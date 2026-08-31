@@ -4,7 +4,7 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.2.0-tags",
+        APP_VERSION: "2.3.0-rankings",
         SCHEMA_VERSION: 2,
         MAX_NAME_LENGTH: 80,
         MAX_TAG_NAME_LENGTH: 60,
