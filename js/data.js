@@ -9,6 +9,7 @@
     }
 
     const categoryIds = new Set(constants.CATEGORIES.map((category) => category.id));
+    const tagCategoryIds = new Set(constants.TAG_CATEGORIES.map((category) => category.id));
     const ratingIds = new Set(constants.RATING_OPTIONS.map((rating) => rating.id));
     const collectionNames = Object.freeze([
         "participants",
@@ -110,14 +111,15 @@
     }
 
     function createTag(input, timestamp = nowIso()) {
-        if (input.categoryId !== null && input.categoryId !== undefined && !categoryIds.has(input.categoryId)) {
+        const categoryId = input.categoryId || "general";
+        if (!tagCategoryIds.has(categoryId)) {
             throw new TypeError("categoryId has an unsupported category.");
         }
 
         return {
             id: input.id || createId("tag"),
             name: requireText(input.name, "name"),
-            categoryId: input.categoryId || null,
+            categoryId,
             type: requireChoice(input.type, constants.TAG_TYPES, "type"),
             predefined: Boolean(input.predefined),
             createdAt: input.createdAt || timestamp,
@@ -273,7 +275,7 @@
                 if (!constants.TAG_TYPES.includes(tag.type)) {
                     errors.push(`${path} has an unsupported type.`);
                 }
-                if (tag.categoryId !== null && !categoryIds.has(tag.categoryId)) {
+                if (tag.categoryId !== null && !tagCategoryIds.has(tag.categoryId)) {
                     errors.push(`${path} has an unsupported categoryId.`);
                 }
                 if (typeof tag.predefined !== "boolean") errors.push(`${path}.predefined must be boolean.`);
@@ -282,6 +284,7 @@
 
 
         if (Array.isArray(state.participantTagAssignments)) {
+            const activeAssignments = new Set();
             state.participantTagAssignments.forEach((assignment, index) => {
                 if (!isRecord(assignment)) return;
                 const path = `participantTagAssignments[${index}]`;
@@ -289,6 +292,13 @@
                 requireEntityText(assignment, "tagId", path, errors);
                 requireEntityText(assignment, "assignedAt", path, errors);
                 requireNullableText(assignment, "removedAt", path, errors);
+                if (assignment.removedAt === null) {
+                    const activeKey = `${assignment.participantId}\u0000${assignment.tagId}`;
+                    if (activeAssignments.has(activeKey)) {
+                        errors.push(`${path} duplicates an active participant/tag relationship.`);
+                    }
+                    activeAssignments.add(activeKey);
+                }
             });
         }
 

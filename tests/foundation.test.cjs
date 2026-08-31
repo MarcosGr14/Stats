@@ -101,7 +101,7 @@ test("state validation rejects broken entity references", () => {
     assert.match(result.errors.join(" "), /missing tag/);
 });
 
-test("initialization removes only the documented legacy key", () => {
+test("Phase 2 initialization does not repeat legacy cleanup or touch unrelated keys", () => {
     const memory = new MemoryStorage({
         [constants.LEGACY_STORAGE_KEY]: "legacy",
         "unrelated:key": "preserve-me"
@@ -110,8 +110,8 @@ test("initialization removes only the documented legacy key", () => {
     const result = storage.initialize(memory, "2026-08-30T00:00:00.000Z");
 
     assert.equal(result.status, "initialized");
-    assert.equal(result.legacyRemoved, true);
-    assert.equal(memory.getItem(constants.LEGACY_STORAGE_KEY), null);
+    assert.equal(result.legacyRemoved, false);
+    assert.equal(memory.getItem(constants.LEGACY_STORAGE_KEY), "legacy");
     assert.equal(memory.getItem("unrelated:key"), "preserve-me");
     assert.ok(memory.getItem(constants.STORAGE_KEY));
 });

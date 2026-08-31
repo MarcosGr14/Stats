@@ -57,46 +57,47 @@
         return candidate;
     }
 
+    function saveWithBackup(state, storage = defaultStorage(), timestamp = new Date().toISOString()) {
+        const rawCurrentState = storage.getItem(constants.STORAGE_KEY);
+        if (rawCurrentState !== null && storage.getItem(constants.TAG_MIGRATION_BACKUP_KEY) === null) {
+            storage.setItem(constants.TAG_MIGRATION_BACKUP_KEY, rawCurrentState);
+        }
+        return save(state, storage, timestamp);
+    }
+
     function initialize(storage = defaultStorage(), timestamp = new Date().toISOString()) {
-        let legacyRemoved = false;
-
         try {
-            if (storage.getItem(constants.LEGACY_STORAGE_KEY) !== null) {
-                storage.removeItem(constants.LEGACY_STORAGE_KEY);
-                legacyRemoved = true;
-            }
-
             const stored = load(storage);
             if (stored.status === "ready") {
-                return { ...stored, legacyRemoved };
+                return { ...stored, legacyRemoved: false };
             }
             if (stored.status === "invalid") {
                 return {
                     ...stored,
                     state: data.createEmptyState(timestamp),
-                    legacyRemoved
+                    legacyRemoved: false
                 };
             }
             if (stored.status === "unavailable") {
                 return {
                     ...stored,
                     state: data.createEmptyState(timestamp),
-                    legacyRemoved
+                    legacyRemoved: false
                 };
             }
 
             const state = save(data.createEmptyState(timestamp), storage, timestamp);
-            return { status: "initialized", state, errors: [], legacyRemoved };
+            return { status: "initialized", state, errors: [], legacyRemoved: false };
         } catch (error) {
             return {
                 status: "unavailable",
                 state: data.createEmptyState(timestamp),
                 errors: [error.message],
-                legacyRemoved
+                legacyRemoved: false
             };
         }
     }
 
-    namespace.storage = Object.freeze({ initialize, load, save, parseStoredState });
+    namespace.storage = Object.freeze({ initialize, load, save, saveWithBackup, parseStoredState });
     root.StatsV2 = namespace;
 })(globalThis);
