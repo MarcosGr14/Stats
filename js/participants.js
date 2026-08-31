@@ -196,8 +196,14 @@
         const gender = options.gender || "all";
         const status = options.status || "active";
         const categoryId = options.categoryId || "all";
+        const tagId = options.tagId || "all";
         const sort = options.sort || "a-z";
         const groupsById = new Map(state.groups.map((group) => [group.id, group.name]));
+        const participantIdsForTag = tagId === "all"
+            ? null
+            : new Set(state.participantTagAssignments
+                .filter((assignment) => assignment.tagId === tagId && assignment.removedAt === null)
+                .map((assignment) => assignment.participantId));
 
         const filtered = state.participants.filter((participant) => {
             const groupName = participant.groupId ? groupsById.get(participant.groupId) || "" : "";
@@ -209,7 +215,8 @@
                 || (status === "active" && participant.archivedAt === null)
                 || (status === "archived" && participant.archivedAt !== null);
             const matchesCategory = categoryId === "all" || participant.categoryIds.includes(categoryId);
-            return matchesQuery && matchesGender && matchesStatus && matchesCategory;
+            const matchesTag = participantIdsForTag === null || participantIdsForTag.has(participant.id);
+            return matchesQuery && matchesGender && matchesStatus && matchesCategory && matchesTag;
         });
 
         return filtered.sort((left, right) => {

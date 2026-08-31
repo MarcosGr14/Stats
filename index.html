@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Stats V2: gestiona participantes y fotos para tu temporada de performance K-pop.">
+    <meta name="description" content="Stats V2: gestiona participantes, fotos y tags reusables para tu temporada de performance K-pop.">
     <meta name="theme-color" content="#0B0B0F">
     <title>Participants · Stats V2</title>
-    <link rel="stylesheet" href="css/global.css?v=2.1.3">
-    <link rel="stylesheet" href="css/components.css?v=2.1.3">
-    <link rel="stylesheet" href="css/app.css?v=2.1.3">
-    <script src="js/constants.js?v=2.1.3" defer></script>
-    <script src="js/data.js?v=2.1.3" defer></script>
-    <script src="js/storage.js?v=2.1.3" defer></script>
-    <script src="js/participants.js?v=2.1.3" defer></script>
-    <script src="js/image-storage.js?v=2.1.3" defer></script>
-    <script src="js/app.js?v=2.1.3" defer></script>
+    <link rel="stylesheet" href="css/global.css?v=2.2.0">
+    <link rel="stylesheet" href="css/components.css?v=2.2.0">
+    <link rel="stylesheet" href="css/app.css?v=2.2.0">
+    <script src="js/constants.js?v=2.2.0" defer></script>
+    <script src="js/data.js?v=2.2.0" defer></script>
+    <script src="js/storage.js?v=2.2.0" defer></script>
+    <script src="js/participants.js?v=2.2.0" defer></script>
+    <script src="js/tags.js?v=2.2.0" defer></script>
+    <script src="js/image-storage.js?v=2.2.0" defer></script>
+    <script src="js/app.js?v=2.2.0" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -37,7 +38,7 @@
 
             <div class="build-status" title="Fase actual del proyecto">
                 <span class="status-dot" aria-hidden="true"></span>
-                Phase 1
+                Phase 2
             </div>
         </header>
 
@@ -101,6 +102,13 @@
                             <option value="stage">Stage</option>
                             <option value="visual">Visual</option>
                             <option value="all-rounder">All-rounder</option>
+                        </select>
+                    </label>
+
+                    <label class="select-control" for="tag-filter">
+                        <span>Tag</span>
+                        <select id="tag-filter">
+                            <option value="all">All tags</option>
                         </select>
                     </label>
 
@@ -230,6 +238,131 @@
         <div class="dialog-actions">
             <button class="button button--quiet" id="cancel-delete" type="button">Cancel</button>
             <button class="button button--danger" id="confirm-delete" type="button">Delete permanently</button>
+        </div>
+    </dialog>
+
+    <dialog class="app-dialog tag-dialog" id="tag-dialog" aria-labelledby="tag-dialog-title">
+        <header class="dialog-header">
+            <div>
+                <p class="eyebrow">Participant tags</p>
+                <h2 id="tag-dialog-title">Manage tags</h2>
+                <p class="tag-dialog-identity" id="tag-dialog-identity"></p>
+            </div>
+            <button class="icon-button" id="close-tag-dialog" type="button" aria-label="Cerrar gestor de tags">×</button>
+        </header>
+
+        <div class="tag-dialog-body">
+            <section class="assigned-tag-panel" aria-labelledby="assigned-tags-title">
+                <div class="tag-section-heading">
+                    <div>
+                        <p class="micro-label">Current description</p>
+                        <h3 id="assigned-tags-title">Assigned tags</h3>
+                    </div>
+                    <span class="tag-count" id="assigned-tag-count">0</span>
+                </div>
+                <div class="assigned-tag-groups" id="assigned-tag-groups"></div>
+                <p class="tag-empty-copy" id="assigned-tags-empty">No tags assigned yet.</p>
+            </section>
+
+            <section class="tag-catalog-panel" aria-labelledby="tag-catalog-title">
+                <div class="tag-section-heading">
+                    <div>
+                        <p class="micro-label">Reusable catalog</p>
+                        <h3 id="tag-catalog-title">Add tags</h3>
+                    </div>
+                    <button class="button button--secondary" id="show-custom-tag-form" type="button">＋ Custom tag</button>
+                </div>
+
+                <div class="tag-picker-controls">
+                    <label class="search-control" for="tag-search">
+                        <span aria-hidden="true">⌕</span>
+                        <span class="sr-only">Buscar tags</span>
+                        <input id="tag-search" type="search" placeholder="Search tags..." autocomplete="off">
+                    </label>
+                    <label class="select-control" for="tag-category-filter">
+                        <span>Category</span>
+                        <select id="tag-category-filter">
+                            <option value="all">All</option>
+                            <option value="vocal">Vocal</option>
+                            <option value="rap">Rap</option>
+                            <option value="dance">Dance</option>
+                            <option value="stage">Stage</option>
+                            <option value="general">General</option>
+                        </select>
+                    </label>
+                    <label class="select-control" for="tag-type-filter">
+                        <span>Type</span>
+                        <select id="tag-type-filter">
+                            <option value="all">All</option>
+                            <option value="strength">Strengths</option>
+                            <option value="weakness">Needs Work</option>
+                            <option value="neutral">Special</option>
+                        </select>
+                    </label>
+                </div>
+
+                <p class="tag-warning" id="tag-category-warning" role="status" aria-live="polite" hidden></p>
+                <div class="tag-catalog-list" id="tag-catalog-list"></div>
+                <p class="tag-empty-copy" id="tag-catalog-empty" hidden>No tags match these filters.</p>
+
+                <form class="custom-tag-form" id="custom-tag-form" novalidate hidden>
+                    <input id="custom-tag-id" type="hidden">
+                    <div class="tag-section-heading">
+                        <div>
+                            <p class="micro-label">Catalog entry</p>
+                            <h3 id="custom-tag-form-title">Create custom tag</h3>
+                        </div>
+                    </div>
+                    <div class="custom-tag-fields">
+                        <label class="field" for="custom-tag-name">
+                            <span>Tag name <strong aria-hidden="true">*</strong></span>
+                            <input id="custom-tag-name" type="text" maxlength="60" autocomplete="off" required>
+                        </label>
+                        <label class="field" for="custom-tag-category">
+                            <span>Category <strong aria-hidden="true">*</strong></span>
+                            <select id="custom-tag-category" required>
+                                <option value="vocal">Vocal</option>
+                                <option value="rap">Rap</option>
+                                <option value="dance">Dance</option>
+                                <option value="stage">Stage</option>
+                                <option value="general">General</option>
+                            </select>
+                        </label>
+                        <label class="field" for="custom-tag-type">
+                            <span>Type <strong aria-hidden="true">*</strong></span>
+                            <select id="custom-tag-type" required>
+                                <option value="strength">Strength</option>
+                                <option value="weakness">Needs Work</option>
+                                <option value="neutral">Special</option>
+                            </select>
+                        </label>
+                    </div>
+                    <label class="custom-tag-assign" id="custom-tag-assign-field" for="assign-custom-tag">
+                        <input id="assign-custom-tag" type="checkbox" checked>
+                        <span>Assign to this participant now</span>
+                    </label>
+                    <p class="field-error" id="custom-tag-error" role="alert"></p>
+                    <div class="custom-tag-actions">
+                        <button class="button button--quiet" id="cancel-custom-tag" type="button">Cancel</button>
+                        <button class="button button--primary" id="save-custom-tag" type="submit">Create and assign</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <footer class="dialog-actions">
+            <button class="button button--quiet" id="done-managing-tags" type="button">Done</button>
+        </footer>
+    </dialog>
+
+    <dialog class="app-dialog confirm-dialog" id="tag-delete-dialog" aria-labelledby="tag-delete-dialog-title">
+        <div class="confirm-symbol" aria-hidden="true">!</div>
+        <p class="eyebrow">Custom tag</p>
+        <h2 id="tag-delete-dialog-title">Delete custom tag?</h2>
+        <p id="tag-delete-dialog-message">This action cannot be undone.</p>
+        <div class="dialog-actions">
+            <button class="button button--quiet" id="cancel-tag-delete" type="button">Cancel</button>
+            <button class="button button--danger" id="confirm-tag-delete" type="button">Delete custom tag</button>
         </div>
     </dialog>
 

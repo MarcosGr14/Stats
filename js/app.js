@@ -6,12 +6,15 @@
     const data = namespace && namespace.data;
     const storage = namespace && namespace.storage;
     const participantService = namespace && namespace.participants;
+    const tagService = namespace && namespace.tags;
     const imageStorage = namespace && namespace.imageStorage;
 
     let state = null;
     let writable = false;
     let editingParticipantId = null;
     let deleteParticipantId = null;
+    let tagParticipantId = null;
+    let pendingTagDeleteId = null;
     let selectedPhotoFile = null;
     let removeExistingPhoto = false;
     let previewObjectUrl = null;
@@ -33,6 +36,10 @@
 
     function findParticipant(participantId) {
         return state.participants.find((participant) => participant.id === participantId) || null;
+    }
+
+    function findTag(tagId) {
+        return state.tags.find((tag) => tag.id === tagId) || null;
     }
 
     function initials(name) {
@@ -68,6 +75,7 @@
         const messages = {
             ready: `Datos locales listos${legacyNote}`,
             initialized: `Estado V2 inicializado${legacyNote}`,
+            migrated: "Datos preservados · catálogo de tags listo",
             invalid: "Datos V2 inválidos · edición bloqueada",
             unavailable: "Almacenamiento no disponible · edición bloqueada"
         };
@@ -152,6 +160,41 @@
         );
     }
 
+    function createTagChip(tag, removable = false, participantId = null) {
+        const chip = createElement("span", `tag-chip tag-chip--${tag.type}`);
+        const symbol = tag.type === "strength" ? "+" : tag.type === "weakness" ? "△" : "✦";
+        chip.append(
+            createElement("span", "tag-chip-symbol", symbol),
+            createElement("span", "tag-chip-name", tag.name)
+        );
+        if (removable) {
+            const remove = createElement("button", "tag-chip-remove", "×");
+            remove.type = "button";
+            remove.dataset.tagAction = "remove";
+            remove.dataset.tagId = tag.id;
+            remove.dataset.participantId = participantId;
+            remove.setAttribute("aria-label", `Remove ${tag.name}`);
+            chip.append(remove);
+        }
+        return chip;
+    }
+
+    function renderTagFilterOptions(selectedValue = elements.tagFilter.value) {
+        const fragment = document.createDocumentFragment();
+        const allOption = createElement("option", "", "All tags");
+        allOption.value = "all";
+        fragment.append(allOption);
+        [...state.tags]
+            .sort((left, right) => left.name.localeCompare(right.name, "es", { sensitivity: "base" }))
+            .forEach((tag) => {
+                const option = createElement("option", "", `${tag.name} · ${tagCategoryLabel(tag.categoryId)}`);
+                option.value = tag.id;
+                fragment.append(option);
+            });
+        elements.tagFilter.replaceChildren(fragment);
+        elements.tagFilter.value = state.tags.some((tag) => tag.id === selectedValue) ? selectedValue : "all";
+    }
+
     function actionButton(label, action, participantId) {
         const button = createElement("button", "", label);
         button.type = "button";
@@ -185,10 +228,23 @@
         participant.categoryIds.forEach((categoryId) => badges.append(createCategoryBadge(categoryId)));
         body.append(badges);
 
+        const activeTags = tagService.activeTagsForParticipant(state, participant.id).map((item) => item.tag);
+        const tagPreview = createElement("div", "card-tag-preview");
+        if (activeTags.length === 0) {
+            tagPreview.append(createElement("span", "card-tag-empty", "No tags yet"));
+        } else {
+            activeTags.slice(0, 3).forEach((tag) => tagPreview.append(createTagChip(tag)));
+            if (activeTags.length > 3) {
+                tagPreview.append(createElement("span", "tag-more", `+${activeTags.length - 3} more`));
+            }
+        }
+        body.append(tagPreview);
+
         const meta = createElement("div", "participant-meta");
         meta.append(createElement("span", "gender-label", participant.gender));
         const actions = createElement("div", "card-actions");
         actions.append(
+            actionButton("Manage tags", "tags", participant.id),
             actionButton("Edit", "edit", participant.id),
             actionButton(participant.archivedAt ? "Restore" : "Archive", participant.archivedAt ? "restore" : "archive", participant.id),
             actionButton("Delete", "delete", participant.id)
@@ -205,6 +261,7 @@
             gender: elements.genderFilter.value,
             status: elements.statusFilter.value,
             categoryId: elements.categoryFilter.value,
+            tagId: elements.tagFilter.value,
             sort: elements.sort.value
         };
     }
@@ -245,6 +302,7 @@
     function renderAll() {
         renderCounts();
         renderGroupOptions();
+        renderTagFilterOptions();
         renderParticipants();
     }
 
@@ -253,8 +311,275 @@
         elements.genderFilter.value = "all";
         elements.statusFilter.value = "active";
         elements.categoryFilter.value = "all";
+        elements.tagFilter.value = "all";
         elements.sort.value = "a-z";
         renderParticipants();
+    }
+
+    function tagCategoryLabel(categoryId) {
+        return constants.TAG_CATEGORIES.find((category) => category.id === categoryId)?.label || "General";
+    }
+
+    function setTagWarning(message = "") {
+        elements.tagCategoryWarning.textContent = message;
+        elements.tagCategoryWarning.hidden = !message;
+    }
+
+    function renderAssignedTags() {
+        const participant = findParticipant(tagParticipantId);
+        if (!participant) return;
+        const assigned = tagService.activeTagsForParticipant(state, participant.id).map((item) => item.tag);
+        elements.assignedTagCount.textContent = String(assigned.length);
+        elements.assignedTagsEmpty.hidden = assigned.length > 0;
+
+        const fragment = document.createDocumentFragment();
+        constants.TAG_TYPES.forEach((type) => {
+            const matching = assigned.filter((tag) => tag.type === type);
+            if (matching.length === 0) return;
+            const group = createElement("section", `assigned-tag-group assigned-tag-group--${type}`);
+            group.append(createElement("h4", "", constants.TAG_TYPE_LABELS[type]));
+            const chips = createElement("div", "assigned-tag-chips");
+            matching.forEach((tag) => chips.append(createTagChip(tag, true, participant.id)));
+            group.append(chips);
+            fragment.append(group);
+        });
+        elements.assignedTagGroups.replaceChildren(fragment);
+    }
+
+    function renderTagCatalog() {
+        const participant = findParticipant(tagParticipantId);
+        if (!participant) return;
+        const assignedIds = new Set(tagService.activeTagsForParticipant(state, participant.id).map((item) => item.tag.id));
+        const filtered = tagService.filterCatalog(state, {
+            query: elements.tagSearch.value,
+            categoryId: elements.tagCategoryFilter.value,
+            type: elements.tagTypeFilter.value
+        });
+        const fragment = document.createDocumentFragment();
+
+        filtered.forEach((tag) => {
+            const row = createElement("article", `tag-catalog-item tag-catalog-item--${tag.type}`);
+            const add = createElement("button", "tag-catalog-add");
+            add.type = "button";
+            add.dataset.tagAction = "assign";
+            add.dataset.tagId = tag.id;
+            add.disabled = assignedIds.has(tag.id);
+            add.setAttribute("aria-pressed", String(assignedIds.has(tag.id)));
+            add.append(
+                createElement("span", "tag-catalog-name", tag.name),
+                createElement(
+                    "span",
+                    "tag-catalog-meta",
+                    `${constants.TAG_TYPE_LABELS[tag.type]} · ${tagCategoryLabel(tag.categoryId)}`
+                )
+            );
+            row.append(add);
+
+            if (!tag.predefined) {
+                const actions = createElement("div", "tag-catalog-actions");
+                const usage = tagService.tagUsage(state, tag.id);
+                const edit = createElement("button", "text-button", "Edit");
+                edit.type = "button";
+                edit.dataset.tagAction = "edit-custom";
+                edit.dataset.tagId = tag.id;
+                edit.disabled = usage.totalAssignments > 0;
+                edit.setAttribute(
+                    "aria-label",
+                    usage.totalAssignments > 0 ? `Edit ${tag.name}, unavailable while in use` : `Edit ${tag.name}`
+                );
+                const remove = createElement("button", "text-button text-button--danger", "Delete");
+                remove.type = "button";
+                remove.dataset.tagAction = "delete-custom";
+                remove.dataset.tagId = tag.id;
+                remove.setAttribute("aria-label", `Delete custom tag ${tag.name}`);
+                actions.append(edit, remove);
+                row.append(actions);
+            }
+            fragment.append(row);
+        });
+
+        elements.tagCatalogList.replaceChildren(fragment);
+        elements.tagCatalogEmpty.hidden = filtered.length > 0;
+    }
+
+    function renderTagDialog() {
+        const participant = findParticipant(tagParticipantId);
+        if (!participant) return;
+        elements.tagDialogTitle.textContent = `Manage ${participant.name}`;
+        elements.tagDialogIdentity.textContent = groupName(participant.groupId);
+        renderAssignedTags();
+        renderTagCatalog();
+    }
+
+    function hideCustomTagForm() {
+        elements.customTagForm.hidden = true;
+        elements.customTagForm.reset();
+        elements.customTagId.value = "";
+        elements.customTagAssignField.hidden = false;
+        elements.customTagError.textContent = "";
+        elements.customTagFormTitle.textContent = "Create custom tag";
+        elements.saveCustomTag.textContent = "Create and assign";
+    }
+
+    function updateCustomTagSubmitLabel() {
+        if (elements.customTagId.value) {
+            elements.saveCustomTag.textContent = "Save changes";
+            return;
+        }
+        elements.saveCustomTag.textContent = elements.assignCustomTag.checked ? "Create and assign" : "Create tag";
+    }
+
+    function showCustomTagForm(tag = null) {
+        elements.customTagForm.hidden = false;
+        elements.customTagError.textContent = "";
+        elements.customTagId.value = tag ? tag.id : "";
+        elements.customTagName.value = tag ? tag.name : "";
+        elements.customTagCategory.value = tag ? tag.categoryId : "general";
+        elements.customTagType.value = tag ? tag.type : "neutral";
+        elements.customTagAssignField.hidden = Boolean(tag);
+        elements.customTagFormTitle.textContent = tag ? `Edit ${tag.name}` : "Create custom tag";
+        updateCustomTagSubmitLabel();
+        requestAnimationFrame(() => elements.customTagName.focus());
+    }
+
+    function openTagDialog(participantId) {
+        if (!writable) {
+            showToast("La edición está bloqueada hasta recuperar el almacenamiento local.", "error");
+            return;
+        }
+        const participant = findParticipant(participantId);
+        if (!participant) return;
+        returnFocusElement = document.activeElement;
+        tagParticipantId = participantId;
+        elements.tagSearch.value = "";
+        elements.tagCategoryFilter.value = "all";
+        elements.tagTypeFilter.value = "all";
+        setTagWarning();
+        hideCustomTagForm();
+        renderTagDialog();
+        elements.tagDialog.showModal();
+        requestAnimationFrame(() => elements.tagSearch.focus());
+    }
+
+    function closeTagDialog() {
+        if (elements.tagDialog.open) elements.tagDialog.close();
+        tagParticipantId = null;
+        hideCustomTagForm();
+        setTagWarning();
+        if (returnFocusElement && typeof returnFocusElement.focus === "function") returnFocusElement.focus();
+    }
+
+    function assignTagToCurrent(tagId) {
+        const participant = findParticipant(tagParticipantId);
+        const tag = findTag(tagId);
+        if (!participant || !tag) return;
+        try {
+            const result = tagService.assignTag(state, participant.id, tag.id);
+            if (result.created) commitState(result.state);
+            renderTagDialog();
+            setTagWarning(result.categoryWarning
+                ? `${participant.name} no está actualmente en ${tagCategoryLabel(tag.categoryId)}, pero el tag fue permitido.`
+                : "");
+            showToast(result.created ? `${tag.name} asignado a ${participant.name}.` : `${tag.name} ya estaba asignado.`);
+        } catch (error) {
+            showToast("No se pudo asignar el tag.", "error");
+        }
+    }
+
+    function removeTagFromCurrent(tagId) {
+        const participant = findParticipant(tagParticipantId);
+        const tag = findTag(tagId);
+        if (!participant || !tag) return;
+        try {
+            const result = tagService.removeTag(state, participant.id, tag.id);
+            commitState(result.state);
+            setTagWarning();
+            renderTagDialog();
+            showToast(`${tag.name} removido de ${participant.name}.`);
+        } catch (error) {
+            showToast("No se pudo remover el tag.", "error");
+        }
+    }
+
+    function submitCustomTag(event) {
+        event.preventDefault();
+        elements.customTagError.textContent = "";
+        const editingTagId = elements.customTagId.value;
+        const input = {
+            name: elements.customTagName.value,
+            categoryId: elements.customTagCategory.value,
+            type: elements.customTagType.value
+        };
+
+        try {
+            if (editingTagId) {
+                const updated = tagService.updateCustomTag(state, editingTagId, input);
+                commitState(updated.state);
+                hideCustomTagForm();
+                renderTagDialog();
+                showToast(`${updated.tag.name} actualizado.`);
+                return;
+            }
+
+            const catalogResult = tagService.createCustomTag(state, input);
+            if (!elements.assignCustomTag.checked) {
+                commitState(catalogResult.state);
+                hideCustomTagForm();
+                renderTagDialog();
+                setTagWarning();
+                showToast(catalogResult.created
+                    ? `${catalogResult.tag.name} creado en el catálogo.`
+                    : `${catalogResult.tag.name} ya existía en el catálogo.`);
+                return;
+            }
+            const assignmentResult = tagService.assignTag(catalogResult.state, tagParticipantId, catalogResult.tag.id);
+            commitState(assignmentResult.state);
+            hideCustomTagForm();
+            renderTagDialog();
+            const participant = findParticipant(tagParticipantId);
+            setTagWarning(assignmentResult.categoryWarning
+                ? `${participant.name} no está actualmente en ${tagCategoryLabel(catalogResult.tag.categoryId)}, pero el tag fue permitido.`
+                : "");
+            showToast(catalogResult.created
+                ? `${catalogResult.tag.name} creado y asignado.`
+                : `${catalogResult.tag.name} ya existía y fue reutilizado.`);
+        } catch (error) {
+            elements.customTagError.textContent = error.message || "No se pudo guardar el tag.";
+        }
+    }
+
+    function openTagDeleteDialog(tagId) {
+        const tag = findTag(tagId);
+        if (!tag || tag.predefined) return;
+        const usage = tagService.tagUsage(state, tag.id);
+        pendingTagDeleteId = tag.id;
+        elements.tagDeleteDialogTitle.textContent = `Delete ${tag.name}?`;
+        elements.confirmTagDelete.disabled = usage.totalAssignments > 0;
+        elements.tagDeleteDialogMessage.textContent = usage.totalAssignments > 0
+            ? `${tag.name} tiene ${usage.activeCount} participante(s) activo(s) y ${usage.totalAssignments} relación(es) históricas. Remuévelo antes de borrarlo.`
+            : `${tag.name} no tiene referencias y se eliminará del catálogo global.`;
+        elements.tagDeleteDialog.showModal();
+        requestAnimationFrame(() => elements.cancelTagDelete.focus());
+    }
+
+    function closeTagDeleteDialog() {
+        if (elements.tagDeleteDialog.open) elements.tagDeleteDialog.close();
+        pendingTagDeleteId = null;
+    }
+
+    function confirmTagDelete() {
+        const tag = findTag(pendingTagDeleteId);
+        if (!tag) return closeTagDeleteDialog();
+        try {
+            const result = tagService.deleteCustomTag(state, tag.id);
+            commitState(result.state);
+            closeTagDeleteDialog();
+            renderTagDialog();
+            showToast(`${tag.name} eliminado del catálogo.`);
+        } catch (error) {
+            closeTagDeleteDialog();
+            showToast(error.message || "No se pudo borrar el tag.", "error");
+        }
     }
 
     function clearPreviewUrl() {
@@ -550,6 +875,10 @@
 
     function handleParticipantAction(action, participantId) {
         try {
+            if (action === "tags") {
+                openTagDialog(participantId);
+                return;
+            }
             if (action === "edit") {
                 openParticipantDialog(participantId);
                 return;
@@ -645,6 +974,7 @@
             genderFilter: byId("gender-filter"),
             statusFilter: byId("status-filter"),
             categoryFilter: byId("category-filter"),
+            tagFilter: byId("tag-filter"),
             sort: byId("sort-participants"),
             resetFilters: byId("reset-filters"),
             grid: byId("participant-grid"),
@@ -682,6 +1012,37 @@
             deleteDialogMessage: byId("delete-dialog-message"),
             cancelDelete: byId("cancel-delete"),
             confirmDelete: byId("confirm-delete"),
+            tagDialog: byId("tag-dialog"),
+            tagDialogTitle: byId("tag-dialog-title"),
+            tagDialogIdentity: byId("tag-dialog-identity"),
+            closeTagDialog: byId("close-tag-dialog"),
+            doneManagingTags: byId("done-managing-tags"),
+            assignedTagCount: byId("assigned-tag-count"),
+            assignedTagGroups: byId("assigned-tag-groups"),
+            assignedTagsEmpty: byId("assigned-tags-empty"),
+            tagSearch: byId("tag-search"),
+            tagCategoryFilter: byId("tag-category-filter"),
+            tagTypeFilter: byId("tag-type-filter"),
+            tagCategoryWarning: byId("tag-category-warning"),
+            tagCatalogList: byId("tag-catalog-list"),
+            tagCatalogEmpty: byId("tag-catalog-empty"),
+            showCustomTagForm: byId("show-custom-tag-form"),
+            customTagForm: byId("custom-tag-form"),
+            customTagId: byId("custom-tag-id"),
+            customTagFormTitle: byId("custom-tag-form-title"),
+            customTagName: byId("custom-tag-name"),
+            customTagCategory: byId("custom-tag-category"),
+            customTagType: byId("custom-tag-type"),
+            customTagAssignField: byId("custom-tag-assign-field"),
+            assignCustomTag: byId("assign-custom-tag"),
+            customTagError: byId("custom-tag-error"),
+            cancelCustomTag: byId("cancel-custom-tag"),
+            saveCustomTag: byId("save-custom-tag"),
+            tagDeleteDialog: byId("tag-delete-dialog"),
+            tagDeleteDialogTitle: byId("tag-delete-dialog-title"),
+            tagDeleteDialogMessage: byId("tag-delete-dialog-message"),
+            cancelTagDelete: byId("cancel-tag-delete"),
+            confirmTagDelete: byId("confirm-tag-delete"),
             toast: byId("app-toast")
         };
     }
@@ -693,7 +1054,7 @@
             else openParticipantDialog();
         });
         elements.search.addEventListener("input", renderParticipants);
-        [elements.genderFilter, elements.statusFilter, elements.categoryFilter, elements.sort]
+        [elements.genderFilter, elements.statusFilter, elements.categoryFilter, elements.tagFilter, elements.sort]
             .forEach((control) => control.addEventListener("change", renderParticipants));
         elements.resetFilters.addEventListener("click", resetFilters);
         elements.grid.addEventListener("click", (event) => {
@@ -737,11 +1098,50 @@
         elements.deleteDialog.addEventListener("click", (event) => {
             if (event.target === elements.deleteDialog) closeDeleteDialog();
         });
+
+        elements.closeTagDialog.addEventListener("click", closeTagDialog);
+        elements.doneManagingTags.addEventListener("click", closeTagDialog);
+        elements.tagDialog.addEventListener("cancel", (event) => {
+            event.preventDefault();
+            closeTagDialog();
+        });
+        elements.tagDialog.addEventListener("click", (event) => {
+            if (event.target === elements.tagDialog) closeTagDialog();
+        });
+        elements.assignedTagGroups.addEventListener("click", (event) => {
+            const button = event.target.closest("button[data-tag-action='remove']");
+            if (button) removeTagFromCurrent(button.dataset.tagId);
+        });
+        elements.tagSearch.addEventListener("input", renderTagCatalog);
+        [elements.tagCategoryFilter, elements.tagTypeFilter]
+            .forEach((control) => control.addEventListener("change", renderTagCatalog));
+        elements.tagCatalogList.addEventListener("click", (event) => {
+            const button = event.target.closest("button[data-tag-action]");
+            if (!button) return;
+            const tag = findTag(button.dataset.tagId);
+            if (button.dataset.tagAction === "assign") assignTagToCurrent(button.dataset.tagId);
+            if (button.dataset.tagAction === "edit-custom" && tag) showCustomTagForm(tag);
+            if (button.dataset.tagAction === "delete-custom") openTagDeleteDialog(button.dataset.tagId);
+        });
+        elements.showCustomTagForm.addEventListener("click", () => showCustomTagForm());
+        elements.cancelCustomTag.addEventListener("click", hideCustomTagForm);
+        elements.customTagForm.addEventListener("submit", submitCustomTag);
+        elements.assignCustomTag.addEventListener("change", updateCustomTagSubmitLabel);
+
+        elements.cancelTagDelete.addEventListener("click", closeTagDeleteDialog);
+        elements.confirmTagDelete.addEventListener("click", confirmTagDelete);
+        elements.tagDeleteDialog.addEventListener("cancel", (event) => {
+            event.preventDefault();
+            closeTagDeleteDialog();
+        });
+        elements.tagDeleteDialog.addEventListener("click", (event) => {
+            if (event.target === elements.tagDeleteDialog) closeTagDeleteDialog();
+        });
     }
 
     function initialize() {
-        if (!constants || !data || !storage || !participantService || !imageStorage) {
-            throw new Error("Stats V2 participant modules did not load correctly.");
+        if (!constants || !data || !storage || !participantService || !tagService || !imageStorage) {
+            throw new Error("Stats V2 participant and tag modules did not load correctly.");
         }
 
         cacheElements();
@@ -749,6 +1149,20 @@
         const result = storage.initialize();
         state = result.state;
         writable = result.status === "ready" || result.status === "initialized";
+        if (writable) {
+            try {
+                const migration = tagService.ensurePredefinedCatalog(state);
+                if (migration.changed) {
+                    state = storage.saveWithBackup(migration.state);
+                    result.status = "migrated";
+                    result.tagsAdded = migration.addedCount;
+                }
+            } catch (error) {
+                writable = false;
+                result.status = "unavailable";
+                result.errors = [error.message];
+            }
+        }
         elements.addButton.disabled = !writable;
         elements.emptyButton.disabled = !writable;
         showStorageStatus(result);
