@@ -3,9 +3,51 @@
 
     const namespace = root.StatsV2 || {};
     const constants = namespace.constants;
+    const data = namespace.data;
 
-    if (!constants) {
-        throw new Error("Stats V2 constants must load before image storage.");
+    if (!constants || !data) {
+        throw new Error("Stats V2 constants and data model must load before image storage.");
+    }
+
+    function validateImageFile(file) {
+        if (!file || typeof file.type !== "string" || typeof file.size !== "number") {
+            return { valid: false, code: "INVALID_FILE", message: "Selecciona un archivo de imagen válido." };
+        }
+        if (!constants.IMAGE_MIME_TYPES.includes(file.type.toLowerCase())) {
+            return {
+                valid: false,
+                code: "UNSUPPORTED_TYPE",
+                message: "Usa una imagen JPEG, PNG o WebP."
+            };
+        }
+        if (file.size <= 0) {
+            return { valid: false, code: "EMPTY_FILE", message: "La imagen seleccionada está vacía." };
+        }
+        if (file.size > constants.MAX_IMAGE_BYTES) {
+            return {
+                valid: false,
+                code: "FILE_TOO_LARGE",
+                message: "La imagen debe pesar 5 MB o menos."
+            };
+        }
+        return { valid: true, code: null, message: "" };
+    }
+
+    function createImageRecord(file, participantId, timestamp = new Date().toISOString()) {
+        const validation = validateImageFile(file);
+        if (!validation.valid) {
+            const error = new TypeError(validation.message);
+            error.code = validation.code;
+            throw error;
+        }
+        return {
+            id: data.createId("image"),
+            participantId: participantId || null,
+            blob: file,
+            fileName: file.name || "participant-image",
+            mimeType: file.type,
+            createdAt: timestamp
+        };
     }
 
     function openDatabase(indexedDb = root.indexedDB) {
@@ -52,6 +94,12 @@
         if (!record || typeof record.id !== "string" || !record.blob) {
             return Promise.reject(new TypeError("An image record requires an id and blob."));
         }
+        const validation = validateImageFile(record.blob);
+        if (!validation.valid) {
+            const error = new TypeError(validation.message);
+            error.code = validation.code;
+            return Promise.reject(error);
+        }
 
         const safeRecord = {
             id: record.id,
@@ -73,6 +121,13 @@
         return withStore("readwrite", (store) => requestResult(store.delete(id)), indexedDb);
     }
 
-    namespace.imageStorage = Object.freeze({ openDatabase, putImage, getImage, deleteImage });
+    namespace.imageStorage = Object.freeze({
+        validateImageFile,
+        createImageRecord,
+        openDatabase,
+        putImage,
+        getImage,
+        deleteImage
+    });
     root.StatsV2 = namespace;
 })(globalThis);
