@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Stats V2: gestiona participantes, fotos y tags reusables para tu temporada de performance K-pop.">
+    <meta name="description" content="Stats V2: explora participantes, tags y rankings por categoría sin inventar puntuaciones.">
     <meta name="theme-color" content="#0B0B0F">
     <title>Participants · Stats V2</title>
-    <link rel="stylesheet" href="css/global.css?v=2.2.0">
-    <link rel="stylesheet" href="css/components.css?v=2.2.0">
-    <link rel="stylesheet" href="css/app.css?v=2.2.0">
-    <script src="js/constants.js?v=2.2.0" defer></script>
-    <script src="js/data.js?v=2.2.0" defer></script>
-    <script src="js/storage.js?v=2.2.0" defer></script>
-    <script src="js/participants.js?v=2.2.0" defer></script>
-    <script src="js/tags.js?v=2.2.0" defer></script>
-    <script src="js/image-storage.js?v=2.2.0" defer></script>
-    <script src="js/app.js?v=2.2.0" defer></script>
+    <link rel="stylesheet" href="css/global.css?v=2.3.0">
+    <link rel="stylesheet" href="css/components.css?v=2.3.0">
+    <link rel="stylesheet" href="css/app.css?v=2.3.0">
+    <script src="js/constants.js?v=2.3.0" defer></script>
+    <script src="js/data.js?v=2.3.0" defer></script>
+    <script src="js/storage.js?v=2.3.0" defer></script>
+    <script src="js/participants.js?v=2.3.0" defer></script>
+    <script src="js/tags.js?v=2.3.0" defer></script>
+    <script src="js/rankings.js?v=2.3.0" defer></script>
+    <script src="js/image-storage.js?v=2.3.0" defer></script>
+    <script src="js/app.js?v=2.3.0" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -31,14 +32,14 @@
             </a>
 
             <nav class="primary-nav" aria-label="Navegación principal">
-                <a href="#participants" aria-current="page">Participants</a>
+                <a id="nav-participants" href="#participants" aria-current="page">Participants</a>
                 <span class="nav-future" aria-label="Weekly, disponible en Fase 4">Weekly</span>
-                <span class="nav-future" aria-label="Rankings, disponible en Fase 3">Rankings</span>
+                <a id="nav-rankings" href="#rankings">Rankings</a>
             </nav>
 
             <div class="build-status" title="Fase actual del proyecto">
                 <span class="status-dot" aria-hidden="true"></span>
-                Phase 2
+                Phase 3
             </div>
         </header>
 
@@ -136,6 +137,113 @@
                     <h2 id="empty-title">No participants yet</h2>
                     <p id="empty-copy">Add your first performer and assign every category where they stand out.</p>
                     <button class="button button--secondary" id="empty-add-participant" type="button">Add first participant</button>
+                </div>
+            </section>
+
+            <section class="rankings-view" id="rankings" aria-labelledby="rankings-title" hidden>
+                <header class="rankings-header">
+                    <div>
+                        <p class="eyebrow">Performance directory · Read-only</p>
+                        <div class="rankings-title-row">
+                            <h1 id="rankings-title">Rankings</h1>
+                            <span class="unranked-badge">Unranked</span>
+                        </div>
+                        <p class="manager-intro">
+                            Explora el roster por disciplina. Las posiciones se activarán cuando exista un score real de Weekly Voting.
+                        </p>
+                    </div>
+                    <div class="rankings-readonly" aria-label="Vista de solo lectura">
+                        <span aria-hidden="true">◇</span>
+                        Derived, not stored
+                    </div>
+                </header>
+
+                <div class="ranking-tabs" role="tablist" aria-label="Categoría del ranking">
+                    <button class="ranking-tab ranking-tab--vocal" id="ranking-tab-vocal" type="button" role="tab" aria-selected="true" aria-controls="ranking-panel" tabindex="0" data-ranking-category="vocal">Vocal</button>
+                    <button class="ranking-tab ranking-tab--rap" id="ranking-tab-rap" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="rap">Rap</button>
+                    <button class="ranking-tab ranking-tab--dance" id="ranking-tab-dance" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="dance">Dance</button>
+                    <button class="ranking-tab ranking-tab--stage" id="ranking-tab-stage" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="stage">Stage</button>
+                    <button class="ranking-tab ranking-tab--visual" id="ranking-tab-visual" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="visual">Visual</button>
+                    <button class="ranking-tab ranking-tab--all-rounder" id="ranking-tab-all-rounder" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="all-rounder">All-rounder</button>
+                </div>
+
+                <div id="ranking-panel" role="tabpanel" aria-labelledby="ranking-tab-vocal">
+                    <section class="ranking-toolbar" aria-label="Buscar y filtrar rankings">
+                        <label class="search-control ranking-search" for="ranking-search">
+                            <span aria-hidden="true">⌕</span>
+                            <span class="sr-only">Buscar en rankings</span>
+                            <input id="ranking-search" type="search" placeholder="Search participants..." autocomplete="off">
+                        </label>
+
+                        <label class="select-control" for="ranking-gender-filter">
+                            <span>Gender</span>
+                            <select id="ranking-gender-filter">
+                                <option value="all">All</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </label>
+
+                        <label class="select-control" for="ranking-group-filter">
+                            <span>Group</span>
+                            <select id="ranking-group-filter">
+                                <option value="all">All Groups</option>
+                            </select>
+                        </label>
+
+                        <label class="select-control" for="ranking-tag-filter">
+                            <span>Tag</span>
+                            <select id="ranking-tag-filter">
+                                <option value="all">All Tags</option>
+                            </select>
+                        </label>
+
+                        <label class="select-control" for="ranking-sort">
+                            <span>Sort</span>
+                            <select id="ranking-sort">
+                                <option value="a-z">A-Z</option>
+                                <option value="recent">Recently Added</option>
+                            </select>
+                        </label>
+
+                        <label class="archive-toggle" for="ranking-include-archived">
+                            <input id="ranking-include-archived" type="checkbox">
+                            <span>Include archived</span>
+                        </label>
+
+                        <button class="button button--quiet ranking-reset" id="reset-ranking-filters" type="button">Reset</button>
+                    </section>
+
+                    <section class="top-three-locked" aria-labelledby="top-three-title">
+                        <div>
+                            <p class="micro-label">Top 3 · Locked</p>
+                            <h2 id="top-three-title">Waiting for a real score</h2>
+                            <p>Performance scoring will become available once weekly voting begins.</p>
+                        </div>
+                        <div class="podium-placeholder" aria-hidden="true">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </section>
+
+                    <div class="ranking-results-heading">
+                        <div>
+                            <p class="micro-label">Category directory</p>
+                            <h2 id="ranking-directory-title">Vocal directory</h2>
+                        </div>
+                        <div>
+                            <strong id="ranking-result-count">0 performers</strong>
+                            <span>No performance score applied</span>
+                        </div>
+                    </div>
+
+                    <div class="ranking-list" id="ranking-list" aria-live="polite" aria-labelledby="ranking-directory-title"></div>
+
+                    <div class="ranking-empty" id="ranking-empty" role="status" hidden>
+                        <span aria-hidden="true">○</span>
+                        <h2 id="ranking-empty-title">No Vocal participants added yet.</h2>
+                        <p id="ranking-empty-copy">Add this category in Participant Manager to see performers here.</p>
+                        <button class="button button--secondary" id="ranking-empty-action" type="button">Open Participants</button>
+                    </div>
                 </div>
             </section>
         </main>

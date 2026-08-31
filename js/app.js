@@ -7,6 +7,7 @@
     const storage = namespace && namespace.storage;
     const participantService = namespace && namespace.participants;
     const tagService = namespace && namespace.tags;
+    const rankingsService = namespace && namespace.rankings;
     const imageStorage = namespace && namespace.imageStorage;
 
     let state = null;
@@ -21,6 +22,8 @@
     let cardObjectUrls = [];
     let returnFocusElement = null;
     let toastTimer = null;
+    let activeView = "participants";
+    let rankingCategory = "vocal";
     let elements = {};
 
     function byId(id) {
@@ -206,6 +209,8 @@
     function createParticipantCard(participant) {
         const card = createElement("article", "participant-card");
         card.dataset.archived = String(participant.archivedAt !== null);
+        card.dataset.participantId = participant.id;
+        card.tabIndex = -1;
 
         const photo = createElement("div", "card-photo");
         const image = createElement("img");
@@ -299,11 +304,212 @@
         renderEmptyState(filtered.length);
     }
 
+    function renderRankingFilterOptions() {
+        const selectedGroup = elements.rankingGroupFilter.value || "all";
+        const groupFragment = document.createDocumentFragment();
+        const allGroups = createElement("option", "", "All Groups");
+        allGroups.value = "all";
+        const soloists = createElement("option", "", "Soloist / No group");
+        soloists.value = "soloist";
+        groupFragment.append(allGroups, soloists);
+        [...state.groups]
+            .sort((left, right) => left.name.localeCompare(right.name, "es", { sensitivity: "base" }))
+            .forEach((group) => {
+                const option = createElement("option", "", group.name);
+                option.value = group.id;
+                groupFragment.append(option);
+            });
+        elements.rankingGroupFilter.replaceChildren(groupFragment);
+        elements.rankingGroupFilter.value = selectedGroup === "soloist" || state.groups.some((group) => group.id === selectedGroup)
+            ? selectedGroup
+            : "all";
+
+        const selectedTag = elements.rankingTagFilter.value || "all";
+        const tagFragment = document.createDocumentFragment();
+        const allTags = createElement("option", "", "All Tags");
+        allTags.value = "all";
+        tagFragment.append(allTags);
+        [...state.tags]
+            .sort((left, right) => left.name.localeCompare(right.name, "es", { sensitivity: "base" }))
+            .forEach((tag) => {
+                const option = createElement("option", "", `${tag.name} · ${tagCategoryLabel(tag.categoryId)}`);
+                option.value = tag.id;
+                tagFragment.append(option);
+            });
+        elements.rankingTagFilter.replaceChildren(tagFragment);
+        elements.rankingTagFilter.value = state.tags.some((tag) => tag.id === selectedTag) ? selectedTag : "all";
+    }
+
+    function rankingCategoryLabel(categoryId = rankingCategory) {
+        return constants.CATEGORIES.find((category) => category.id === categoryId)?.label || categoryId;
+    }
+
+    function currentRankingFilters() {
+        return {
+            categoryId: rankingCategory,
+            query: elements.rankingSearch.value,
+            gender: elements.rankingGenderFilter.value,
+            groupId: elements.rankingGroupFilter.value,
+            tagId: elements.rankingTagFilter.value,
+            includeArchived: elements.rankingIncludeArchived.checked,
+            sort: elements.rankingSort.value,
+            scoreProvider: null
+        };
+    }
+
+    function createRankingRow(item) {
+        const participant = item.participant;
+        const row = createElement("article", "ranking-row");
+        row.dataset.archived = String(participant.archivedAt !== null);
+        row.dataset.participantId = participant.id;
+
+        const status = createElement("span", "ranking-status", "Unranked");
+        const photo = createElement("div", "ranking-photo");
+        const image = createElement("img");
+        image.alt = `Foto de ${participant.name}`;
+        image.hidden = true;
+        const fallback = createElement("span", "", initials(participant.name));
+        photo.append(image, fallback);
+        if (participant.imageId) loadCardImage(participant.imageId, image, fallback);
+
+        const copy = createElement("div", "ranking-copy");
+        const nameLine = createElement("div", "ranking-name-line");
+        nameLine.append(createElement("h3", "", participant.name));
+        if (participant.archivedAt !== null) {
+            nameLine.append(createElement("span", "ranking-archived", "Archived"));
+        }
+        copy.append(nameLine, createElement("p", "ranking-group", item.group ? item.group.name : "Soloist / No group"));
+
+        const details = createElement("div", "ranking-details");
+        details.append(createCategoryBadge(rankingCategory));
+        const tags = createElement("div", "ranking-tags");
+        item.tags.slice(0, 3).forEach((tag) => tags.append(createTagChip(tag)));
+        if (item.tags.length > 3) tags.append(createElement("span", "tag-more", `+${item.tags.length - 3} more`));
+        if (item.tags.length > 0) details.append(tags);
+        details.append(createElement("span", "gender-label", participant.gender));
+        copy.append(details);
+
+        const view = createElement("button", "button button--quiet ranking-view-button", "View participant");
+        view.type = "button";
+        view.dataset.rankingParticipantId = participant.id;
+        row.append(status, photo, copy, view);
+        return row;
+    }
+
+    function renderRankingEmptyState(result) {
+        const empty = result.items.length === 0;
+        elements.rankingEmpty.hidden = !empty;
+        if (!empty) return;
+
+        const label = rankingCategoryLabel();
+        const hasCategoryParticipants = state.participants.some((participant) => (
+            participant.archivedAt === null && participant.categoryIds.includes(rankingCategory)
+        ));
+        if (hasCategoryParticipants) {
+            elements.rankingEmptyTitle.textContent = "No participants match these filters.";
+            elements.rankingEmptyCopy.textContent = "Try another search or clear the active ranking filters.";
+            elements.rankingEmptyAction.textContent = "Reset filters";
+            elements.rankingEmptyAction.dataset.action = "reset";
+        } else {
+            elements.rankingEmptyTitle.textContent = `No ${label} participants added yet.`;
+            elements.rankingEmptyCopy.textContent = "Add this category in Participant Manager to see performers here.";
+            elements.rankingEmptyAction.textContent = "Open Participants";
+            elements.rankingEmptyAction.dataset.action = "participants";
+        }
+    }
+
+    function renderRankings() {
+        revokeCardUrls();
+        const result = rankingsService.deriveRanking(state, currentRankingFilters());
+        const fragment = document.createDocumentFragment();
+        result.items.forEach((item) => fragment.append(createRankingRow(item)));
+        elements.rankingList.replaceChildren(fragment);
+        elements.rankingsView.dataset.category = rankingCategory;
+
+        elements.rankingTabs.forEach((tab) => {
+            const selected = tab.dataset.rankingCategory === rankingCategory;
+            tab.setAttribute("aria-selected", String(selected));
+            tab.tabIndex = selected ? 0 : -1;
+        });
+        const activeTab = elements.rankingTabs.find((tab) => tab.dataset.rankingCategory === rankingCategory);
+        if (activeTab) elements.rankingPanel.setAttribute("aria-labelledby", activeTab.id);
+
+        const label = rankingCategoryLabel();
+        elements.rankingDirectoryTitle.textContent = `${label} directory`;
+        elements.rankingResultCount.textContent = `${result.items.length} performer${result.items.length === 1 ? "" : "s"}`;
+        renderRankingEmptyState(result);
+    }
+
+    function activeViewFromLocation() {
+        return root.location.hash === "#rankings" ? "rankings" : "participants";
+    }
+
+    function activateView(view, shouldRender = true) {
+        activeView = view === "rankings" ? "rankings" : "participants";
+        elements.participantManager.hidden = activeView !== "participants";
+        elements.rankingsView.hidden = activeView !== "rankings";
+        if (activeView === "participants") {
+            elements.navParticipants.setAttribute("aria-current", "page");
+            elements.navRankings.removeAttribute("aria-current");
+        } else {
+            elements.navRankings.setAttribute("aria-current", "page");
+            elements.navParticipants.removeAttribute("aria-current");
+        }
+        document.title = activeView === "rankings" ? "Rankings · Stats V2" : "Participants · Stats V2";
+        if (shouldRender) {
+            if (activeView === "rankings") renderRankings();
+            else renderParticipants();
+        }
+    }
+
+    function navigateToView(view) {
+        const targetHash = `#${view}`;
+        if (root.location.hash !== targetHash) root.history.pushState(null, "", targetHash);
+        activateView(view);
+        byId(view)?.scrollIntoView({ block: "start" });
+    }
+
+    function selectRankingCategory(categoryId, focusTab = false) {
+        if (!constants.CATEGORIES.some((category) => category.id === categoryId)) return;
+        rankingCategory = categoryId;
+        renderRankings();
+        if (focusTab) {
+            elements.rankingTabs.find((tab) => tab.dataset.rankingCategory === categoryId)?.focus();
+        }
+    }
+
+    function resetRankingFilters() {
+        elements.rankingSearch.value = "";
+        elements.rankingGenderFilter.value = "all";
+        elements.rankingGroupFilter.value = "all";
+        elements.rankingTagFilter.value = "all";
+        elements.rankingSort.value = "a-z";
+        elements.rankingIncludeArchived.checked = false;
+        renderRankings();
+    }
+
+    function viewParticipantFromRankings(participantId) {
+        const participant = findParticipant(participantId);
+        if (!participant) return;
+        elements.search.value = participant.name;
+        elements.genderFilter.value = "all";
+        elements.statusFilter.value = participant.archivedAt === null ? "active" : "archived";
+        elements.categoryFilter.value = "all";
+        elements.tagFilter.value = "all";
+        elements.sort.value = "a-z";
+        navigateToView("participants");
+        requestAnimationFrame(() => {
+            const card = [...elements.grid.children].find((item) => item.dataset.participantId === participantId);
+            if (card) card.focus();
+        });
+    }
+
     function renderAll() {
         renderCounts();
         renderGroupOptions();
         renderTagFilterOptions();
-        renderParticipants();
+        renderRankingFilterOptions();
+        activateView(activeView);
     }
 
     function resetFilters() {
@@ -968,6 +1174,10 @@
 
     function cacheElements() {
         elements = {
+            participantManager: byId("participants"),
+            rankingsView: byId("rankings"),
+            navParticipants: byId("nav-participants"),
+            navRankings: byId("nav-rankings"),
             participantCount: byId("participant-count"),
             storageStatus: byId("storage-status"),
             search: byId("participant-search"),
@@ -1043,11 +1253,37 @@
             tagDeleteDialogMessage: byId("tag-delete-dialog-message"),
             cancelTagDelete: byId("cancel-tag-delete"),
             confirmTagDelete: byId("confirm-tag-delete"),
+            rankingPanel: byId("ranking-panel"),
+            rankingTabs: [...document.querySelectorAll("[data-ranking-category]")],
+            rankingSearch: byId("ranking-search"),
+            rankingGenderFilter: byId("ranking-gender-filter"),
+            rankingGroupFilter: byId("ranking-group-filter"),
+            rankingTagFilter: byId("ranking-tag-filter"),
+            rankingSort: byId("ranking-sort"),
+            rankingIncludeArchived: byId("ranking-include-archived"),
+            resetRankingFilters: byId("reset-ranking-filters"),
+            rankingDirectoryTitle: byId("ranking-directory-title"),
+            rankingResultCount: byId("ranking-result-count"),
+            rankingList: byId("ranking-list"),
+            rankingEmpty: byId("ranking-empty"),
+            rankingEmptyTitle: byId("ranking-empty-title"),
+            rankingEmptyCopy: byId("ranking-empty-copy"),
+            rankingEmptyAction: byId("ranking-empty-action"),
             toast: byId("app-toast")
         };
     }
 
     function bindEvents() {
+        elements.navParticipants.addEventListener("click", (event) => {
+            event.preventDefault();
+            navigateToView("participants");
+        });
+        elements.navRankings.addEventListener("click", (event) => {
+            event.preventDefault();
+            navigateToView("rankings");
+        });
+        root.addEventListener("hashchange", () => activateView(activeViewFromLocation()));
+
         elements.addButton.addEventListener("click", () => openParticipantDialog());
         elements.emptyButton.addEventListener("click", () => {
             if (elements.emptyButton.dataset.action === "reset") resetFilters();
@@ -1137,11 +1373,37 @@
         elements.tagDeleteDialog.addEventListener("click", (event) => {
             if (event.target === elements.tagDeleteDialog) closeTagDeleteDialog();
         });
+
+        elements.rankingTabs.forEach((tab, index) => {
+            tab.addEventListener("click", () => selectRankingCategory(tab.dataset.rankingCategory));
+            tab.addEventListener("keydown", (event) => {
+                let targetIndex = null;
+                if (event.key === "ArrowRight") targetIndex = (index + 1) % elements.rankingTabs.length;
+                if (event.key === "ArrowLeft") targetIndex = (index - 1 + elements.rankingTabs.length) % elements.rankingTabs.length;
+                if (event.key === "Home") targetIndex = 0;
+                if (event.key === "End") targetIndex = elements.rankingTabs.length - 1;
+                if (targetIndex === null) return;
+                event.preventDefault();
+                selectRankingCategory(elements.rankingTabs[targetIndex].dataset.rankingCategory, true);
+            });
+        });
+        elements.rankingSearch.addEventListener("input", renderRankings);
+        [elements.rankingGenderFilter, elements.rankingGroupFilter, elements.rankingTagFilter, elements.rankingSort, elements.rankingIncludeArchived]
+            .forEach((control) => control.addEventListener("change", renderRankings));
+        elements.resetRankingFilters.addEventListener("click", resetRankingFilters);
+        elements.rankingList.addEventListener("click", (event) => {
+            const button = event.target.closest("button[data-ranking-participant-id]");
+            if (button) viewParticipantFromRankings(button.dataset.rankingParticipantId);
+        });
+        elements.rankingEmptyAction.addEventListener("click", () => {
+            if (elements.rankingEmptyAction.dataset.action === "reset") resetRankingFilters();
+            else navigateToView("participants");
+        });
     }
 
     function initialize() {
-        if (!constants || !data || !storage || !participantService || !tagService || !imageStorage) {
-            throw new Error("Stats V2 participant and tag modules did not load correctly.");
+        if (!constants || !data || !storage || !participantService || !tagService || !rankingsService || !imageStorage) {
+            throw new Error("Stats V2 participant, tag and ranking modules did not load correctly.");
         }
 
         cacheElements();
@@ -1165,6 +1427,7 @@
         }
         elements.addButton.disabled = !writable;
         elements.emptyButton.disabled = !writable;
+        activeView = activeViewFromLocation();
         showStorageStatus(result);
         renderAll();
     }
