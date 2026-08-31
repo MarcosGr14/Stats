@@ -34,7 +34,11 @@
         if (typeof value !== "string" || value.trim() === "") {
             throw new TypeError(`${field} must be a non-empty string.`);
         }
-        return value.trim();
+        const normalized = value.trim();
+        if (normalized.length > constants.MAX_NAME_LENGTH) {
+            throw new TypeError(`${field} must be ${constants.MAX_NAME_LENGTH} characters or fewer.`);
+        }
+        return normalized;
     }
 
     function requireChoice(value, choices, field) {
@@ -76,6 +80,9 @@
 
     function createParticipant(input, timestamp = nowIso()) {
         const categories = uniqueStrings(input.categoryIds || [], "categoryIds");
+        if (categories.length === 0) {
+            throw new TypeError("categoryIds requires at least one category.");
+        }
         if (categories.some((id) => !categoryIds.has(id))) {
             throw new TypeError("categoryIds contains an unsupported category.");
         }
@@ -238,6 +245,7 @@
                     errors.push(`${path} has an unsupported gender.`);
                 }
                 if (!Array.isArray(participant.categoryIds)
+                    || participant.categoryIds.length === 0
                     || participant.categoryIds.some((id) => !categoryIds.has(id))
                     || new Set(participant.categoryIds).size !== participant.categoryIds.length) {
                     errors.push(`${path} has invalid categoryIds.`);
@@ -360,6 +368,7 @@
 
     namespace.data = Object.freeze({
         collectionNames,
+        createId,
         createEmptyState,
         createParticipant,
         createGroup,

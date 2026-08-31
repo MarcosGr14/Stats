@@ -55,7 +55,7 @@ test("participant factory enforces neutral categories and supported gender", () 
     assert.deepEqual(participant.categoryIds, ["vocal", "dance"]);
     assert.equal(participant.archivedAt, null);
     assert.throws(
-        () => data.createParticipant({ name: "Test", gender: "other", categoryIds: [] }),
+        () => data.createParticipant({ name: "Test", gender: "other", categoryIds: ["vocal"] }),
         /unsupported value/
     );
     assert.throws(
