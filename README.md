@@ -1,25 +1,26 @@
 # Stats V2
 
-Aplicación local-first para evaluar y seguir performers K-pop a lo largo de una temporada. La Fase 0 reemplaza el ranking monolítico original con una base versionada, segura y preparada para participantes, categorías, tags, votos semanales e historial.
+Aplicación local-first para organizar y, en fases posteriores, evaluar performers K-pop a lo largo de una temporada. Mantiene HTML, CSS y JavaScript Vanilla, sin backend, framework ni dependencias de ejecución.
 
 ## Estado actual
 
-Solo está implementada **Fase 0 — Reset & Foundation**:
+Está implementada **Fase 1 - Participant Manager** sobre la fundación V2:
 
-- shell visual dark, responsive y accesible;
-- HTML, CSS y JavaScript separados;
-- modelo de datos V2 y validación antes de persistir;
-- metadata en `localStorage` e interfaz base para imágenes en IndexedDB;
-- eliminación limitada y explícita del estado legacy;
-- pruebas aisladas que no usan el almacenamiento real del navegador.
+- alta y edición de participantes;
+- grupos reutilizables, con creación rápida desde el formulario;
+- género `male`/`female` independiente de las categorías;
+- categorías múltiples: `vocal`, `rap`, `dance`, `stage`, `visual` y `all-rounder`;
+- foto opcional en IndexedDB, con fallback visual;
+- búsqueda por nombre o grupo, filtros por género/estado/categoría y orden A-Z/recientes;
+- archivado y restauración;
+- borrado permanente solo cuando no existe historial relacionado;
+- UI responsive y accesible con formularios y diálogos navegables por teclado.
 
-No están implementados todavía el participant manager, el catálogo de tags, las votaciones, los rankings, los perfiles, los analytics ni la fórmula de ganadores.
+No se han implementado tags, rankings, votación semanal, perfiles, analytics ni fórmulas de ganadores. Esas funciones pertenecen a fases posteriores.
 
 ## Ejecución
 
-No hay dependencias, build step ni framework. Se puede abrir `index.html` directamente o servir la carpeta con cualquier servidor estático.
-
-Ejemplo con Python:
+No hay build step. Se puede abrir `index.html` directamente o servir la carpeta con un servidor estático:
 
 ```bash
 python -m http.server 4173
@@ -38,47 +39,21 @@ Stats/
 │   ├── constants.js
 │   ├── data.js
 │   ├── storage.js
+│   ├── participants.js
 │   ├── image-storage.js
 │   └── app.js
 ├── docs/
 │   └── screenshots/
-│       ├── foundation-desktop.png
-│       └── foundation-mobile.png
 ├── tests/
-│   └── foundation.test.cjs
+│   ├── foundation.test.cjs
+│   ├── participants.test.cjs
+│   └── image-storage.test.cjs
 └── README.md
 ```
 
-Los módulos comparten únicamente el namespace global `StatsV2` para conservar compatibilidad con sitios estáticos y con la apertura mediante `file://`.
+Los módulos comparten el namespace global `StatsV2` para conservar compatibilidad con un sitio estático y con la apertura mediante `file://`.
 
-## Modelo de datos
-
-El estado raíz tiene esta forma:
-
-```js
-{
-  schemaVersion: 2,
-  meta: {
-    createdAt,
-    updatedAt
-  },
-  participants: [],
-  groups: [],
-  tags: [],
-  participantTagAssignments: [],
-  weeks: [],
-  weeklyVotes: [],
-  settings: {
-    activeWeekId: null,
-    voters: [
-      { id: "p1", name: "P1" },
-      { id: "p2", name: "P2" }
-    ]
-  }
-}
-```
-
-### Participante
+## Modelo de participante
 
 ```js
 {
@@ -94,37 +69,34 @@ El estado raíz tiene esta forma:
 }
 ```
 
-Las categorías son constantes neutras: `vocal`, `rap`, `dance`, `stage`, `visual` y `all-rounder`. El género (`male` o `female`) es un filtro independiente.
-
-Los tags no se duplican dentro del participante. `participantTagAssignments` registra la relación y sus fechas `assignedAt`/`removedAt`, lo que permite construir historial sin perder información.
-
-`weeklyVotes` admite las evaluaciones `standout`, `impressed`, `good` y `normal`. Sus puntajes base están declarados, pero no existe ni se presume una fórmula de ganador general.
+Cada persona existe una sola vez y puede tener varias categorías. Los grupos son entidades separadas; el género funciona como filtro y queda listo para los ganadores masculino/femenino de una fase posterior.
 
 ## Persistencia
 
 | Uso | Nombre exacto |
 | --- | --- |
-| Estado V2 en `localStorage` | `stats:v2:state` |
+| Estado y metadata en `localStorage` | `stats:v2:state` |
 | Clave legacy eliminada | `rankingsApp_data` |
 | Base IndexedDB | `stats-v2` |
 | Object store de imágenes | `images` |
 
-Al iniciar:
+Las fotos admiten JPEG, PNG o WebP de hasta 5 MB. El blob se guarda en IndexedDB y `localStorage` conserva únicamente su `imageId`. Si la imagen no existe o IndexedDB falla, la tarjeta muestra las iniciales como fallback.
 
-1. se elimina únicamente `rankingsApp_data` si existe;
-2. nunca se enumeran ni eliminan otras claves;
-3. se crea un estado V2 vacío si no existe;
-4. si el estado V2 está corrupto o no pasa validación, se muestra un estado temporal vacío **sin sobrescribir el valor original**.
+Al iniciar, la app elimina únicamente `rankingsApp_data`. Nunca enumera ni borra otras claves. Si el estado V2 es corrupto o no pasa validación, muestra un estado temporal vacío sin sobrescribir el valor original.
 
-Las imágenes no se guardan en `localStorage`. `image-storage.js` prepara operaciones `putImage`, `getImage` y `deleteImage` para IndexedDB, pero la UI de fotos pertenece a la Fase 1.
+## Archivado y borrado
+
+- Archivar conserva identidad, categorías, foto y referencias históricas.
+- Restaurar vuelve a mostrar el participante en el roster activo.
+- El borrado permanente se permite solo cuando no existen votos ni asignaciones históricas de tags.
+- Si hay historial, la UI ofrece archivar en lugar de destruir el registro.
 
 ## Seguridad y accesibilidad
 
-- La UI no utiliza `innerHTML` para insertar datos.
-- Las actualizaciones de contenido usan `textContent`.
-- Hay enlace de salto, landmarks, labels accesibles y `focus-visible`.
-- El layout contempla 320, 375, 768, laptop y desktop.
-- No depende de hover y respeta `prefers-reduced-motion`.
+- Los datos editables se insertan con `textContent` y creación segura de nodos; no se usa `innerHTML`.
+- Hay enlace de salto, landmarks, labels, estados de error, foco visible y diálogos nativos.
+- El layout fue revisado en 320, 375, 768 y 1440 px, sin overflow horizontal.
+- Los controles no dependen solo de hover o color y se respeta `prefers-reduced-motion`.
 - No se cargan fuentes, scripts ni estilos de terceros.
 
 ## Pruebas
@@ -132,23 +104,20 @@ Las imágenes no se guardan en `localStorage`. `image-storage.js` prepara operac
 Requiere Node.js 20 o superior y no instala paquetes:
 
 ```bash
-node --test tests/foundation.test.cjs
+node --test tests/*.test.cjs
 ```
 
-La suite usa almacenamiento en memoria; no toca `localStorage` ni IndexedDB reales.
+Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, orden, archivo/restauración, protección del historial, persistencia y errores de imágenes.
 
-## Revisión visual
-
-La shell fue revisada en 320, 375, 768 y 1440 px. No presenta overflow horizontal del documento ni errores de consola. Las capturas de referencia están en `docs/screenshots/`.
+También se realizó un smoke test en un origen local aislado para crear, editar, buscar, filtrar, archivar, restaurar, borrar y recargar un participante con foto.
 
 ## Riesgos y decisiones pendientes
 
-- El catálogo de tags predefinidos se creará en la Fase 2.
-- Las reglas de unicidad de votos por semana/participante/usuario se cerrarán antes de la Fase 4.
-- El formato de exportación de imágenes se definirá en la Fase 9.
+- El catálogo y la UI de tags pertenecen a la Fase 2.
+- La limpieza de blobs huérfanos se hace de forma oportunista; una herramienta integral de mantenimiento/backup pertenece a la Fase 9.
+- Navegadores sin IndexedDB mantienen el participant manager, pero usan el fallback visual y no pueden guardar fotos.
 - La fórmula de `overallScore`, Male Performer of the Year y Female Performer of the Year requiere aprobación explícita antes de implementarse.
-- La compatibilidad con navegadores sin IndexedDB se limitará a mostrar el fallback visual de imagen.
 
 ## Próxima fase
 
-La Fase 1 añadirá el participant manager solo después de revisar y aprobar esta fundación.
+La Fase 2 no debe comenzar automáticamente. Este repositorio queda detenido al terminar y verificar la Fase 1.

@@ -117,3 +117,30 @@ test("stores, retrieves and deletes an image through the IndexedDB abstraction",
     await imageStorage.deleteImage(record.id, indexedDb);
     assert.equal(await imageStorage.getImage(record.id, indexedDb), undefined);
 });
+
+test("reports unavailable and blocked image databases without storing metadata", async () => {
+    await assert.rejects(
+        imageStorage.openDatabase(null),
+        /IndexedDB is unavailable/
+    );
+
+    const blockedIndexedDb = {
+        open() {
+            const request = {
+                result: null,
+                error: null,
+                onupgradeneeded: null,
+                onsuccess: null,
+                onerror: null,
+                onblocked: null
+            };
+            queueMicrotask(() => request.onblocked && request.onblocked());
+            return request;
+        }
+    };
+
+    await assert.rejects(
+        imageStorage.openDatabase(blockedIndexedDb),
+        /blocked by another tab/
+    );
+});

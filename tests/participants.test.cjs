@@ -46,6 +46,15 @@ test("creates a participant with multiple categories and a valid group", () => {
     assert.equal(result.state.participants.length, 1);
 });
 
+test("reuses groups case-insensitively instead of duplicating them", () => {
+    const initial = stateWithGroup();
+    const result = participants.createGroup(initial, "  AESPA  ", timestamp);
+
+    assert.equal(result.created, false);
+    assert.equal(result.group.id, initial.groups[0].id);
+    assert.equal(result.state.groups.length, 1);
+});
+
 test("rejects empty names, missing categories and unsupported gender", () => {
     const state = stateWithGroup();
 
@@ -138,6 +147,11 @@ test("filters by search, group, gender, status and category", () => {
         participants.filterParticipants(state, { status: "all", gender: "male", categoryId: "rap" })
             .map((item) => item.name),
         ["Mark"]
+    );
+    assert.deepEqual(
+        participants.filterParticipants(state, { status: "all", sort: "recent" })
+            .map((item) => item.name),
+        ["Mark", "Ningning"]
     );
 });
 
