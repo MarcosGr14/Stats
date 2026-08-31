@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Stats V2: seguimiento local de performers K-pop por categorías, semanas y evolución.">
+    <meta name="description" content="Stats V2: gestiona participantes y fotos para tu temporada de performance K-pop.">
     <meta name="theme-color" content="#0B0B0F">
-    <title>Stats V2 · K-pop Performance Tracker</title>
-    <link rel="stylesheet" href="css/global.css?v=2.0.0">
-    <link rel="stylesheet" href="css/components.css?v=2.0.0">
-    <link rel="stylesheet" href="css/app.css?v=2.0.0">
-    <script src="js/constants.js?v=2.0.0" defer></script>
-    <script src="js/data.js?v=2.0.0" defer></script>
-    <script src="js/storage.js?v=2.0.0" defer></script>
-    <script src="js/image-storage.js?v=2.0.0" defer></script>
-    <script src="js/app.js?v=2.0.0" defer></script>
+    <title>Participants · Stats V2</title>
+    <link rel="stylesheet" href="css/global.css?v=2.1.2">
+    <link rel="stylesheet" href="css/components.css?v=2.1.2">
+    <link rel="stylesheet" href="css/app.css?v=2.1.2">
+    <script src="js/constants.js?v=2.1.2" defer></script>
+    <script src="js/data.js?v=2.1.2" defer></script>
+    <script src="js/storage.js?v=2.1.2" defer></script>
+    <script src="js/participants.js?v=2.1.2" defer></script>
+    <script src="js/image-storage.js?v=2.1.2" defer></script>
+    <script src="js/app.js?v=2.1.2" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
 
     <div class="site-shell">
         <header class="topbar">
-            <a class="brand" href="#overview" aria-label="Stats V2, inicio">
+            <a class="brand" href="#participants" aria-label="Stats V2, participantes">
                 <span class="brand-mark" aria-hidden="true">S</span>
                 <span class="brand-copy">
                     <strong>STATS</strong>
@@ -29,151 +30,104 @@
             </a>
 
             <nav class="primary-nav" aria-label="Navegación principal">
-                <a href="#overview" aria-current="page">Overview</a>
-                <span class="nav-future" aria-label="Participants, disponible en Fase 1">Participants</span>
+                <a href="#participants" aria-current="page">Participants</a>
                 <span class="nav-future" aria-label="Weekly, disponible en Fase 4">Weekly</span>
                 <span class="nav-future" aria-label="Rankings, disponible en Fase 3">Rankings</span>
             </nav>
 
             <div class="build-status" title="Fase actual del proyecto">
                 <span class="status-dot" aria-hidden="true"></span>
-                Foundation v2
+                Phase 1
             </div>
         </header>
 
         <main id="main-content">
-            <section class="hero" id="overview" aria-labelledby="hero-title">
-                <div class="hero-copy">
-                    <p class="eyebrow">MAMA LATINO · 2026 SEASON</p>
-                    <h1 id="hero-title">Más que puntos.<br><span>Una temporada completa.</span></h1>
-                    <p class="hero-description">
-                        La nueva base de Stats está preparada para seguir participantes, categorías,
-                        fortalezas y evolución semanal sin duplicar datos.
-                    </p>
-                    <a class="text-link" href="#foundation">Explorar la fundación <span aria-hidden="true">→</span></a>
-                </div>
-
-                <aside class="leaders-card" aria-labelledby="leaders-title">
-                    <div class="card-heading">
-                        <div>
-                            <p class="micro-label">Season pulse</p>
-                            <h2 id="leaders-title">Current leaders</h2>
-                        </div>
-                        <span class="live-label">Formula pending</span>
-                    </div>
-
-                    <div class="leader-row">
-                        <span class="leader-index">M</span>
-                        <div>
-                            <small>Male leader</small>
-                            <strong>Por definir</strong>
-                        </div>
-                        <span class="leader-score">—</span>
-                    </div>
-                    <div class="leader-row">
-                        <span class="leader-index leader-index--female">F</span>
-                        <div>
-                            <small>Female leader</small>
-                            <strong>Por definir</strong>
-                        </div>
-                        <span class="leader-score">—</span>
-                    </div>
-
-                    <p class="card-note">La fórmula final no se calculará hasta que sea definida y aprobada.</p>
-                </aside>
-            </section>
-
-            <section class="season-overview" aria-labelledby="season-title">
-                <div class="section-heading">
+            <section class="participant-manager" id="participants" aria-labelledby="participants-title">
+                <header class="manager-header">
                     <div>
-                        <p class="eyebrow">Season overview</p>
-                        <h2 id="season-title">La estructura está lista</h2>
+                        <p class="eyebrow">Roster management · 2026 season</p>
+                        <div class="title-row">
+                            <h1 id="participants-title">Participants</h1>
+                            <span id="participant-count" class="title-count" aria-label="0 participantes">0</span>
+                        </div>
+                        <p class="manager-intro">
+                            Una persona, múltiples disciplinas. Construye tu roster sin duplicar performers.
+                        </p>
                     </div>
+                    <button class="button button--primary" id="add-participant" type="button">
+                        <span aria-hidden="true">＋</span> Add participant
+                    </button>
+                </header>
+
+                <div class="roster-stats" aria-label="Resumen del roster">
+                    <p><strong id="active-count">0</strong><span>Active</span></p>
+                    <p><strong id="archived-count">0</strong><span>Archived</span></p>
+                    <p><strong id="group-count">0</strong><span>Groups</span></p>
                     <p id="storage-status" class="storage-status" role="status">Comprobando almacenamiento…</p>
                 </div>
 
-                <div class="metric-grid">
-                    <article class="metric-card">
-                        <span class="metric-accent metric-accent--pink" aria-hidden="true"></span>
-                        <p>Participants</p>
-                        <strong id="participant-count">0</strong>
-                        <small>Entidades únicas</small>
-                    </article>
-                    <article class="metric-card">
-                        <span class="metric-accent metric-accent--cyan" aria-hidden="true"></span>
-                        <p>Active week</p>
-                        <strong id="active-week">—</strong>
-                        <small>Sin semana abierta</small>
-                    </article>
-                    <article class="metric-card">
-                        <span class="metric-accent metric-accent--purple" aria-hidden="true"></span>
-                        <p>Weekly votes</p>
-                        <strong id="vote-count">0</strong>
-                        <small>P1 + P2</small>
-                    </article>
-                    <article class="metric-card">
-                        <span class="metric-accent metric-accent--gold" aria-hidden="true"></span>
-                        <p>Tracked tags</p>
-                        <strong id="tag-count">0</strong>
-                        <small>Strengths · Needs Work</small>
-                    </article>
-                </div>
-            </section>
+                <section class="roster-toolbar" aria-label="Buscar, filtrar y ordenar participantes">
+                    <label class="search-control" for="participant-search">
+                        <span aria-hidden="true">⌕</span>
+                        <span class="sr-only">Buscar participantes</span>
+                        <input id="participant-search" type="search" placeholder="Search participants..." autocomplete="off">
+                    </label>
 
-            <section class="category-section" aria-labelledby="category-title">
-                <div class="section-heading section-heading--compact">
-                    <div>
-                        <p class="eyebrow">Performance lenses</p>
-                        <h2 id="category-title">Una persona, múltiples categorías</h2>
-                    </div>
-                    <p>El género será un filtro, nunca una categoría duplicada.</p>
-                </div>
+                    <label class="select-control" for="gender-filter">
+                        <span>Gender</span>
+                        <select id="gender-filter">
+                            <option value="all">All</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </label>
 
-                <div class="category-strip" aria-label="Categorías disponibles">
-                    <span class="category-chip category-chip--vocal">Vocal</span>
-                    <span class="category-chip category-chip--rap">Rap</span>
-                    <span class="category-chip category-chip--dance">Dance</span>
-                    <span class="category-chip category-chip--stage">Stage</span>
-                    <span class="category-chip category-chip--visual">Visual</span>
-                    <span class="category-chip category-chip--all-rounder">All-rounder</span>
-                </div>
-            </section>
+                    <label class="select-control" for="status-filter">
+                        <span>Status</span>
+                        <select id="status-filter">
+                            <option value="active">Active</option>
+                            <option value="archived">Archived</option>
+                            <option value="all">All</option>
+                        </select>
+                    </label>
 
-            <section class="foundation-section" id="foundation" aria-labelledby="foundation-title">
-                <div class="section-heading">
-                    <div>
-                        <p class="eyebrow">Phase 0</p>
-                        <h2 id="foundation-title">Foundation first</h2>
-                    </div>
-                    <span class="phase-badge">Reset &amp; foundation</span>
+                    <label class="select-control" for="category-filter">
+                        <span>Category</span>
+                        <select id="category-filter">
+                            <option value="all">All categories</option>
+                            <option value="vocal">Vocal</option>
+                            <option value="rap">Rap</option>
+                            <option value="dance">Dance</option>
+                            <option value="stage">Stage</option>
+                            <option value="visual">Visual</option>
+                            <option value="all-rounder">All-rounder</option>
+                        </select>
+                    </label>
+
+                    <label class="select-control" for="sort-participants">
+                        <span>Sort</span>
+                        <select id="sort-participants">
+                            <option value="a-z">A–Z</option>
+                            <option value="recent">Recently added</option>
+                        </select>
+                    </label>
+
+                    <button class="button button--quiet toolbar-reset" id="reset-filters" type="button">Reset</button>
+                </section>
+
+                <div class="results-heading">
+                    <p id="result-summary">0 active performers</p>
+                    <p>Local-first · Saved on this device</p>
                 </div>
 
-                <div class="foundation-grid">
-                    <article class="foundation-card">
-                        <span class="card-number">01</span>
-                        <h3>Local-first</h3>
-                        <p>Metadata en el navegador e imágenes preparadas para IndexedDB, sin backend ni login.</p>
-                    </article>
-                    <article class="foundation-card">
-                        <span class="card-number">02</span>
-                        <h3>Modelo limpio</h3>
-                        <p>Participantes únicos, grupos separados y relaciones listas para semanas, tags e historial.</p>
-                    </article>
-                    <article class="foundation-card">
-                        <span class="card-number">03</span>
-                        <h3>Datos seguros</h3>
-                        <p>Estado versionado, validación antes de guardar y eliminación limitada a la clave legacy.</p>
-                    </article>
-                </div>
+                <div class="participant-grid" id="participant-grid" aria-live="polite"></div>
 
-                <div class="empty-state">
-                    <div class="empty-symbol" aria-hidden="true">＋</div>
-                    <div>
-                        <p class="micro-label">Next unlocked phase</p>
-                        <h3>Participant manager</h3>
-                        <p>La creación y edición de participantes comenzará únicamente después de aprobar esta fundación.</p>
-                    </div>
-                    <span class="locked-label">Fase 1</span>
+                <div class="manager-empty" id="participant-empty">
+                    <div class="empty-orbit" aria-hidden="true"><span>＋</span></div>
+                    <p class="eyebrow" id="empty-kicker">Your roster starts here</p>
+                    <h2 id="empty-title">No participants yet</h2>
+                    <p id="empty-copy">Add your first performer and assign every category where they stand out.</p>
+                    <button class="button button--secondary" id="empty-add-participant" type="button">Add first participant</button>
                 </div>
             </section>
         </main>
@@ -183,5 +137,102 @@
             <p id="schema-version">Schema v2</p>
         </footer>
     </div>
+
+    <dialog class="app-dialog participant-dialog" id="participant-dialog" aria-labelledby="participant-dialog-title">
+        <form id="participant-form" novalidate>
+            <header class="dialog-header">
+                <div>
+                    <p class="eyebrow" id="participant-dialog-kicker">Roster entry</p>
+                    <h2 id="participant-dialog-title">Add participant</h2>
+                </div>
+                <button class="icon-button" id="close-participant-dialog" type="button" aria-label="Cerrar formulario">×</button>
+            </header>
+
+            <div class="form-errors" id="form-errors" role="alert" aria-live="assertive" hidden></div>
+            <input id="participant-id" name="participantId" type="hidden">
+
+            <div class="participant-form-layout">
+                <div class="photo-field">
+                    <div class="photo-preview" id="photo-preview">
+                        <img id="photo-preview-image" alt="Vista previa de la foto" hidden>
+                        <span id="photo-preview-fallback" aria-hidden="true">ST</span>
+                    </div>
+                    <label class="button button--secondary file-button" for="participant-photo">Choose image</label>
+                    <input id="participant-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp">
+                    <button class="text-button" id="remove-photo" type="button" hidden>Remove photo</button>
+                    <p>JPEG, PNG or WebP · Max 5 MB</p>
+                    <p class="field-error" id="photo-error"></p>
+                </div>
+
+                <div class="form-fields">
+                    <label class="field" for="participant-name">
+                        <span>Name <strong aria-hidden="true">*</strong></span>
+                        <input id="participant-name" name="name" type="text" maxlength="80" autocomplete="off" required>
+                        <small class="field-error" id="name-error"></small>
+                    </label>
+
+                    <div class="group-field">
+                        <label class="field" for="participant-group">
+                            <span>Group</span>
+                            <select id="participant-group" name="groupId">
+                                <option value="">Soloist / No group</option>
+                            </select>
+                        </label>
+                        <button class="button button--quiet" id="show-group-form" type="button">＋ Create group</button>
+                    </div>
+
+                    <div class="inline-group-form" id="inline-group-form" hidden>
+                        <label class="field" for="new-group-name">
+                            <span>New group name</span>
+                            <input id="new-group-name" type="text" maxlength="80" autocomplete="off">
+                            <small class="field-error" id="group-error"></small>
+                        </label>
+                        <div>
+                            <button class="button button--secondary" id="create-group" type="button">Save group</button>
+                            <button class="text-button" id="cancel-group" type="button">Cancel</button>
+                        </div>
+                    </div>
+
+                    <fieldset class="choice-fieldset gender-fieldset">
+                        <legend>Gender <strong aria-hidden="true">*</strong></legend>
+                        <label><input type="radio" name="gender" value="female" required><span>Female</span></label>
+                        <label><input type="radio" name="gender" value="male" required><span>Male</span></label>
+                        <small class="field-error" id="gender-error"></small>
+                    </fieldset>
+
+                    <fieldset class="choice-fieldset category-fieldset">
+                        <legend>Categories <strong aria-hidden="true">*</strong></legend>
+                        <div class="category-options">
+                            <label class="category-option category-option--vocal"><input type="checkbox" name="categories" value="vocal"><span>Vocal</span></label>
+                            <label class="category-option category-option--rap"><input type="checkbox" name="categories" value="rap"><span>Rap</span></label>
+                            <label class="category-option category-option--dance"><input type="checkbox" name="categories" value="dance"><span>Dance</span></label>
+                            <label class="category-option category-option--stage"><input type="checkbox" name="categories" value="stage"><span>Stage</span></label>
+                            <label class="category-option category-option--visual"><input type="checkbox" name="categories" value="visual"><span>Visual</span></label>
+                            <label class="category-option category-option--all-rounder"><input type="checkbox" name="categories" value="all-rounder"><span>All-rounder</span></label>
+                        </div>
+                        <small class="field-error" id="categories-error"></small>
+                    </fieldset>
+                </div>
+            </div>
+
+            <footer class="dialog-actions">
+                <button class="button button--quiet" id="cancel-participant" type="button">Cancel</button>
+                <button class="button button--primary" id="save-participant" type="submit">Save participant</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog class="app-dialog confirm-dialog" id="delete-dialog" aria-labelledby="delete-dialog-title">
+        <div class="confirm-symbol" aria-hidden="true">!</div>
+        <p class="eyebrow">Permanent action</p>
+        <h2 id="delete-dialog-title">Delete participant?</h2>
+        <p id="delete-dialog-message">This action cannot be undone.</p>
+        <div class="dialog-actions">
+            <button class="button button--quiet" id="cancel-delete" type="button">Cancel</button>
+            <button class="button button--danger" id="confirm-delete" type="button">Delete permanently</button>
+        </div>
+    </dialog>
+
+    <div class="app-toast" id="app-toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>
