@@ -784,10 +784,3 @@ Desarrollado por **MarcosGr14** como proyecto personal de seguimiento y evaluaci
 ## Status
 
 Stats V2 se encuentra actualmente en desarrollo activo.
-
-```
-
-Ese README ya está en nivel **“repo serio pero con identidad propia”** y además cuenta bien qué hace la app sin parecer documentación corporativa aburrida.
-
-Cuando termines Fase 4, solo habría que actualizar la sección de estado y mover `Weekly Voting` de 🚧 a ✅.
-```
