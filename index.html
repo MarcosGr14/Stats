@@ -3,451 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ MAMA LATINO 2026 ✨</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --bg-color: #fdf2f8; 
-            --card-bg: #ffffff;
-            --text-main: #5c4a52; 
-            --text-muted: #a78b97;
-            --primary: #ff8fb3; 
-            --primary-hover: #ff749f;
-            --primary-dark: #d81b60; /* Tono rosa más oscuro para el footer */
-            --danger: #ffffff; 
-            --border: #fce7f3; 
-            --bar-gradient: linear-gradient(90deg, #ff9a9e 0%, #fecfef 100%); 
-            --banner-gradient: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
-        }
-
-        body {
-            font-family: 'Nunito', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            background-image: radial-gradient(#ffe4e6 1px, transparent 1px);
-            background-size: 20px 20px; 
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        /* BANNER SUPERIOR */
-        .banner {
-            background: var(--banner-gradient);
-            padding: 30px 20px;
-            box-shadow: 0 4px 15px rgba(255, 117, 140, 0.3);
-            margin-bottom: 40px;
-        }
-
-        .banner-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .banner h1 {
-            margin: 0;
-            font-size: 32px;
-            font-weight: 900;
-            color: #ffffff;
-            letter-spacing: -0.5px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .btn-danger {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: var(--danger);
-            border: 2px solid var(--danger);
-            padding: 8px 18px;
-            border-radius: 20px;
-            font-weight: 800;
-            font-family: 'Nunito', sans-serif;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-danger:hover {
-            background-color: var(--danger);
-            color: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.4);
-        }
-
-        /* CONTENEDOR PRINCIPAL */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            flex-grow: 1; /* Esto empuja el footer hacia abajo */
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* Grid para los primeros 6 gráficos */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-        }
-
-        /* SECCIÓN DE VISUALES */
-        .visuals-section {
-            margin-top: 60px;
-            margin-bottom: 40px;
-        }
-
-        .visuals-title {
-            text-align: center;
-            font-size: 28px;
-            font-weight: 900;
-            color: var(--primary-dark);
-            margin-bottom: 30px;
-            position: relative;
-        }
-        
-        /* Línea decorativa al lado del título Visuales */
-        .visuals-title::before, .visuals-title::after {
-            content: "";
-            display: inline-block;
-            width: 100px;
-            height: 3px;
-            background: var(--primary);
-            vertical-align: middle;
-            margin: 0 15px;
-            border-radius: 5px;
-        }
-
-        /* Grid exclusivo para Visuales (2 columnas 100% ancho) */
-        .visuals-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* Exactamente mitad y mitad */
-            gap: 25px;
-        }
-
-        /* TARJETAS DE GRÁFICO (Compartido) */
-        .chart-card {
-            background: var(--card-bg);
-            border: 2px solid var(--border);
-            border-radius: 24px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(255, 182, 193, 0.15);
-            transition: transform 0.2s;
-        }
-        
-        .chart-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px dashed var(--border);
-        }
-
-        .chart-header h2 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--text-main);
-        }
-
-        .chart-actions button {
-            background: var(--bg-color);
-            border: none;
-            color: var(--primary-hover);
-            padding: 6px 14px;
-            border-radius: 15px;
-            font-size: 13px;
-            font-family: 'Nunito', sans-serif;
-            cursor: pointer;
-            margin-left: 5px;
-            font-weight: 700;
-            transition: all 0.2s;
-        }
-        
-        .chart-actions button:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        /* BARRAS Y COMPETIDORES */
-        .competitor {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            font-size: 15px;
-        }
-
-        .name {
-            width: 95px;
-            font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: var(--text-main);
-        }
-
-        .bar-container {
-            flex-grow: 1;
-            background: var(--border);
-            height: 22px;
-            border-radius: 12px;
-            margin: 0 12px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .bar {
-            height: 100%;
-            background: var(--bar-gradient);
-            width: 0%;
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding-right: 10px;
-            color: #5c4a52;
-            font-weight: 800;
-            font-size: 12px;
-            box-sizing: border-box;
-            min-width: 35px;
-            border-radius: 12px;
-        }
-
-        .controls button {
-            background: var(--bg-color);
-            border: none;
-            color: var(--primary);
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            cursor: pointer;
-            font-weight: 800;
-            font-size: 16px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-left: 4px;
-            transition: all 0.2s;
-        }
-
-        .controls button:hover {
-            background: var(--primary);
-            color: white;
-            transform: scale(1.1);
-        }
-
-        .empty-state {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 15px;
-            font-weight: 600;
-            padding: 30px 0;
-            background: var(--bg-color);
-            border-radius: 16px;
-            border: 2px dashed var(--border);
-        }
-
-        /* FOOTER */
-        .site-footer {
-            background-color: var(--primary-dark);
-            color: white;
-            text-align: center;
-            padding: 25px 20px;
-            font-size: 18px;
-            font-weight: 900;
-            letter-spacing: 2px;
-            margin-top: 50px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* Adaptabilidad para móviles */
-        @media (max-width: 768px) {
-            .visuals-grid {
-                grid-template-columns: 1fr; /* En celular se pondrán una sobre otra para que quepan */
-            }
-            .visuals-title::before, .visuals-title::after {
-                width: 30px;
-            }
-        }
-    </style>
+    <meta name="description" content="Stats V2: seguimiento local de performers K-pop por categorías, semanas y evolución.">
+    <meta name="theme-color" content="#0B0B0F">
+    <title>Stats V2 · K-pop Performance Tracker</title>
+    <link rel="stylesheet" href="css/global.css?v=2.0.0">
+    <link rel="stylesheet" href="css/components.css?v=2.0.0">
+    <link rel="stylesheet" href="css/app.css?v=2.0.0">
+    <script src="js/constants.js?v=2.0.0" defer></script>
+    <script src="js/data.js?v=2.0.0" defer></script>
+    <script src="js/storage.js?v=2.0.0" defer></script>
+    <script src="js/image-storage.js?v=2.0.0" defer></script>
+    <script src="js/app.js?v=2.0.0" defer></script>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Saltar al contenido</a>
 
-    <!-- BANNER -->
-    <header class="banner">
-        <div class="banner-content">
-            <h1>✨ K-Pop Rankings ✨</h1>
-            <button class="btn-danger" onclick="resetAllData()">Borrar todo 🗑️</button>
-        </div>
-    </header>
+    <div class="site-shell">
+        <header class="topbar">
+            <a class="brand" href="#overview" aria-label="Stats V2, inicio">
+                <span class="brand-mark" aria-hidden="true">S</span>
+                <span class="brand-copy">
+                    <strong>STATS</strong>
+                    <small>Performance index</small>
+                </span>
+            </a>
 
-    <!-- CUERPO PRINCIPAL -->
-    <main class="container">
-        
-        <!-- Categorías Principales (Las 6 de arriba) -->
-        <div class="charts-grid" id="main-grid">
-            <!-- Se inyectan con JS -->
-        </div>
+            <nav class="primary-nav" aria-label="Navegación principal">
+                <a href="#overview" aria-current="page">Overview</a>
+                <span class="nav-future" aria-label="Participants, disponible en Fase 1">Participants</span>
+                <span class="nav-future" aria-label="Weekly, disponible en Fase 4">Weekly</span>
+                <span class="nav-future" aria-label="Rankings, disponible en Fase 3">Rankings</span>
+            </nav>
 
-        <!-- Sección Exclusiva para Visuales -->
-        <div class="visuals-section">
-            <div class="visuals-title">🌸 VISUALES 🌸</div>
-            <div class="visuals-grid" id="visuals-grid">
-                <!-- Se inyectan con JS -->
+            <div class="build-status" title="Fase actual del proyecto">
+                <span class="status-dot" aria-hidden="true"></span>
+                Foundation v2
             </div>
-        </div>
+        </header>
 
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="site-footer">
-        MAMA LATINO 2026 EDITION
-    </footer>
-
-    <script>
-        // Separamos las categorías para inyectarlas en diferentes lugares
-        const mainCategoriesMap = {
-            solistaM: "🎤 Solista Masculino",
-            solistaF: "✨ Solista Femenino",
-            bailarinM: "🕺 Bailarín Masculino",
-            bailarinaF: "💃 Bailarina Femenina",
-            raperoM: "🔥 Rapero Masculino",
-            raperaF: "👑 Rapera Femenina"
-        };
-
-        const visualCategoriesMap = {
-            visualM: "🌟 Visual Masculino",
-            visualF: "🌸 Visual Femenino"
-        };
-
-        const allCategoriesMap = { ...mainCategoriesMap, ...visualCategoriesMap };
-
-        const defaultData = {
-            solistaM: [], solistaF: [], bailarinM: [], 
-            bailarinaF: [], raperoM: [], raperaF: [],
-            visualM: [], visualF: []
-        };
-
-        let appData = JSON.parse(localStorage.getItem('rankingsApp_data'));
-
-        if (!appData) {
-            appData = JSON.parse(JSON.stringify(defaultData));
-        } else {
-            for (const key in defaultData) {
-                if (!appData[key]) {
-                    appData[key] = [];
-                }
-            }
-        }
-
-        function saveData() {
-            localStorage.setItem('rankingsApp_data', JSON.stringify(appData));
-        }
-
-        // Función auxiliar para construir el HTML de una tarjeta
-        function buildCardHtml(key, title) {
-            const categoryData = appData[key];
-            const maxPoints = Math.max(...categoryData.map(c => c.points), 100);
-            let competitorsHtml = '';
-            
-            if (categoryData.length === 0) {
-                competitorsHtml = `<div class="empty-state">Agrega a tu fav aquí 💖</div>`;
-            } else {
-                categoryData.forEach(comp => {
-                    const percentage = Math.min((comp.points / maxPoints) * 100, 100);
-                    competitorsHtml += `
-                        <div class="competitor">
-                            <div class="name" title="${comp.name}">${comp.name}</div>
-                            <div class="bar-container">
-                                <div class="bar" style="width: ${percentage}%">${comp.points}</div>
-                            </div>
-                            <div class="controls">
-                                <button onclick="changePoints('${key}', ${comp.id}, -1)">-</button>
-                                <button onclick="changePoints('${key}', ${comp.id}, 1)">+</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            return `
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h2>${title}</h2>
-                        <div class="chart-actions">
-                            <button onclick="sortCategory('${key}')">🏆 Ordenar</button>
-                            <button onclick="addCompetitor('${key}')">➕ Añadir</button>
-                        </div>
-                    </div>
-                    <div class="chart-content">
-                        ${competitorsHtml}
-                    </div>
+        <main id="main-content">
+            <section class="hero" id="overview" aria-labelledby="hero-title">
+                <div class="hero-copy">
+                    <p class="eyebrow">MAMA LATINO · 2026 SEASON</p>
+                    <h1 id="hero-title">Más que puntos.<br><span>Una temporada completa.</span></h1>
+                    <p class="hero-description">
+                        La nueva base de Stats está preparada para seguir participantes, categorías,
+                        fortalezas y evolución semanal sin duplicar datos.
+                    </p>
+                    <a class="text-link" href="#foundation">Explorar la fundación <span aria-hidden="true">→</span></a>
                 </div>
-            `;
-        }
 
-        function renderAll() {
-            // Renderizar Main Grid (Las primeras 6)
-            const mainGrid = document.getElementById('main-grid');
-            mainGrid.innerHTML = '';
-            for (const [key, title] of Object.entries(mainCategoriesMap)) {
-                mainGrid.innerHTML += buildCardHtml(key, title);
-            }
+                <aside class="leaders-card" aria-labelledby="leaders-title">
+                    <div class="card-heading">
+                        <div>
+                            <p class="micro-label">Season pulse</p>
+                            <h2 id="leaders-title">Current leaders</h2>
+                        </div>
+                        <span class="live-label">Formula pending</span>
+                    </div>
 
-            // Renderizar Visuals Grid (Las últimas 2)
-            const visualsGrid = document.getElementById('visuals-grid');
-            visualsGrid.innerHTML = '';
-            for (const [key, title] of Object.entries(visualCategoriesMap)) {
-                visualsGrid.innerHTML += buildCardHtml(key, title);
-            }
-        }
+                    <div class="leader-row">
+                        <span class="leader-index">M</span>
+                        <div>
+                            <small>Male leader</small>
+                            <strong>Por definir</strong>
+                        </div>
+                        <span class="leader-score">—</span>
+                    </div>
+                    <div class="leader-row">
+                        <span class="leader-index leader-index--female">F</span>
+                        <div>
+                            <small>Female leader</small>
+                            <strong>Por definir</strong>
+                        </div>
+                        <span class="leader-score">—</span>
+                    </div>
 
-        function changePoints(categoryKey, id, amount) {
-            const competitor = appData[categoryKey].find(c => c.id === id);
-            if (competitor) {
-                competitor.points += amount;
-                if (competitor.points < 0) competitor.points = 0;
-                saveData();
-                renderAll(); 
-            }
-        }
+                    <p class="card-note">La fórmula final no se calculará hasta que sea definida y aprobada.</p>
+                </aside>
+            </section>
 
-        function sortCategory(categoryKey) {
-            appData[categoryKey].sort((a, b) => b.points - a.points);
-            saveData();
-            renderAll();
-        }
+            <section class="season-overview" aria-labelledby="season-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Season overview</p>
+                        <h2 id="season-title">La estructura está lista</h2>
+                    </div>
+                    <p id="storage-status" class="storage-status" role="status">Comprobando almacenamiento…</p>
+                </div>
 
-        function addCompetitor(categoryKey) {
-            const title = allCategoriesMap[categoryKey];
-            const name = prompt(`🌟 Introduce el nombre para ${title}:`);
-            if (name && name.trim() !== '') {
-                const newId = Date.now(); 
-                appData[categoryKey].push({ id: newId, name: name.trim(), points: 0 });
-                saveData();
-                renderAll();
-            }
-        }
+                <div class="metric-grid">
+                    <article class="metric-card">
+                        <span class="metric-accent metric-accent--pink" aria-hidden="true"></span>
+                        <p>Participants</p>
+                        <strong id="participant-count">0</strong>
+                        <small>Entidades únicas</small>
+                    </article>
+                    <article class="metric-card">
+                        <span class="metric-accent metric-accent--cyan" aria-hidden="true"></span>
+                        <p>Active week</p>
+                        <strong id="active-week">—</strong>
+                        <small>Sin semana abierta</small>
+                    </article>
+                    <article class="metric-card">
+                        <span class="metric-accent metric-accent--purple" aria-hidden="true"></span>
+                        <p>Weekly votes</p>
+                        <strong id="vote-count">0</strong>
+                        <small>P1 + P2</small>
+                    </article>
+                    <article class="metric-card">
+                        <span class="metric-accent metric-accent--gold" aria-hidden="true"></span>
+                        <p>Tracked tags</p>
+                        <strong id="tag-count">0</strong>
+                        <small>Strengths · Needs Work</small>
+                    </article>
+                </div>
+            </section>
 
-        function resetAllData() {
-            if (confirm("¿Seguro que quieres borrar a todos los artistas? 🥺 Esta acción no se puede deshacer.")) {
-                appData = JSON.parse(JSON.stringify(defaultData));
-                saveData();
-                renderAll();
-            }
-        }
+            <section class="category-section" aria-labelledby="category-title">
+                <div class="section-heading section-heading--compact">
+                    <div>
+                        <p class="eyebrow">Performance lenses</p>
+                        <h2 id="category-title">Una persona, múltiples categorías</h2>
+                    </div>
+                    <p>El género será un filtro, nunca una categoría duplicada.</p>
+                </div>
 
-        renderAll();
-    </script>
+                <div class="category-strip" aria-label="Categorías disponibles">
+                    <span class="category-chip category-chip--vocal">Vocal</span>
+                    <span class="category-chip category-chip--rap">Rap</span>
+                    <span class="category-chip category-chip--dance">Dance</span>
+                    <span class="category-chip category-chip--stage">Stage</span>
+                    <span class="category-chip category-chip--visual">Visual</span>
+                    <span class="category-chip category-chip--all-rounder">All-rounder</span>
+                </div>
+            </section>
+
+            <section class="foundation-section" id="foundation" aria-labelledby="foundation-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Phase 0</p>
+                        <h2 id="foundation-title">Foundation first</h2>
+                    </div>
+                    <span class="phase-badge">Reset &amp; foundation</span>
+                </div>
+
+                <div class="foundation-grid">
+                    <article class="foundation-card">
+                        <span class="card-number">01</span>
+                        <h3>Local-first</h3>
+                        <p>Metadata en el navegador e imágenes preparadas para IndexedDB, sin backend ni login.</p>
+                    </article>
+                    <article class="foundation-card">
+                        <span class="card-number">02</span>
+                        <h3>Modelo limpio</h3>
+                        <p>Participantes únicos, grupos separados y relaciones listas para semanas, tags e historial.</p>
+                    </article>
+                    <article class="foundation-card">
+                        <span class="card-number">03</span>
+                        <h3>Datos seguros</h3>
+                        <p>Estado versionado, validación antes de guardar y eliminación limitada a la clave legacy.</p>
+                    </article>
+                </div>
+
+                <div class="empty-state">
+                    <div class="empty-symbol" aria-hidden="true">＋</div>
+                    <div>
+                        <p class="micro-label">Next unlocked phase</p>
+                        <h3>Participant manager</h3>
+                        <p>La creación y edición de participantes comenzará únicamente después de aprobar esta fundación.</p>
+                    </div>
+                    <span class="locked-label">Fase 1</span>
+                </div>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <p><strong>STATS V2</strong> · Personal K-pop performance tracker</p>
+            <p id="schema-version">Schema v2</p>
+        </footer>
+    </div>
 </body>
 </html>
