@@ -155,6 +155,41 @@ test("filters by search, group, gender, status and category", () => {
     );
 });
 
+test("filters participants by active tag relationships only", () => {
+    let state = stateWithGroup();
+    state = addParticipant(state, { id: "participant-a", name: "Ningning" }).state;
+    state = addParticipant(state, {
+        id: "participant-b",
+        name: "Mark",
+        groupId: null,
+        gender: "male",
+        categoryIds: ["rap"]
+    }).state;
+    state.tags.push(data.createTag({
+        id: "tag-stage-presence",
+        name: "Stage Presence",
+        categoryId: "stage",
+        type: "strength",
+        predefined: true
+    }, timestamp));
+    state.participantTagAssignments.push(data.createTagAssignment({
+        id: "assignment-active",
+        participantId: "participant-a",
+        tagId: "tag-stage-presence"
+    }, timestamp));
+    state.participantTagAssignments.push(data.createTagAssignment({
+        id: "assignment-removed",
+        participantId: "participant-b",
+        tagId: "tag-stage-presence",
+        removedAt: "2026-09-01T00:00:00.000Z"
+    }, timestamp));
+
+    assert.deepEqual(
+        participants.filterParticipants(state, { tagId: "tag-stage-presence" }).map((item) => item.name),
+        ["Ningning"]
+    );
+});
+
 test("persists and reloads participant state through the central storage helper", () => {
     const memory = new MemoryStorage();
     const state = addParticipant(stateWithGroup()).state;
