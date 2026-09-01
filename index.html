@@ -6,21 +6,24 @@
     <meta name="description" content="Stats V2: administra participantes y registra votaciones semanales P1/P2 con datos locales.">
     <meta name="theme-color" content="#0B0B0F">
     <title>Participants · Stats V2</title>
-    <link rel="stylesheet" href="css/global.css?v=2.4.1">
-    <link rel="stylesheet" href="css/components.css?v=2.4.1">
-    <link rel="stylesheet" href="css/app.css?v=2.4.1">
-    <link rel="stylesheet" href="css/weekly.css?v=2.4.1">
-    <script src="js/constants.js?v=2.4.1" defer></script>
-    <script src="js/data.js?v=2.4.1" defer></script>
-    <script src="js/storage.js?v=2.4.1" defer></script>
-    <script src="js/weekly-migration.js?v=2.4.1" defer></script>
-    <script src="js/weekly.js?v=2.4.1" defer></script>
-    <script src="js/participants.js?v=2.4.1" defer></script>
-    <script src="js/tags.js?v=2.4.1" defer></script>
-    <script src="js/rankings.js?v=2.4.1" defer></script>
-    <script src="js/image-storage.js?v=2.4.1" defer></script>
-    <script src="js/weekly-view.js?v=2.4.1" defer></script>
-    <script src="js/app.js?v=2.4.1" defer></script>
+    <link rel="stylesheet" href="css/global.css?v=2.5.0">
+    <link rel="stylesheet" href="css/components.css?v=2.5.0">
+    <link rel="stylesheet" href="css/app.css?v=2.5.0">
+    <link rel="stylesheet" href="css/weekly.css?v=2.5.0">
+    <link rel="stylesheet" href="css/spotlight.css?v=2.5.0">
+    <script src="js/constants.js?v=2.5.0" defer></script>
+    <script src="js/data.js?v=2.5.0" defer></script>
+    <script src="js/storage.js?v=2.5.0" defer></script>
+    <script src="js/weekly-migration.js?v=2.5.0" defer></script>
+    <script src="js/weekly.js?v=2.5.0" defer></script>
+    <script src="js/spotlight.js?v=2.5.0" defer></script>
+    <script src="js/participants.js?v=2.5.0" defer></script>
+    <script src="js/tags.js?v=2.5.0" defer></script>
+    <script src="js/rankings.js?v=2.5.0" defer></script>
+    <script src="js/image-storage.js?v=2.5.0" defer></script>
+    <script src="js/weekly-view.js?v=2.5.0" defer></script>
+    <script src="js/spotlight-view.js?v=2.5.0" defer></script>
+    <script src="js/app.js?v=2.5.0" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -38,12 +41,13 @@
             <nav class="primary-nav" aria-label="Navegación principal">
                 <a id="nav-participants" href="#participants" aria-current="page">Participants</a>
                 <a id="nav-weekly" href="#weekly">Weekly</a>
+                <a id="nav-spotlight" href="#spotlight">Spotlight</a>
                 <a id="nav-rankings" href="#rankings">Rankings</a>
             </nav>
 
             <div class="build-status" title="Fase actual del proyecto">
                 <span class="status-dot" aria-hidden="true"></span>
-                Phase 4.1
+                Phase 5
             </div>
         </header>
 
@@ -251,6 +255,89 @@
                         <h2>No participants match these filters</h2>
                         <p>Try another search or reset the weekly filters.</p>
                     </div>
+                </div>
+            </section>
+
+            <section class="spotlight-view" id="spotlight" aria-labelledby="spotlight-title" hidden>
+                <header class="spotlight-header">
+                    <div>
+                        <p class="eyebrow">Weekly results · Derived, never stored</p>
+                        <div class="spotlight-title-row">
+                            <h1 id="spotlight-title">Weekly Spotlight</h1>
+                            <span class="spotlight-mode spotlight-mode--empty" id="spotlight-mode">No week</span>
+                        </div>
+                        <p class="manager-intro" id="spotlight-intro">Cada disciplina tiene resultados Female y Male independientes.</p>
+                    </div>
+                    <label class="select-control spotlight-week-control" for="spotlight-week-select">
+                        <span>Week</span>
+                        <select id="spotlight-week-select"><option value="">No weeks yet</option></select>
+                    </label>
+                </header>
+
+                <div class="spotlight-empty" id="spotlight-empty" role="status">
+                    <span aria-hidden="true">◇</span>
+                    <h2>No weekly results yet</h2>
+                    <p>Open a week in Weekly Voting and record evaluations to build a live ranking.</p>
+                </div>
+
+                <div id="spotlight-workspace" hidden>
+                    <section class="spotlight-selector" aria-label="Weekly Spotlight filters">
+                        <div class="spotlight-category-tabs" id="spotlight-category-tabs" role="tablist" aria-label="Result category"></div>
+                        <div class="spotlight-gender-switch" id="spotlight-gender-switch" role="group" aria-label="Result gender">
+                            <button type="button" data-spotlight-gender="female" aria-pressed="true">Female</button>
+                            <button type="button" data-spotlight-gender="male" aria-pressed="false">Male</button>
+                        </div>
+                    </section>
+
+                    <section class="spotlight-hero" aria-labelledby="spotlight-result-title">
+                        <div>
+                            <p class="micro-label" id="spotlight-result-kicker">Live ranking</p>
+                            <h2 id="spotlight-result-title">Female Vocal</h2>
+                            <p id="spotlight-week-range"></p>
+                        </div>
+                        <div class="spotlight-praised" id="spotlight-praised" hidden>
+                            <span>Most Praised Skill</span>
+                            <strong id="spotlight-praised-name"></strong>
+                            <small id="spotlight-praised-count"></small>
+                        </div>
+                    </section>
+
+                    <section class="spotlight-top-section" aria-labelledby="spotlight-top-title">
+                        <div class="section-heading section-heading--compact">
+                            <div>
+                                <p class="micro-label">Podium</p>
+                                <h2 id="spotlight-top-title">Top 3</h2>
+                            </div>
+                            <p id="spotlight-winner-copy">Provisional weekly leaders</p>
+                        </div>
+                        <div class="spotlight-podium" id="spotlight-podium" aria-live="polite"></div>
+                    </section>
+
+                    <section class="spotlight-ranking-section" aria-labelledby="spotlight-ranking-title">
+                        <div class="section-heading section-heading--compact">
+                            <div>
+                                <p class="micro-label">All evaluated</p>
+                                <h2 id="spotlight-ranking-title">Full Weekly Ranking</h2>
+                            </div>
+                            <p id="spotlight-ranking-summary">0 evaluated</p>
+                        </div>
+                        <div class="spotlight-ranking-list" id="spotlight-ranking-list"></div>
+                        <div class="spotlight-result-empty" id="spotlight-result-empty" role="status" hidden>
+                            <h3>No evaluated performers</h3>
+                            <p>Normal ratings appear here with 0 points. Not evaluated means no vote exists.</p>
+                        </div>
+                    </section>
+
+                    <section class="spotlight-recap" aria-labelledby="spotlight-recap-title">
+                        <div class="section-heading section-heading--compact">
+                            <div>
+                                <p class="micro-label">All categories</p>
+                                <h2 id="spotlight-recap-title">Weekly Recap</h2>
+                            </div>
+                            <p id="spotlight-recap-copy">Live overview</p>
+                        </div>
+                        <div class="spotlight-recap-grid" id="spotlight-recap-grid"></div>
+                    </section>
                 </div>
             </section>
 

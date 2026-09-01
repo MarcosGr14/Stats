@@ -11,6 +11,8 @@
     const weeklyService = namespace && namespace.weekly;
     const weeklyMigration = namespace && namespace.weeklyMigration;
     const weeklyViewService = namespace && namespace.weeklyView;
+    const spotlightService = namespace && namespace.spotlight;
+    const spotlightViewService = namespace && namespace.spotlightView;
     const imageStorage = namespace && namespace.imageStorage;
 
     let state = null;
@@ -28,6 +30,7 @@
     let activeView = "participants";
     let rankingCategory = "vocal";
     let weeklyController = null;
+    let spotlightController = null;
     let elements = {};
 
     function byId(id) {
@@ -448,24 +451,29 @@
 
     function activeViewFromLocation() {
         if (root.location.hash === "#weekly") return "weekly";
+        if (root.location.hash === "#spotlight") return "spotlight";
         if (root.location.hash === "#rankings") return "rankings";
         return "participants";
     }
 
     function activateView(view, shouldRender = true) {
-        activeView = ["participants", "weekly", "rankings"].includes(view) ? view : "participants";
+        activeView = ["participants", "weekly", "spotlight", "rankings"].includes(view) ? view : "participants";
         elements.participantManager.hidden = activeView !== "participants";
         elements.weeklyView.hidden = activeView !== "weekly";
+        elements.spotlightView.hidden = activeView !== "spotlight";
         elements.rankingsView.hidden = activeView !== "rankings";
-        [elements.navParticipants, elements.navWeekly, elements.navRankings].forEach((link) => link.removeAttribute("aria-current"));
+        [elements.navParticipants, elements.navWeekly, elements.navSpotlight, elements.navRankings]
+            .forEach((link) => link.removeAttribute("aria-current"));
         if (activeView === "participants") elements.navParticipants.setAttribute("aria-current", "page");
         if (activeView === "weekly") elements.navWeekly.setAttribute("aria-current", "page");
+        if (activeView === "spotlight") elements.navSpotlight.setAttribute("aria-current", "page");
         if (activeView === "rankings") elements.navRankings.setAttribute("aria-current", "page");
-        const titles = { participants: "Participants", weekly: "Weekly Voting", rankings: "Rankings" };
+        const titles = { participants: "Participants", weekly: "Weekly Voting", spotlight: "Weekly Spotlight", rankings: "Rankings" };
         document.title = `${titles[activeView]} · Stats V2`;
         if (shouldRender) {
             if (activeView === "rankings") renderRankings();
             else if (activeView === "weekly") weeklyController?.activate();
+            else if (activeView === "spotlight") spotlightController?.activate();
             else renderParticipants();
         }
     }
@@ -1184,9 +1192,11 @@
         elements = {
             participantManager: byId("participants"),
             weeklyView: byId("weekly"),
+            spotlightView: byId("spotlight"),
             rankingsView: byId("rankings"),
             navParticipants: byId("nav-participants"),
             navWeekly: byId("nav-weekly"),
+            navSpotlight: byId("nav-spotlight"),
             navRankings: byId("nav-rankings"),
             participantCount: byId("participant-count"),
             storageStatus: byId("storage-status"),
@@ -1291,6 +1301,10 @@
         elements.navWeekly.addEventListener("click", (event) => {
             event.preventDefault();
             navigateToView("weekly");
+        });
+        elements.navSpotlight.addEventListener("click", (event) => {
+            event.preventDefault();
+            navigateToView("spotlight");
         });
         elements.navRankings.addEventListener("click", (event) => {
             event.preventDefault();
@@ -1417,8 +1431,9 @@
 
     function initialize() {
         if (!constants || !data || !storage || !participantService || !tagService || !rankingsService
-            || !weeklyService || !weeklyMigration || !weeklyViewService || !imageStorage) {
-            throw new Error("Stats V2 participant, tag, weekly and ranking modules did not load correctly.");
+            || !weeklyService || !weeklyMigration || !weeklyViewService || !spotlightService
+            || !spotlightViewService || !imageStorage) {
+            throw new Error("Stats V2 participant, tag, weekly, Spotlight and ranking modules did not load correctly.");
         }
 
         cacheElements();
@@ -1464,6 +1479,10 @@
             commitState,
             canWrite: () => writable,
             notify: showToast
+        });
+        spotlightController = spotlightViewService.createController({
+            getState: () => state,
+            viewParticipant: viewParticipantFromRankings
         });
         activeView = activeViewFromLocation();
         showStorageStatus(result);

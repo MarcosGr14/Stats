@@ -4,7 +4,7 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.4.1-category-voting",
+        APP_VERSION: "2.5.0-weekly-spotlight",
         SCHEMA_VERSION: 2,
         MAX_NAME_LENGTH: 80,
         MAX_TAG_NAME_LENGTH: 60,
