@@ -4,14 +4,18 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.3.0-rankings",
+        APP_VERSION: "2.4.0-weekly-voting",
         SCHEMA_VERSION: 2,
         MAX_NAME_LENGTH: 80,
         MAX_TAG_NAME_LENGTH: 60,
+        MAX_WEEKLY_REASON_TAGS: 3,
+        MAX_WEEKLY_NOTE_LENGTH: 500,
+        MAX_WEEKLY_STANDOUTS: 5,
         MAX_IMAGE_BYTES: 5 * 1024 * 1024,
         IMAGE_MIME_TYPES: Object.freeze(["image/jpeg", "image/png", "image/webp"]),
         STORAGE_KEY: "stats:v2:state",
         TAG_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-tags-backup",
+        WEEKLY_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-weekly-voting-backup",
         LEGACY_STORAGE_KEY: "rankingsApp_data",
         IMAGE_DB_NAME: "stats-v2",
         IMAGE_DB_VERSION: 1,
@@ -38,6 +42,8 @@
             weakness: "Needs Work",
             neutral: "Special"
         }),
+        WEEK_STATUSES: Object.freeze(["OPEN", "CLOSED"]),
+        VOTER_IDS: Object.freeze(["p1", "p2"]),
         RATING_OPTIONS: Object.freeze([
             Object.freeze({ id: "standout", score: 3, label: "Standout" }),
             Object.freeze({ id: "impressed", score: 2, label: "Impressed" }),

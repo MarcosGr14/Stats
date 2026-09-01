@@ -11,6 +11,10 @@
     const categoryIds = new Set(constants.CATEGORIES.map((category) => category.id));
     const tagCategoryIds = new Set(constants.TAG_CATEGORIES.map((category) => category.id));
     const ratingIds = new Set(constants.RATING_OPTIONS.map((rating) => rating.id));
+    const weekStatuses = new Set(constants.WEEK_STATUSES);
+    const ISO_WEEK_ID_PATTERN = /^\d{4}-W(?:0[1-9]|[1-4]\d|5[0-3])$/;
+    const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+    const DAY_MS = 24 * 60 * 60 * 1000;
     const collectionNames = Object.freeze([
         "participants",
         "groups",
@@ -56,12 +60,35 @@
         return [...new Set(values)];
     }
 
+    function isoWeekIdFromMonday(date) {
+        const thursday = new Date(date.getTime() + 3 * DAY_MS);
+        const isoYear = thursday.getUTCFullYear();
+        const januaryFourth = new Date(Date.UTC(isoYear, 0, 4));
+        const januaryFourthWeekday = (januaryFourth.getUTCDay() + 6) % 7;
+        const firstMonday = new Date(januaryFourth.getTime() - januaryFourthWeekday * DAY_MS);
+        const weekNumber = Math.floor((date.getTime() - firstMonday.getTime()) / (7 * DAY_MS)) + 1;
+        return `${isoYear}-W${String(weekNumber).padStart(2, "0")}`;
+    }
+
+    function isValidIsoWeekRange(week) {
+        if (!DATE_KEY_PATTERN.test(week.startDate) || !DATE_KEY_PATTERN.test(week.endDate)) return false;
+        const start = new Date(`${week.startDate}T00:00:00.000Z`);
+        const end = new Date(`${week.endDate}T00:00:00.000Z`);
+        return !Number.isNaN(start.getTime())
+            && !Number.isNaN(end.getTime())
+            && start.getUTCDay() === 1
+            && end.getUTCDay() === 0
+            && end.getTime() - start.getTime() === 6 * DAY_MS
+            && isoWeekIdFromMonday(start) === week.id;
+    }
+
     function createEmptyState(timestamp = nowIso()) {
         return {
             schemaVersion: constants.SCHEMA_VERSION,
             meta: {
                 createdAt: timestamp,
-                updatedAt: timestamp
+                updatedAt: timestamp,
+                weeklyVotingVersion: 1
             },
             participants: [],
             groups: [],
@@ -138,15 +165,25 @@
     }
 
     function createWeek(input, timestamp = nowIso()) {
-        return {
-            id: input.id || createId("week"),
+        const id = requireText(input.id, "id");
+        if (!ISO_WEEK_ID_PATTERN.test(id)) {
+            throw new TypeError("id must be an ISO week id such as 2026-W36.");
+        }
+        const week = {
+            id,
             label: requireText(input.label, "label"),
             startDate: requireText(input.startDate, "startDate"),
             endDate: requireText(input.endDate, "endDate"),
-            closed: Boolean(input.closed),
+            status: requireChoice(input.status || "OPEN", constants.WEEK_STATUSES, "status"),
+            openedAt: input.openedAt || timestamp,
+            closedAt: input.closedAt || null,
             createdAt: input.createdAt || timestamp,
             updatedAt: timestamp
         };
+        if (!isValidIsoWeekRange(week)) {
+            throw new TypeError("startDate and endDate must match the ISO Monday-Sunday week id.");
+        }
+        return week;
     }
 
     function createWeeklyVote(input, timestamp = nowIso()) {
@@ -157,7 +194,7 @@
             participantId: requireText(input.participantId, "participantId"),
             userId: requireText(input.userId, "userId"),
             rating,
-            selectedTagIds: uniqueStrings(input.selectedTagIds || [], "selectedTagIds"),
+            reasonTagIds: uniqueStrings(input.reasonTagIds || input.selectedTagIds || [], "reasonTagIds"),
             note: typeof input.note === "string" ? input.note.trim() : "",
             createdAt: input.createdAt || timestamp,
             updatedAt: timestamp
@@ -210,7 +247,10 @@
         }
         if (!isRecord(state.meta) || typeof state.meta.createdAt !== "string" || typeof state.meta.updatedAt !== "string") {
             errors.push("meta requires createdAt and updatedAt timestamps.");
+        } else if (state.meta.weeklyVotingVersion !== undefined && state.meta.weeklyVotingVersion !== 1) {
+            errors.push("meta.weeklyVotingVersion must be 1 when present.");
         }
+        const weeklyVotingVersion = isRecord(state.meta) ? state.meta.weeklyVotingVersion : undefined;
 
         collectionNames.forEach((collection) => {
             if (!Array.isArray(state[collection])) {
@@ -229,6 +269,13 @@
                     errors.push(`settings.voters[${index}] requires a name.`);
                 }
             });
+            if (weeklyVotingVersion === 1) {
+                const voterIds = state.settings.voters.map((voter) => voter && voter.id).sort();
+                if (voterIds.length !== constants.VOTER_IDS.length
+                    || voterIds.some((id, index) => id !== [...constants.VOTER_IDS].sort()[index])) {
+                    errors.push("settings.voters must contain exactly p1 and p2.");
+                }
+            }
             if (state.settings.activeWeekId !== null && typeof state.settings.activeWeekId !== "string") {
                 errors.push("settings.activeWeekId must be null or a string.");
             }
@@ -303,6 +350,7 @@
         }
 
         if (Array.isArray(state.weeks)) {
+            let openWeekCount = 0;
             state.weeks.forEach((week, index) => {
                 if (!isRecord(week)) return;
                 const path = `weeks[${index}]`;
@@ -310,11 +358,33 @@
                 requireEntityText(week, "startDate", path, errors);
                 requireEntityText(week, "endDate", path, errors);
                 validateTimestamps(week, path, errors);
-                if (typeof week.closed !== "boolean") errors.push(`${path}.closed must be boolean.`);
+                if (weeklyVotingVersion === 1) {
+                    if (!ISO_WEEK_ID_PATTERN.test(week.id)) errors.push(`${path}.id must be an ISO week id.`);
+                    if (!isValidIsoWeekRange(week)) {
+                        errors.push(`${path} must match its ISO Monday-Sunday date range.`);
+                    }
+                    if (!weekStatuses.has(week.status)) errors.push(`${path}.status must be OPEN or CLOSED.`);
+                    requireEntityText(week, "openedAt", path, errors);
+                    requireNullableText(week, "closedAt", path, errors);
+                    if (week.status === "OPEN") {
+                        openWeekCount += 1;
+                        if (week.closedAt !== null) errors.push(`${path}.closedAt must be null while OPEN.`);
+                    }
+                    if (week.status === "CLOSED" && week.closedAt === null) {
+                        errors.push(`${path}.closedAt is required while CLOSED.`);
+                    }
+                } else if (typeof week.closed !== "boolean") {
+                    errors.push(`${path}.closed must be boolean.`);
+                }
             });
+            if (weeklyVotingVersion === 1 && openWeekCount > 1) {
+                errors.push("Only one week may be OPEN.");
+            }
         }
 
         if (Array.isArray(state.weeklyVotes)) {
+            const voteRelationships = new Set();
+            const standoutCounts = new Map();
             state.weeklyVotes.forEach((vote, index) => {
                 if (!isRecord(vote)) return;
                 const path = `weeklyVotes[${index}]`;
@@ -323,12 +393,33 @@
                 requireEntityText(vote, "userId", path, errors);
                 validateTimestamps(vote, path, errors);
                 if (!ratingIds.has(vote.rating)) errors.push(`${path} has an unsupported rating.`);
-                if (!Array.isArray(vote.selectedTagIds)
-                    || vote.selectedTagIds.some((id) => typeof id !== "string")
-                    || new Set(vote.selectedTagIds).size !== vote.selectedTagIds.length) {
-                    errors.push(`${path} has invalid selectedTagIds.`);
+                const reasonTagIds = weeklyVotingVersion === 1 ? vote.reasonTagIds : vote.selectedTagIds;
+                const reasonField = weeklyVotingVersion === 1 ? "reasonTagIds" : "selectedTagIds";
+                if (!Array.isArray(reasonTagIds)
+                    || reasonTagIds.some((id) => typeof id !== "string")
+                    || new Set(reasonTagIds).size !== reasonTagIds.length) {
+                    errors.push(`${path} has invalid ${reasonField}.`);
+                } else if (weeklyVotingVersion === 1 && reasonTagIds.length > constants.MAX_WEEKLY_REASON_TAGS) {
+                    errors.push(`${path}.reasonTagIds exceeds the allowed limit.`);
                 }
                 if (typeof vote.note !== "string") errors.push(`${path}.note must be a string.`);
+                if (weeklyVotingVersion === 1 && typeof vote.note === "string"
+                    && vote.note.length > constants.MAX_WEEKLY_NOTE_LENGTH) {
+                    errors.push(`${path}.note exceeds the allowed length.`);
+                }
+                const relationshipKey = `${vote.weekId}\u0000${vote.participantId}\u0000${vote.userId}`;
+                if (voteRelationships.has(relationshipKey)) {
+                    errors.push(`${path} duplicates a week/participant/user vote.`);
+                }
+                voteRelationships.add(relationshipKey);
+                if (vote.rating === "standout") {
+                    const standoutKey = `${vote.weekId}\u0000${vote.userId}`;
+                    const count = (standoutCounts.get(standoutKey) || 0) + 1;
+                    standoutCounts.set(standoutKey, count);
+                    if (count > constants.MAX_WEEKLY_STANDOUTS) {
+                        errors.push(`${path} exceeds the five-Standout limit for its user and week.`);
+                    }
+                }
             });
         }
 
@@ -362,14 +453,26 @@
                     errors.push(`weeklyVotes[${index}].participantId references a missing participant.`);
                 }
                 if (!voterIds.has(vote.userId)) errors.push(`weeklyVotes[${index}].userId references a missing voter.`);
-                if (Array.isArray(vote.selectedTagIds)) {
-                    vote.selectedTagIds.forEach((tagId) => {
+                const reasonTagIds = weeklyVotingVersion === 1 ? vote.reasonTagIds : vote.selectedTagIds;
+                if (Array.isArray(reasonTagIds)) {
+                    reasonTagIds.forEach((tagId) => {
                         if (!tagIds.has(tagId)) errors.push(`weeklyVotes[${index}] references a missing tag.`);
                     });
                 }
             });
             if (state.settings.activeWeekId !== null && !weekIds.has(state.settings.activeWeekId)) {
                 errors.push("settings.activeWeekId references a missing week.");
+            } else if (weeklyVotingVersion === 1 && state.settings.activeWeekId !== null) {
+                const activeWeek = state.weeks.find((week) => week.id === state.settings.activeWeekId);
+                if (!activeWeek || activeWeek.status !== "OPEN") {
+                    errors.push("settings.activeWeekId must reference the OPEN week.");
+                }
+            }
+            if (weeklyVotingVersion === 1) {
+                const openWeek = state.weeks.find((week) => week && week.status === "OPEN");
+                if (openWeek && state.settings.activeWeekId !== openWeek.id) {
+                    errors.push("settings.activeWeekId must identify the only OPEN week.");
+                }
             }
         }
 

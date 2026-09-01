@@ -57,12 +57,19 @@
         return candidate;
     }
 
-    function saveWithBackup(state, storage = defaultStorage(), timestamp = new Date().toISOString()) {
+    function saveWithNamedBackup(state, backupKey, storage = defaultStorage(), timestamp = new Date().toISOString()) {
+        if (typeof backupKey !== "string" || backupKey.trim() === "") {
+            throw new TypeError("backupKey must be a non-empty string.");
+        }
         const rawCurrentState = storage.getItem(constants.STORAGE_KEY);
-        if (rawCurrentState !== null && storage.getItem(constants.TAG_MIGRATION_BACKUP_KEY) === null) {
-            storage.setItem(constants.TAG_MIGRATION_BACKUP_KEY, rawCurrentState);
+        if (rawCurrentState !== null && storage.getItem(backupKey) === null) {
+            storage.setItem(backupKey, rawCurrentState);
         }
         return save(state, storage, timestamp);
+    }
+
+    function saveWithBackup(state, storage = defaultStorage(), timestamp = new Date().toISOString()) {
+        return saveWithNamedBackup(state, constants.TAG_MIGRATION_BACKUP_KEY, storage, timestamp);
     }
 
     function initialize(storage = defaultStorage(), timestamp = new Date().toISOString()) {
@@ -98,6 +105,13 @@
         }
     }
 
-    namespace.storage = Object.freeze({ initialize, load, save, saveWithBackup, parseStoredState });
+    namespace.storage = Object.freeze({
+        initialize,
+        load,
+        save,
+        saveWithBackup,
+        saveWithNamedBackup,
+        parseStoredState
+    });
     root.StatsV2 = namespace;
 })(globalThis);
