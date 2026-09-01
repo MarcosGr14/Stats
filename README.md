@@ -4,7 +4,7 @@ Aplicación local-first para organizar y, en fases posteriores, evaluar performe
 
 ## Estado actual
 
-Está implementada **Fase 5 - Weekly Spotlight + Full Weekly Rankings** sobre Participant Manager, Tag System y Category-specific Voting:
+Está implementada **Fase 6 - Profiles & History** sobre Participant Manager, Tag System, Category-specific Voting y Weekly Spotlight:
 
 - alta y edición de participantes;
 - grupos reutilizables, con creación rápida desde el formulario;
@@ -34,11 +34,17 @@ Está implementada **Fase 5 - Weekly Spotlight + Full Weekly Rankings** sobre Pa
 - Top 3 real, ganadores simples o conjuntos y ranking completo de competición `1, 1, 3`;
 - estados `LIVE PREVIEW` para semanas abiertas y `OFFICIAL RESULTS` para semanas cerradas;
 - recap de seis categorías y ambos géneros, badges editoriales y motivos semanales destacados;
+- perfiles completos derivados desde la identidad y el historial existentes, sin crear una entidad `profile`;
+- resumen por participante con semanas evaluadas únicas, victorias, Top 3, mejores semanas y motivo más citado;
+- récords y tendencias independientes por categoría, incluyendo huecos explícitos para `Not evaluated`;
+- historial semanal filtrable y ordenable con posición, puntos, votantes, Standouts, badges y motivos;
+- navegación al perfil desde Manager, Rankings, Weekly, Spotlight y Recap, con estado por URL;
+- participantes archivados con perfil, foto e historial íntegros y en modo de solo lectura histórica;
 - archivado y restauración;
 - borrado permanente solo cuando no existe historial relacionado;
 - UI responsive y accesible con formularios y diálogos navegables por teclado.
 
-No se han implementado Overall Score, standings de temporada, perfiles completos, analytics ni fórmulas anuales. Esas funciones pertenecen a Fase 6 o fases posteriores.
+No se han implementado Overall Score, standings de temporada, líderes globales, Grand Winners, analytics globales ni fórmulas anuales. Esas funciones pertenecen a Fase 7 o fases posteriores.
 
 ## Ejecución
 
@@ -58,7 +64,8 @@ Stats/
 │   ├── components.css
 │   ├── app.css
 │   ├── weekly.css
-│   └── spotlight.css
+│   ├── spotlight.css
+│   └── profile.css
 ├── js/
 │   ├── constants.js
 │   ├── data.js
@@ -68,6 +75,8 @@ Stats/
 │   ├── weekly-view.js
 │   ├── spotlight.js
 │   ├── spotlight-view.js
+│   ├── profile-history.js
+│   ├── profile-view.js
 │   ├── participants.js
 │   ├── tags.js
 │   ├── rankings.js
@@ -86,6 +95,8 @@ Stats/
 │   ├── weekly-ui-contract.test.cjs
 │   ├── spotlight.test.cjs
 │   ├── spotlight-ui-contract.test.cjs
+│   ├── profile-history.test.cjs
+│   ├── profile-ui-contract.test.cjs
 │   └── image-storage.test.cjs
 └── README.md
 ```
@@ -179,6 +190,16 @@ El resultado incluye Top 3, ranking completo, todos los ganadores de la posició
 
 Todo es de solo lectura. No existen colecciones `weeklyRankings` o `weeklyWinners`, ni campos persistidos de posición o ganador. `deriveParticipantHistory()` prepara consultas futuras de victorias, Top 3, posiciones y mejor semana a partir del historial existente, pero no implementa standings de temporada.
 
+## Profiles & History
+
+`profile-history.js` deriva el dossier completo de un participante desde `participants`, `groups`, asignaciones activas de tags, `weeks` y `weeklyVotes`. No persiste una colección de perfiles, estadísticas, tendencias ni historial. Para cada semana y categoría reutiliza el mismo ranking de competición de Weekly Spotlight, con el mismo orden por puntos, votantes y Standouts y los mismos empates reales.
+
+El resumen general cuenta semanas evaluadas únicas, aunque una persona tenga votos en varias categorías durante la misma semana. Las victorias conjuntas cuentan como una victoria completa y las apariciones Top 3 conservan la posición de competición. Los récords permanecen separados por categoría: victorias, Top 3, mejor puntuación, mejores semanas empatadas por las tres métricas, semanas evaluadas y motivo más citado. No existe un score combinado ni una “Best Category”.
+
+El historial distingue `Normal` de `Not evaluated`: un voto Normal aparece con 0 puntos; la ausencia de voto queda fuera del historial y como hueco accesible en la tendencia. Los tags permanentes provienen únicamente de `participantTagAssignments`; los motivos semanales se leen de `weeklyVote.reasonTagIds` y nunca modifican el perfil. Los participantes archivados conservan identidad, imagen, tags e historial, pero siguen excluidos de votos nuevos.
+
+`profile-view.js` presenta Summary, Profile Tags, Category Records, Performance Trend, Weekly Praise, Wins y Weekly History. El historial se filtra por categoría y se ordena de más reciente a más antiguo o al revés. Manager, Rankings, Weekly, Spotlight y Recap enlazan al mismo perfil mediante `participant` en el hash; Back restaura la vista interna cuando existe y vuelve a Participants al entrar por URL directa. Edit Participant y Manage Tags reutilizan los diálogos existentes.
+
 ## Persistencia
 
 | Uso | Nombre exacto |
@@ -199,6 +220,8 @@ La migración Fase 4 -> Fase 4.1 conserva el JSON exacto previo en `stats:v2:sta
 Abrir, filtrar u ordenar Rankings es una operación de solo lectura: no llama al helper de guardado, no modifica participantes y no toca IndexedDB.
 
 Abrir o navegar Weekly Spotlight tampoco guarda estado. Fase 5 no requiere migración, backup adicional ni cambios de esquema porque consume exclusivamente `weeks`, `weeklyVotes`, participantes, grupos, tags e IDs ya existentes.
+
+Abrir, filtrar u ordenar un perfil también es de solo lectura. Fase 6 no requiere migración, backup adicional ni cambios de esquema: la identidad, la foto y todo el historial se consultan desde las colecciones e IDs existentes. IndexedDB solo se lee para mostrar la imagen y nunca se usa para pruebas con datos reales.
 
 ## Archivado y borrado
 
@@ -223,9 +246,11 @@ Requiere Node.js 20 o superior y no instala paquetes:
 node --test tests/*.test.cjs
 ```
 
-Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, ambas migraciones y backups exactos, semanas ISO, cierre/reapertura, unicidad categorizada, conversión legacy, P1/P2, límite global de Standouts, reason tags, notas, métricas por categoría, desempates, UI contractual, Rankings Unranked, Weekly Spotlight y errores de imágenes.
+Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, ambas migraciones y backups exactos, semanas ISO, cierre/reapertura, unicidad categorizada, conversión legacy, P1/P2, límite global de Standouts, reason tags, notas, métricas por categoría, desempates, UI contractual, Rankings Unranked, Weekly Spotlight, perfiles, historial categorizado, tendencias con huecos y errores de imágenes.
 
 También se realizó un smoke test en un origen local aislado con roster ficticio: Female Vocal A=6, B=5, C=4, D=0 y E sin voto. El Top 3 mostró A/B/C, el ranking completo incluyó D y excluyó E. El cierre cambió Spotlight a OFFICIAL; la reapertura volvió a LIVE y una edición de C a 5 produjo `1, 2, 2, 4`. También se comprobaron Male, otra categoría, recap, motivos, badges y acceso al participante. El layout fue revisado en 320, 375, 768 y 1440 px sin overflow horizontal ni errores de consola.
+
+Para Fase 6 se ejecutó además un smoke aislado con un participante archivado y cinco resultados en Vocal/Stage. Se verificaron tres semanas únicas, tres victorias, cinco Top 3, mejores semanas empatadas, motivos y tags independientes, el hueco `Not evaluated`, orden histórico, navegación/Back, URL directa y los diálogos existentes. El perfil se revisó en 320, 375, 768 y 1440 px sin overflow horizontal ni errores de consola.
 
 ## Riesgos y decisiones pendientes
 
@@ -234,10 +259,11 @@ También se realizó un smoke test en un origen local aislado con roster fictici
 - El crecimiento de votos y notas está sujeto a la cuota de `localStorage`; las fotos continúan separadas en IndexedDB.
 - La reapertura es una acción administrativa local sin autenticación; queda auditada con contador y último timestamp, no con identidad ni motivo.
 - El directorio histórico `Rankings` permanece deliberadamente `Unranked`; Fase 5 clasifica semanas concretas y no define todavía una política acumulada de temporada.
+- Los perfiles derivan nuevamente el ranking de cada semana/categoría consultada; con historiales muy grandes puede convenir una caché derivada e invalidable, nunca una duplicación autoritativa.
 - La limpieza de blobs huérfanos se hace de forma oportunista; una herramienta integral de mantenimiento/backup pertenece a la Fase 9.
 - Navegadores sin IndexedDB mantienen el participant manager, pero usan el fallback visual y no pueden guardar fotos.
 - La fórmula de `overallScore`, Male Performer of the Year y Female Performer of the Year requiere aprobación explícita antes de implementarse.
 
 ## Límite de fase
 
-La Fase 5 termina en Weekly Spotlight, ganadores semanales por categoría/género, Top 3, ranking completo, recap, badges y motivos derivados. No se implementan Overall Score, standings acumulados, Performer of the Year, perfiles completos ni Analytics; el proyecto queda detenido antes de Fase 6.
+La Fase 6 termina en perfiles derivados, récords por categoría, tendencias, Weekly Praise, victorias e historial semanal navegable. No se implementan Overall Score, standings acumulados, líderes globales, Grand Winners, Performer of the Year ni Analytics globales; el proyecto queda detenido antes de Fase 7.
