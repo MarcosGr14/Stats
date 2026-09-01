@@ -4,7 +4,7 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.4.0-weekly-voting",
+        APP_VERSION: "2.4.1-category-voting",
         SCHEMA_VERSION: 2,
         MAX_NAME_LENGTH: 80,
         MAX_TAG_NAME_LENGTH: 60,
@@ -16,6 +16,7 @@
         STORAGE_KEY: "stats:v2:state",
         TAG_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-tags-backup",
         WEEKLY_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-weekly-voting-backup",
+        CATEGORY_VOTING_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-category-voting-backup",
         LEGACY_STORAGE_KEY: "rankingsApp_data",
         IMAGE_DB_NAME: "stats-v2",
         IMAGE_DB_VERSION: 1,

@@ -84,6 +84,7 @@
             initialized: `Estado V2 inicializado${legacyNote}`,
             migrated: "Datos preservados · módulos V2 actualizados",
             "weekly-migrated": "Datos preservados · Weekly Voting listo",
+            "category-voting-migrated": "Datos preservados · Votos por categoría listos",
             invalid: "Datos V2 inválidos · edición bloqueada",
             unavailable: "Almacenamiento no disponible · edición bloqueada"
         };
@@ -1434,6 +1435,15 @@
                         constants.WEEKLY_MIGRATION_BACKUP_KEY
                     );
                     result.status = "weekly-migrated";
+                }
+                const categoryUpgrade = weeklyMigration.ensureCategoryVoting(state);
+                if (categoryUpgrade.changed) {
+                    state = storage.saveWithNamedBackup(
+                        categoryUpgrade.state,
+                        constants.CATEGORY_VOTING_MIGRATION_BACKUP_KEY
+                    );
+                    result.status = "category-voting-migrated";
+                    result.legacyUncategorizedCount = categoryUpgrade.legacyUncategorizedCount;
                 }
                 const tagMigration = tagService.ensurePredefinedCatalog(state);
                 if (tagMigration.changed) {

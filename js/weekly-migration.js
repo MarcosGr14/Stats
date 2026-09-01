@@ -70,7 +70,7 @@
         if (!state || typeof state !== "object" || Array.isArray(state)) {
             throw new WeeklyMigrationError("INVALID_STATE", "Phase 3 state must be an object.");
         }
-        if (state.meta && state.meta.weeklyVotingVersion === 1) {
+        if (state.meta && [1, 2].includes(state.meta.weeklyVotingVersion)) {
             const validation = data.validateState(state);
             if (!validation.valid) {
                 throw new WeeklyMigrationError("INVALID_STATE", validation.errors.join(" "));
@@ -102,6 +102,54 @@
         return { state: candidate, changed: true };
     }
 
+    function ensureCategoryVoting(state) {
+        const weeklyUpgrade = ensureWeeklyVoting(state);
+        const source = weeklyUpgrade.state;
+        if (source.meta.weeklyVotingVersion === 2) {
+            return {
+                state: cloneState(source),
+                changed: weeklyUpgrade.changed,
+                autoCategorizedCount: 0,
+                legacyUncategorizedCount: source.weeklyVotes.filter((vote) => vote.legacyUncategorized === true).length
+            };
+        }
+
+        const candidate = cloneState(source);
+        const participantsById = new Map(candidate.participants.map((participant) => [participant.id, participant]));
+        let autoCategorizedCount = 0;
+        let legacyUncategorizedCount = 0;
+
+        candidate.weeks.forEach((week) => {
+            if (week.reopenedAt === undefined) week.reopenedAt = null;
+            if (week.reopenCount === undefined) week.reopenCount = 0;
+        });
+        candidate.weeklyVotes.forEach((vote) => {
+            if (typeof vote.categoryId === "string" && vote.categoryId !== "") return;
+            const participant = participantsById.get(vote.participantId);
+            if (participant && participant.categoryIds.length === 1) {
+                vote.categoryId = participant.categoryIds[0];
+                delete vote.legacyUncategorized;
+                autoCategorizedCount += 1;
+                return;
+            }
+            delete vote.categoryId;
+            vote.legacyUncategorized = true;
+            legacyUncategorizedCount += 1;
+        });
+        candidate.meta.weeklyVotingVersion = 2;
+
+        const validation = data.validateState(candidate);
+        if (!validation.valid) {
+            throw new WeeklyMigrationError("INVALID_CATEGORY_MIGRATION", validation.errors.join(" "));
+        }
+        return {
+            state: candidate,
+            changed: true,
+            autoCategorizedCount,
+            legacyUncategorizedCount
+        };
+    }
+
     function migrateStoredState(storageAdapter, timestamp = new Date().toISOString()) {
         const loaded = storageService.load(storageAdapter);
         if (loaded.status !== "ready") return loaded;
@@ -122,10 +170,39 @@
         return { status: "migrated", state: saved, errors: [], migrated: true };
     }
 
+    function migrateStoredCategoryState(storageAdapter, timestamp = new Date().toISOString()) {
+        const loaded = storageService.load(storageAdapter);
+        if (loaded.status !== "ready") return loaded;
+
+        const migration = ensureCategoryVoting(loaded.state);
+        if (!migration.changed) return { ...loaded, migrated: false };
+
+        const saved = storageService.saveWithNamedBackup(
+            migration.state,
+            constants.CATEGORY_VOTING_MIGRATION_BACKUP_KEY,
+            storageAdapter,
+            timestamp
+        );
+        const verified = storageService.load(storageAdapter);
+        if (verified.status !== "ready") {
+            throw new WeeklyMigrationError("VERIFY_FAILED", "Category Voting migration could not be verified after saving.");
+        }
+        return {
+            status: "migrated",
+            state: saved,
+            errors: [],
+            migrated: true,
+            autoCategorizedCount: migration.autoCategorizedCount,
+            legacyUncategorizedCount: migration.legacyUncategorizedCount
+        };
+    }
+
     namespace.weeklyMigration = Object.freeze({
         WeeklyMigrationError,
         ensureWeeklyVoting,
-        migrateStoredState
+        ensureCategoryVoting,
+        migrateStoredState,
+        migrateStoredCategoryState
     });
     root.StatsV2 = namespace;
 })(globalThis);

@@ -88,7 +88,7 @@
             meta: {
                 createdAt: timestamp,
                 updatedAt: timestamp,
-                weeklyVotingVersion: 1
+                weeklyVotingVersion: 2
             },
             participants: [],
             groups: [],
@@ -177,6 +177,8 @@
             status: requireChoice(input.status || "OPEN", constants.WEEK_STATUSES, "status"),
             openedAt: input.openedAt || timestamp,
             closedAt: input.closedAt || null,
+            reopenedAt: input.reopenedAt || null,
+            reopenCount: Number.isInteger(input.reopenCount) ? input.reopenCount : 0,
             createdAt: input.createdAt || timestamp,
             updatedAt: timestamp
         };
@@ -192,6 +194,7 @@
             id: input.id || createId("vote"),
             weekId: requireText(input.weekId, "weekId"),
             participantId: requireText(input.participantId, "participantId"),
+            categoryId: requireChoice(input.categoryId, [...categoryIds], "categoryId"),
             userId: requireText(input.userId, "userId"),
             rating,
             reasonTagIds: uniqueStrings(input.reasonTagIds || input.selectedTagIds || [], "reasonTagIds"),
@@ -247,10 +250,13 @@
         }
         if (!isRecord(state.meta) || typeof state.meta.createdAt !== "string" || typeof state.meta.updatedAt !== "string") {
             errors.push("meta requires createdAt and updatedAt timestamps.");
-        } else if (state.meta.weeklyVotingVersion !== undefined && state.meta.weeklyVotingVersion !== 1) {
-            errors.push("meta.weeklyVotingVersion must be 1 when present.");
+        } else if (state.meta.weeklyVotingVersion !== undefined
+            && ![1, 2].includes(state.meta.weeklyVotingVersion)) {
+            errors.push("meta.weeklyVotingVersion must be 1 or 2 when present.");
         }
         const weeklyVotingVersion = isRecord(state.meta) ? state.meta.weeklyVotingVersion : undefined;
+        const hasWeeklyVoting = weeklyVotingVersion === 1 || weeklyVotingVersion === 2;
+        const hasCategoryVoting = weeklyVotingVersion === 2;
 
         collectionNames.forEach((collection) => {
             if (!Array.isArray(state[collection])) {
@@ -269,7 +275,7 @@
                     errors.push(`settings.voters[${index}] requires a name.`);
                 }
             });
-            if (weeklyVotingVersion === 1) {
+            if (hasWeeklyVoting) {
                 const voterIds = state.settings.voters.map((voter) => voter && voter.id).sort();
                 if (voterIds.length !== constants.VOTER_IDS.length
                     || voterIds.some((id, index) => id !== [...constants.VOTER_IDS].sort()[index])) {
@@ -358,7 +364,7 @@
                 requireEntityText(week, "startDate", path, errors);
                 requireEntityText(week, "endDate", path, errors);
                 validateTimestamps(week, path, errors);
-                if (weeklyVotingVersion === 1) {
+                if (hasWeeklyVoting) {
                     if (!ISO_WEEK_ID_PATTERN.test(week.id)) errors.push(`${path}.id must be an ISO week id.`);
                     if (!isValidIsoWeekRange(week)) {
                         errors.push(`${path} must match its ISO Monday-Sunday date range.`);
@@ -366,9 +372,15 @@
                     if (!weekStatuses.has(week.status)) errors.push(`${path}.status must be OPEN or CLOSED.`);
                     requireEntityText(week, "openedAt", path, errors);
                     requireNullableText(week, "closedAt", path, errors);
+                    if (hasCategoryVoting) {
+                        requireNullableText(week, "reopenedAt", path, errors);
+                        if (!Number.isInteger(week.reopenCount) || week.reopenCount < 0) {
+                            errors.push(`${path}.reopenCount must be a non-negative integer.`);
+                        }
+                    }
                     if (week.status === "OPEN") {
                         openWeekCount += 1;
-                        if (week.closedAt !== null) errors.push(`${path}.closedAt must be null while OPEN.`);
+                        if (!hasCategoryVoting && week.closedAt !== null) errors.push(`${path}.closedAt must be null while OPEN.`);
                     }
                     if (week.status === "CLOSED" && week.closedAt === null) {
                         errors.push(`${path}.closedAt is required while CLOSED.`);
@@ -377,7 +389,7 @@
                     errors.push(`${path}.closed must be boolean.`);
                 }
             });
-            if (weeklyVotingVersion === 1 && openWeekCount > 1) {
+            if (hasWeeklyVoting && openWeekCount > 1) {
                 errors.push("Only one week may be OPEN.");
             }
         }
@@ -393,23 +405,36 @@
                 requireEntityText(vote, "userId", path, errors);
                 validateTimestamps(vote, path, errors);
                 if (!ratingIds.has(vote.rating)) errors.push(`${path} has an unsupported rating.`);
-                const reasonTagIds = weeklyVotingVersion === 1 ? vote.reasonTagIds : vote.selectedTagIds;
-                const reasonField = weeklyVotingVersion === 1 ? "reasonTagIds" : "selectedTagIds";
+                const reasonTagIds = hasWeeklyVoting ? vote.reasonTagIds : vote.selectedTagIds;
+                const reasonField = hasWeeklyVoting ? "reasonTagIds" : "selectedTagIds";
                 if (!Array.isArray(reasonTagIds)
                     || reasonTagIds.some((id) => typeof id !== "string")
                     || new Set(reasonTagIds).size !== reasonTagIds.length) {
                     errors.push(`${path} has invalid ${reasonField}.`);
-                } else if (weeklyVotingVersion === 1 && reasonTagIds.length > constants.MAX_WEEKLY_REASON_TAGS) {
+                } else if (hasWeeklyVoting && reasonTagIds.length > constants.MAX_WEEKLY_REASON_TAGS) {
                     errors.push(`${path}.reasonTagIds exceeds the allowed limit.`);
                 }
                 if (typeof vote.note !== "string") errors.push(`${path}.note must be a string.`);
-                if (weeklyVotingVersion === 1 && typeof vote.note === "string"
+                if (hasWeeklyVoting && typeof vote.note === "string"
                     && vote.note.length > constants.MAX_WEEKLY_NOTE_LENGTH) {
                     errors.push(`${path}.note exceeds the allowed length.`);
                 }
-                const relationshipKey = `${vote.weekId}\u0000${vote.participantId}\u0000${vote.userId}`;
+                let relationshipKey = `${vote.weekId}\u0000${vote.participantId}\u0000${vote.userId}`;
+                if (hasCategoryVoting) {
+                    const isLegacy = vote.legacyUncategorized === true;
+                    if (isLegacy) {
+                        if (vote.categoryId !== undefined && vote.categoryId !== null) {
+                            errors.push(`${path} cannot have categoryId while legacyUncategorized is true.`);
+                        }
+                        relationshipKey += "\u0000legacy";
+                    } else {
+                        requireEntityText(vote, "categoryId", path, errors);
+                        if (!categoryIds.has(vote.categoryId)) errors.push(`${path}.categoryId is unsupported.`);
+                        relationshipKey += `\u0000${vote.categoryId}`;
+                    }
+                }
                 if (voteRelationships.has(relationshipKey)) {
-                    errors.push(`${path} duplicates a week/participant/user vote.`);
+                    errors.push(`${path} duplicates a weekly vote relationship.`);
                 }
                 voteRelationships.add(relationshipKey);
                 if (vote.rating === "standout") {
@@ -453,22 +478,28 @@
                     errors.push(`weeklyVotes[${index}].participantId references a missing participant.`);
                 }
                 if (!voterIds.has(vote.userId)) errors.push(`weeklyVotes[${index}].userId references a missing voter.`);
-                const reasonTagIds = weeklyVotingVersion === 1 ? vote.reasonTagIds : vote.selectedTagIds;
+                const reasonTagIds = hasWeeklyVoting ? vote.reasonTagIds : vote.selectedTagIds;
                 if (Array.isArray(reasonTagIds)) {
                     reasonTagIds.forEach((tagId) => {
                         if (!tagIds.has(tagId)) errors.push(`weeklyVotes[${index}] references a missing tag.`);
                     });
                 }
+                if (hasCategoryVoting && vote.legacyUncategorized !== true && participantIds.has(vote.participantId)) {
+                    const participant = state.participants.find((item) => item && item.id === vote.participantId);
+                    if (!participant || !participant.categoryIds.includes(vote.categoryId)) {
+                        errors.push(`weeklyVotes[${index}].categoryId is not assigned to its participant.`);
+                    }
+                }
             });
             if (state.settings.activeWeekId !== null && !weekIds.has(state.settings.activeWeekId)) {
                 errors.push("settings.activeWeekId references a missing week.");
-            } else if (weeklyVotingVersion === 1 && state.settings.activeWeekId !== null) {
+            } else if (hasWeeklyVoting && state.settings.activeWeekId !== null) {
                 const activeWeek = state.weeks.find((week) => week.id === state.settings.activeWeekId);
                 if (!activeWeek || activeWeek.status !== "OPEN") {
                     errors.push("settings.activeWeekId must reference the OPEN week.");
                 }
             }
-            if (weeklyVotingVersion === 1) {
+            if (hasWeeklyVoting) {
                 const openWeek = state.weeks.find((week) => week && week.status === "OPEN");
                 if (openWeek && state.settings.activeWeekId !== openWeek.id) {
                     errors.push("settings.activeWeekId must identify the only OPEN week.");
