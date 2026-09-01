@@ -238,6 +238,7 @@ test("protects custom tags referenced by historical weekly reasons", () => {
         id: "vote-weekly-reason",
         weekId: "2026-W36",
         participantId: "participant-ningning",
+        categoryId: "vocal",
         userId: "p1",
         rating: "good",
         reasonTagIds: [initial.tag.id]

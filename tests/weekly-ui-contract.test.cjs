@@ -16,14 +16,18 @@ test("exposes Weekly navigation and explicit week creation without automatic ope
     assert.match(view, /elements\.openWeek\.addEventListener\("click", openCurrentWeek\)/);
 });
 
-test("weekly voting controls communicate user, rating, removal and closed state accessibly", () => {
+test("weekly voting controls communicate category, user, rating, removal and reopen accessibly", () => {
     assert.match(html, /id="weekly-user-switch" role="group" aria-label="Current voter"/);
     assert.equal((html.match(/data-weekly-rating=/g) || []).length, 4);
     assert.equal((html.match(/aria-pressed="false"/g) || []).length >= 4, true);
     assert.match(html, /Remove evaluation/);
     assert.match(html, /role="alert" aria-live="assertive"/);
     assert.match(view, /week\.status !== "OPEN"/);
-    assert.doesNotMatch(html + view, /Reopen Week/i);
+    assert.match(html, /id="weekly-category-tabs" role="tablist"/);
+    assert.match(html, /id="reopen-current-week"[^>]*>Reopen Week/);
+    assert.match(html, /id="reopen-week-dialog"/);
+    assert.match(view, /weekly\.reopenWeek/);
+    assert.match(view, /data\.weeklyCategoryId|weeklyCategoryId/);
 });
 
 test("weekly reasons and notes have the approved UI limits", () => {
@@ -31,7 +35,15 @@ test("weekly reasons and notes have the approved UI limits", () => {
     assert.match(html, /never change profile tags/);
     assert.match(html, /id="weekly-note" maxlength="500"/);
     assert.match(view, /MAX_WEEKLY_REASON_TAGS/);
+    assert.match(view, /reasonPriority/);
     assert.doesNotMatch(view, /\.innerHTML\s*=/);
+});
+
+test("legacy category conversion is explicit and preserves unresolved votes in the UI", () => {
+    assert.match(html, /id="weekly-legacy-warning"/);
+    assert.match(html, /id="assign-legacy-category"/);
+    assert.match(view, /findLegacyVote/);
+    assert.match(view, /assignLegacyVoteCategory/);
 });
 
 test("weekly assets load before the app while Rankings remains explicitly Unranked", () => {

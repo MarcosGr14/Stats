@@ -89,9 +89,10 @@ test("state validation rejects broken entity references", () => {
         id: "vote-a",
         weekId: "missing-week",
         participantId: "participant-a",
+        categoryId: "vocal",
         userId: "p1",
         rating: "good",
-        selectedTagIds: ["missing-tag"]
+        reasonTagIds: ["missing-tag"]
     }, "2026-08-30T00:00:00.000Z"));
 
     const result = data.validateState(state);
