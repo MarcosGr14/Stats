@@ -8,6 +8,9 @@
     const participantService = namespace && namespace.participants;
     const tagService = namespace && namespace.tags;
     const rankingsService = namespace && namespace.rankings;
+    const weeklyService = namespace && namespace.weekly;
+    const weeklyMigration = namespace && namespace.weeklyMigration;
+    const weeklyViewService = namespace && namespace.weeklyView;
     const imageStorage = namespace && namespace.imageStorage;
 
     let state = null;
@@ -24,6 +27,7 @@
     let toastTimer = null;
     let activeView = "participants";
     let rankingCategory = "vocal";
+    let weeklyController = null;
     let elements = {};
 
     function byId(id) {
@@ -78,7 +82,8 @@
         const messages = {
             ready: `Datos locales listos${legacyNote}`,
             initialized: `Estado V2 inicializado${legacyNote}`,
-            migrated: "Datos preservados · catálogo de tags listo",
+            migrated: "Datos preservados · módulos V2 actualizados",
+            "weekly-migrated": "Datos preservados · Weekly Voting listo",
             invalid: "Datos V2 inválidos · edición bloqueada",
             unavailable: "Almacenamiento no disponible · edición bloqueada"
         };
@@ -441,23 +446,25 @@
     }
 
     function activeViewFromLocation() {
-        return root.location.hash === "#rankings" ? "rankings" : "participants";
+        if (root.location.hash === "#weekly") return "weekly";
+        if (root.location.hash === "#rankings") return "rankings";
+        return "participants";
     }
 
     function activateView(view, shouldRender = true) {
-        activeView = view === "rankings" ? "rankings" : "participants";
+        activeView = ["participants", "weekly", "rankings"].includes(view) ? view : "participants";
         elements.participantManager.hidden = activeView !== "participants";
+        elements.weeklyView.hidden = activeView !== "weekly";
         elements.rankingsView.hidden = activeView !== "rankings";
-        if (activeView === "participants") {
-            elements.navParticipants.setAttribute("aria-current", "page");
-            elements.navRankings.removeAttribute("aria-current");
-        } else {
-            elements.navRankings.setAttribute("aria-current", "page");
-            elements.navParticipants.removeAttribute("aria-current");
-        }
-        document.title = activeView === "rankings" ? "Rankings · Stats V2" : "Participants · Stats V2";
+        [elements.navParticipants, elements.navWeekly, elements.navRankings].forEach((link) => link.removeAttribute("aria-current"));
+        if (activeView === "participants") elements.navParticipants.setAttribute("aria-current", "page");
+        if (activeView === "weekly") elements.navWeekly.setAttribute("aria-current", "page");
+        if (activeView === "rankings") elements.navRankings.setAttribute("aria-current", "page");
+        const titles = { participants: "Participants", weekly: "Weekly Voting", rankings: "Rankings" };
+        document.title = `${titles[activeView]} · Stats V2`;
         if (shouldRender) {
             if (activeView === "rankings") renderRankings();
+            else if (activeView === "weekly") weeklyController?.activate();
             else renderParticipants();
         }
     }
@@ -588,10 +595,10 @@
                 edit.type = "button";
                 edit.dataset.tagAction = "edit-custom";
                 edit.dataset.tagId = tag.id;
-                edit.disabled = usage.totalAssignments > 0;
+                edit.disabled = usage.totalReferences > 0;
                 edit.setAttribute(
                     "aria-label",
-                    usage.totalAssignments > 0 ? `Edit ${tag.name}, unavailable while in use` : `Edit ${tag.name}`
+                    usage.totalReferences > 0 ? `Edit ${tag.name}, unavailable while in use` : `Edit ${tag.name}`
                 );
                 const remove = createElement("button", "text-button text-button--danger", "Delete");
                 remove.type = "button";
@@ -760,9 +767,9 @@
         const usage = tagService.tagUsage(state, tag.id);
         pendingTagDeleteId = tag.id;
         elements.tagDeleteDialogTitle.textContent = `Delete ${tag.name}?`;
-        elements.confirmTagDelete.disabled = usage.totalAssignments > 0;
-        elements.tagDeleteDialogMessage.textContent = usage.totalAssignments > 0
-            ? `${tag.name} tiene ${usage.activeCount} participante(s) activo(s) y ${usage.totalAssignments} relación(es) históricas. Remuévelo antes de borrarlo.`
+        elements.confirmTagDelete.disabled = usage.totalReferences > 0;
+        elements.tagDeleteDialogMessage.textContent = usage.totalReferences > 0
+            ? `${tag.name} conserva ${usage.totalAssignments} relación(es) de perfil y ${usage.reasonVoteCount} razón(es) semanales. No puede borrarse ni romper el historial.`
             : `${tag.name} no tiene referencias y se eliminará del catálogo global.`;
         elements.tagDeleteDialog.showModal();
         requestAnimationFrame(() => elements.cancelTagDelete.focus());
@@ -1175,8 +1182,10 @@
     function cacheElements() {
         elements = {
             participantManager: byId("participants"),
+            weeklyView: byId("weekly"),
             rankingsView: byId("rankings"),
             navParticipants: byId("nav-participants"),
+            navWeekly: byId("nav-weekly"),
             navRankings: byId("nav-rankings"),
             participantCount: byId("participant-count"),
             storageStatus: byId("storage-status"),
@@ -1277,6 +1286,10 @@
         elements.navParticipants.addEventListener("click", (event) => {
             event.preventDefault();
             navigateToView("participants");
+        });
+        elements.navWeekly.addEventListener("click", (event) => {
+            event.preventDefault();
+            navigateToView("weekly");
         });
         elements.navRankings.addEventListener("click", (event) => {
             event.preventDefault();
@@ -1402,8 +1415,9 @@
     }
 
     function initialize() {
-        if (!constants || !data || !storage || !participantService || !tagService || !rankingsService || !imageStorage) {
-            throw new Error("Stats V2 participant, tag and ranking modules did not load correctly.");
+        if (!constants || !data || !storage || !participantService || !tagService || !rankingsService
+            || !weeklyService || !weeklyMigration || !weeklyViewService || !imageStorage) {
+            throw new Error("Stats V2 participant, tag, weekly and ranking modules did not load correctly.");
         }
 
         cacheElements();
@@ -1413,11 +1427,19 @@
         writable = result.status === "ready" || result.status === "initialized";
         if (writable) {
             try {
-                const migration = tagService.ensurePredefinedCatalog(state);
-                if (migration.changed) {
-                    state = storage.saveWithBackup(migration.state);
+                const weeklyUpgrade = weeklyMigration.ensureWeeklyVoting(state);
+                if (weeklyUpgrade.changed) {
+                    state = storage.saveWithNamedBackup(
+                        weeklyUpgrade.state,
+                        constants.WEEKLY_MIGRATION_BACKUP_KEY
+                    );
+                    result.status = "weekly-migrated";
+                }
+                const tagMigration = tagService.ensurePredefinedCatalog(state);
+                if (tagMigration.changed) {
+                    state = storage.saveWithBackup(tagMigration.state);
                     result.status = "migrated";
-                    result.tagsAdded = migration.addedCount;
+                    result.tagsAdded = tagMigration.addedCount;
                 }
             } catch (error) {
                 writable = false;
@@ -1427,6 +1449,12 @@
         }
         elements.addButton.disabled = !writable;
         elements.emptyButton.disabled = !writable;
+        weeklyController = weeklyViewService.createController({
+            getState: () => state,
+            commitState,
+            canWrite: () => writable,
+            notify: showToast
+        });
         activeView = activeViewFromLocation();
         showStorageStatus(result);
         renderAll();

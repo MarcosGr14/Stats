@@ -204,8 +204,8 @@
         const current = findTag(state, tagId);
         if (current.predefined) throw new TagError("PREDEFINED_PROTECTED", "Los tags predefinidos no se editan.");
         const usage = tagUsage(state, tagId);
-        if (usage.totalAssignments > 0) {
-            throw new TagError("TAG_IN_USE", "Quita este tag de sus participantes antes de editarlo.");
+        if (usage.totalReferences > 0) {
+            throw new TagError("TAG_IN_USE", "Este tag tiene relaciones de perfil o razones semanales y no se puede editar.");
         }
 
         const candidate = {
@@ -280,13 +280,18 @@
     function tagUsage(state, tagId) {
         findTag(state, tagId);
         const assignments = state.participantTagAssignments.filter((assignment) => assignment.tagId === tagId);
+        const reasonVotes = state.weeklyVotes.filter((vote) => (
+            Array.isArray(vote.reasonTagIds) && vote.reasonTagIds.includes(tagId)
+        ));
         const activeParticipantIds = [...new Set(assignments
             .filter((assignment) => assignment.removedAt === null)
             .map((assignment) => assignment.participantId))];
         return {
             activeCount: activeParticipantIds.length,
             activeParticipantIds,
-            totalAssignments: assignments.length
+            totalAssignments: assignments.length,
+            reasonVoteCount: reasonVotes.length,
+            totalReferences: assignments.length + reasonVotes.length
         };
     }
 
@@ -295,10 +300,10 @@
         const tag = findTag(state, tagId);
         if (tag.predefined) throw new TagError("PREDEFINED_PROTECTED", "Los tags predefinidos no se pueden borrar.");
         const usage = tagUsage(state, tagId);
-        if (usage.totalAssignments > 0) {
+        if (usage.totalReferences > 0) {
             throw new TagError(
                 "TAG_IN_USE",
-                `Este tag conserva ${usage.totalAssignments} relación(es) y no se puede borrar.`
+                `Este tag conserva ${usage.totalReferences} relación(es) de perfil o voto y no se puede borrar.`
             );
         }
         const nextState = cloneState(state);

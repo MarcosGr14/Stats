@@ -3,20 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Stats V2: explora participantes, tags y rankings por categoría sin inventar puntuaciones.">
+    <meta name="description" content="Stats V2: administra participantes y registra votaciones semanales P1/P2 con datos locales.">
     <meta name="theme-color" content="#0B0B0F">
     <title>Participants · Stats V2</title>
-    <link rel="stylesheet" href="css/global.css?v=2.3.0">
-    <link rel="stylesheet" href="css/components.css?v=2.3.0">
-    <link rel="stylesheet" href="css/app.css?v=2.3.0">
-    <script src="js/constants.js?v=2.3.0" defer></script>
-    <script src="js/data.js?v=2.3.0" defer></script>
-    <script src="js/storage.js?v=2.3.0" defer></script>
-    <script src="js/participants.js?v=2.3.0" defer></script>
-    <script src="js/tags.js?v=2.3.0" defer></script>
-    <script src="js/rankings.js?v=2.3.0" defer></script>
-    <script src="js/image-storage.js?v=2.3.0" defer></script>
-    <script src="js/app.js?v=2.3.0" defer></script>
+    <link rel="stylesheet" href="css/global.css?v=2.4.0">
+    <link rel="stylesheet" href="css/components.css?v=2.4.0">
+    <link rel="stylesheet" href="css/app.css?v=2.4.0">
+    <link rel="stylesheet" href="css/weekly.css?v=2.4.0">
+    <script src="js/constants.js?v=2.4.0" defer></script>
+    <script src="js/data.js?v=2.4.0" defer></script>
+    <script src="js/storage.js?v=2.4.0" defer></script>
+    <script src="js/weekly-migration.js?v=2.4.0" defer></script>
+    <script src="js/weekly.js?v=2.4.0" defer></script>
+    <script src="js/participants.js?v=2.4.0" defer></script>
+    <script src="js/tags.js?v=2.4.0" defer></script>
+    <script src="js/rankings.js?v=2.4.0" defer></script>
+    <script src="js/image-storage.js?v=2.4.0" defer></script>
+    <script src="js/weekly-view.js?v=2.4.0" defer></script>
+    <script src="js/app.js?v=2.4.0" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -33,13 +37,13 @@
 
             <nav class="primary-nav" aria-label="Navegación principal">
                 <a id="nav-participants" href="#participants" aria-current="page">Participants</a>
-                <span class="nav-future" aria-label="Weekly, disponible en Fase 4">Weekly</span>
+                <a id="nav-weekly" href="#weekly">Weekly</a>
                 <a id="nav-rankings" href="#rankings">Rankings</a>
             </nav>
 
             <div class="build-status" title="Fase actual del proyecto">
                 <span class="status-dot" aria-hidden="true"></span>
-                Phase 3
+                Phase 4
             </div>
         </header>
 
@@ -137,6 +141,110 @@
                     <h2 id="empty-title">No participants yet</h2>
                     <p id="empty-copy">Add your first performer and assign every category where they stand out.</p>
                     <button class="button button--secondary" id="empty-add-participant" type="button">Add first participant</button>
+                </div>
+            </section>
+
+            <section class="weekly-view" id="weekly" aria-labelledby="weekly-title" hidden>
+                <header class="weekly-header">
+                    <div>
+                        <p class="eyebrow">Two-person review · America/Panama</p>
+                        <div class="weekly-title-row">
+                            <h1 id="weekly-title">Weekly Voting</h1>
+                            <span class="week-status" id="weekly-status">No week</span>
+                        </div>
+                        <p class="manager-intro">Una evaluación general por participante, usuario y semana. Normal es una evaluación; Not evaluated es ausencia de voto.</p>
+                    </div>
+                    <div class="week-actions">
+                        <label class="select-control" for="weekly-week-select">
+                            <span>Week</span>
+                            <select id="weekly-week-select" aria-describedby="weekly-week-range">
+                                <option value="">No weeks yet</option>
+                            </select>
+                        </label>
+                        <button class="button button--primary" id="open-current-week" type="button">Open current ISO week</button>
+                        <button class="button button--danger" id="close-current-week" type="button" hidden>Close Week</button>
+                    </div>
+                </header>
+
+                <div class="weekly-empty" id="weekly-empty" role="status">
+                    <span aria-hidden="true">W</span>
+                    <h2>No weekly voting session yet</h2>
+                    <p>Opening a week is always explicit. Existing roster, tags and photos stay unchanged.</p>
+                </div>
+
+                <div id="weekly-workspace" hidden>
+                    <section class="week-overview" aria-labelledby="weekly-period-title">
+                        <div>
+                            <p class="micro-label">Selected week</p>
+                            <h2 id="weekly-period-title">Week</h2>
+                            <p id="weekly-week-range"></p>
+                        </div>
+                        <div class="weekly-user-panel">
+                            <p class="micro-label">Voting as</p>
+                            <div class="user-switch" id="weekly-user-switch" role="group" aria-label="Current voter"></div>
+                            <p id="weekly-voter-clarity" aria-live="polite"></p>
+                        </div>
+                        <div class="weekly-progress" aria-label="Weekly voting progress">
+                            <p><strong id="weekly-evaluated-count">0</strong><span>Evaluated</span></p>
+                            <p class="standout-progress" id="weekly-standout-progress"><strong id="weekly-standout-count">0 / 5</strong><span>Standouts</span></p>
+                            <p><strong id="weekly-standout-remaining">5</strong><span>Remaining</span></p>
+                        </div>
+                    </section>
+
+                    <section class="weekly-toolbar" aria-label="Search and filter weekly participants">
+                        <label class="search-control weekly-search" for="weekly-search">
+                            <span aria-hidden="true">⌕</span>
+                            <span class="sr-only">Buscar participante o grupo</span>
+                            <input id="weekly-search" type="search" placeholder="Search participant or group..." autocomplete="off">
+                        </label>
+                        <label class="select-control" for="weekly-category-filter">
+                            <span>Category</span>
+                            <select id="weekly-category-filter">
+                                <option value="all">All categories</option>
+                                <option value="vocal">Vocal</option>
+                                <option value="rap">Rap</option>
+                                <option value="dance">Dance</option>
+                                <option value="stage">Stage</option>
+                                <option value="visual">Visual</option>
+                                <option value="all-rounder">All-rounder</option>
+                            </select>
+                        </label>
+                        <label class="select-control" for="weekly-gender-filter">
+                            <span>Gender</span>
+                            <select id="weekly-gender-filter">
+                                <option value="all">All</option>
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                            </select>
+                        </label>
+                        <label class="select-control" for="weekly-group-filter">
+                            <span>Group</span>
+                            <select id="weekly-group-filter"><option value="all">All groups</option></select>
+                        </label>
+                        <label class="select-control" for="weekly-evaluation-filter">
+                            <span>Evaluation</span>
+                            <select id="weekly-evaluation-filter">
+                                <option value="all">All</option>
+                                <option value="evaluated">Evaluated</option>
+                                <option value="not-evaluated">Not evaluated</option>
+                                <option value="standout">Standout</option>
+                                <option value="impressed">Impressed</option>
+                                <option value="good">Good</option>
+                                <option value="normal">Normal</option>
+                            </select>
+                        </label>
+                        <button class="button button--quiet" id="reset-weekly-filters" type="button">Reset</button>
+                    </section>
+
+                    <div class="weekly-results-heading">
+                        <p id="weekly-results-summary">0 active performers</p>
+                        <p id="weekly-readonly-copy">OPEN · Votes can be edited</p>
+                    </div>
+                    <div class="weekly-grid" id="weekly-grid" aria-live="polite"></div>
+                    <div class="weekly-no-results" id="weekly-no-results" role="status" hidden>
+                        <h2>No participants match these filters</h2>
+                        <p>Try another search or reset the weekly filters.</p>
+                    </div>
                 </div>
             </section>
 
@@ -471,6 +579,70 @@
         <div class="dialog-actions">
             <button class="button button--quiet" id="cancel-tag-delete" type="button">Cancel</button>
             <button class="button button--danger" id="confirm-tag-delete" type="button">Delete custom tag</button>
+        </div>
+    </dialog>
+
+    <dialog class="app-dialog weekly-vote-dialog" id="weekly-vote-dialog" aria-labelledby="weekly-vote-title">
+        <form id="weekly-vote-form" novalidate>
+            <header class="dialog-header">
+                <div>
+                    <p class="eyebrow" id="weekly-vote-kicker">Weekly evaluation</p>
+                    <h2 id="weekly-vote-title">Evaluate participant</h2>
+                    <p id="weekly-vote-identity"></p>
+                </div>
+                <button class="icon-button" id="close-weekly-vote" type="button" aria-label="Close weekly vote editor">×</button>
+            </header>
+            <div class="weekly-vote-body">
+                <div class="form-errors" id="weekly-vote-error" role="alert" aria-live="assertive" hidden></div>
+                <fieldset class="weekly-rating-fieldset">
+                    <legend>Rating <strong aria-hidden="true">*</strong></legend>
+                    <div class="weekly-rating-options" id="weekly-rating-options">
+                        <button class="weekly-rating weekly-rating--standout" type="button" data-weekly-rating="standout" aria-pressed="false"><strong>Standout</strong><span>3 pts</span></button>
+                        <button class="weekly-rating weekly-rating--impressed" type="button" data-weekly-rating="impressed" aria-pressed="false"><strong>Impressed</strong><span>2 pts</span></button>
+                        <button class="weekly-rating weekly-rating--good" type="button" data-weekly-rating="good" aria-pressed="false"><strong>Good</strong><span>1 pt</span></button>
+                        <button class="weekly-rating weekly-rating--normal" type="button" data-weekly-rating="normal" aria-pressed="false"><strong>Normal</strong><span>0 pts · evaluated</span></button>
+                    </div>
+                </fieldset>
+                <section class="weekly-reasons" aria-labelledby="weekly-reasons-title">
+                    <div class="tag-section-heading">
+                        <div>
+                            <p class="micro-label">Optional · Up to 3</p>
+                            <h3 id="weekly-reasons-title">Weekly reasons</h3>
+                        </div>
+                        <span class="tag-count" id="weekly-reason-count">0 / 3</span>
+                    </div>
+                    <p class="weekly-reason-note">These explain this week only and never change profile tags.</p>
+                    <div class="weekly-selected-reasons" id="weekly-selected-reasons"></div>
+                    <label class="search-control" for="weekly-reason-search">
+                        <span aria-hidden="true">⌕</span>
+                        <span class="sr-only">Search weekly reason tags</span>
+                        <input id="weekly-reason-search" type="search" placeholder="Search reasons..." autocomplete="off">
+                    </label>
+                    <div class="weekly-reason-list" id="weekly-reason-list"></div>
+                </section>
+                <label class="field weekly-note" for="weekly-note">
+                    <span>Optional note</span>
+                    <textarea id="weekly-note" maxlength="500" rows="4" placeholder="What stood out this week?"></textarea>
+                    <small><span id="weekly-note-count">0</span> / 500</small>
+                </label>
+            </div>
+            <footer class="dialog-actions weekly-vote-actions">
+                <button class="button button--danger" id="remove-weekly-vote" type="button" hidden>Remove evaluation</button>
+                <span></span>
+                <button class="button button--quiet" id="cancel-weekly-vote" type="button">Cancel</button>
+                <button class="button button--primary" id="save-weekly-vote" type="submit">Save evaluation</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog class="app-dialog confirm-dialog" id="close-week-dialog" aria-labelledby="close-week-dialog-title">
+        <div class="confirm-symbol" aria-hidden="true">!</div>
+        <p class="eyebrow">Freeze weekly results</p>
+        <h2 id="close-week-dialog-title">Close this week?</h2>
+        <p id="close-week-dialog-message">Votes will become read-only. Reopening is not available in Phase 4.</p>
+        <div class="dialog-actions">
+            <button class="button button--quiet" id="cancel-close-week" type="button">Cancel</button>
+            <button class="button button--danger" id="confirm-close-week" type="button">Close Week</button>
         </div>
     </dialog>
 
