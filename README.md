@@ -4,7 +4,7 @@ Aplicación local-first para organizar y, en fases posteriores, evaluar performe
 
 ## Estado actual
 
-Está implementada **Fase 6 - Profiles & History** sobre Participant Manager, Tag System, Category-specific Voting y Weekly Spotlight:
+Está implementada **Fase 7A - Core Analytics** sobre Participant Manager, Tag System, Category-specific Voting, Weekly Spotlight y Profiles & History:
 
 - alta y edición de participantes;
 - grupos reutilizables, con creación rápida desde el formulario;
@@ -40,11 +40,16 @@ Está implementada **Fase 6 - Profiles & History** sobre Participant Manager, Ta
 - historial semanal filtrable y ordenable con posición, puntos, votantes, Standouts, badges y motivos;
 - navegación al perfil desde Manager, Rankings, Weekly, Spotlight y Recap, con estado por URL;
 - participantes archivados con perfil, foto e historial íntegros y en modo de solo lectura histórica;
+- capa `analytics.js` pura, explicable y de solo lectura, sin colecciones derivadas persistidas;
+- métricas de victorias, Top 3, Standouts, Duo Standouts, Solo Picks y Split Decisions por categoría y género;
+- consistencia, mejora, promedios de score/posición, acuerdo y controversia con muestras mínimas explícitas;
+- Weekly Praise, profile tags, P1/P2, distribución de ratings, actividad semanal y agregados descriptivos;
+- alcance oficial `CLOSED` por defecto, con `includeOpen` explícito para análisis live y filtros temporales;
 - archivado y restauración;
 - borrado permanente solo cuando no existe historial relacionado;
 - UI responsive y accesible con formularios y diálogos navegables por teclado.
 
-No se han implementado Overall Score, standings de temporada, líderes globales, Grand Winners, analytics globales ni fórmulas anuales. Esas funciones pertenecen a Fase 7 o fases posteriores.
+No se han implementado Overall Score, Season Score, standings de temporada, Male/Female Leader, Grand Winners, Best Group, Most Competitive Week ni el dashboard visual de Analytics. Esas funciones pertenecen a Fase 7B o fases posteriores y requieren definición o autorización propia.
 
 ## Ejecución
 
@@ -77,6 +82,7 @@ Stats/
 │   ├── spotlight-view.js
 │   ├── profile-history.js
 │   ├── profile-view.js
+│   ├── analytics.js
 │   ├── participants.js
 │   ├── tags.js
 │   ├── rankings.js
@@ -97,6 +103,7 @@ Stats/
 │   ├── spotlight-ui-contract.test.cjs
 │   ├── profile-history.test.cjs
 │   ├── profile-ui-contract.test.cjs
+│   ├── analytics.test.cjs
 │   └── image-storage.test.cjs
 └── README.md
 ```
@@ -200,6 +207,33 @@ El historial distingue `Normal` de `Not evaluated`: un voto Normal aparece con 0
 
 `profile-view.js` presenta Summary, Profile Tags, Category Records, Performance Trend, Weekly Praise, Wins y Weekly History. El historial se filtra por categoría y se ordena de más reciente a más antiguo o al revés. Manager, Rankings, Weekly, Spotlight y Recap enlazan al mismo perfil mediante `participant` en el hash; Back restaura la vista interna cuando existe y vuelve a Participants al entrar por URL directa. Edit Participant y Manage Tags reutilizan los diálogos existentes.
 
+## Core Analytics
+
+`analytics.js` es una capa de funciones puras sobre el estado existente. Reutiliza `weekly.js` para scores y desempates y `spotlight.js` para posiciones, ganadores y badges; no copia esas fórmulas ni persiste resultados. Las métricas de performance siempre se agrupan independientemente por `categoryId + gender`, de modo que competir en más categorías no produce una ventaja global. El nombre solo estabiliza la presentación después de asignar empates reales.
+
+Métricas disponibles y fórmulas:
+
+- **Most Weekly Wins:** cuenta resultados con rank 1; cada joint winner recibe una victoria completa.
+- **Most Top 3 Appearances:** cuenta ranks de competición 1, 2 o 3; en `1, 1, 3` las tres apariciones cuentan.
+- **Most Standouts:** cuenta votos individuales `rating === standout`; `weeksWithStandout` se conserva como metadata separada.
+- **Duo Standouts / Solo Picks / Split Decisions:** cuentan eventos semanales usando los badges oficiales de Spotlight. Duo es P1+P2 Standout; Solo requiere un único voto mayor que Normal; Split conserva la definición existente de diferencia 3.
+- **Most Controversial:** promedio de `abs(P1 score - P2 score)` usando únicamente semanas con ambos votos. **Biggest Disagreement** devuelve todos los eventos empatados con la mayor diferencia.
+- **Highest Agreement:** el menor promedio de diferencia con al menos 3 semanas de doble voto.
+- **Most Consistent:** desviación estándar poblacional de `weeklyPoints` en semanas evaluadas. Requiere 3 semanas; empata primero por menor desviación, después por más semanas y luego por mayor promedio. Si todo coincide, conserva empate real.
+- **Most Improved:** pendiente de regresión lineal ordinaria de `weeklyPoints` frente a la posición cronológica de la semana. Requiere 3 evaluaciones y slope positivo; los gaps conservan distancia temporal, `Normal` aporta 0 y `Not evaluated` no aporta score.
+- **Best Average Weekly Score:** media aritmética de Weekly Points con al menos 3 semanas evaluadas.
+- **Best Average Placement:** media de ranks de competición con al menos 3 apariciones.
+- **Most Praised Skill:** menciones en `weeklyVotes.reasonTagIds`, globales o filtradas. No existe una segunda métrica duplicada llamada Most Used Reason Tag.
+- **Profile Tag Analytics:** conteo independiente de asignaciones activas `strength`, `weakness` y `neutral` (Special); excluye relaciones removidas y Weekly Praise.
+- **P1/P2 Analytics:** total de votos, rating promedio, Standouts dados, razones más usadas, participantes más evaluados y distribución Standout/Impressed/Good/Normal por usuario.
+- **Weekly Activity / Most Active Week:** votos, participantes, categorías, Standouts y reason tags por semana; mide actividad, no calidad, y conserva empates.
+- **Category Analytics:** votos, participantes evaluados, score semanal promedio, Standouts, skill más elogiada y participantes con más victorias por categoría/género.
+- **Group Analytics:** participantes evaluados, victorias, Top 3 y Standouts descriptivos por grupo/categoría/género; no asigna Best Group.
+
+Todas las respuestas incluyen scope, valor, tamaño de muestra y metadata explicativa cuando corresponde. Las métricas estadísticas devuelven `insufficientData: true` si no alcanzan su umbral. Se soportan filtros lógicos `categoryId`, `gender`, `groupId`, `participantId`, `userId` donde aplica, `fromWeekId`, `toWeekId` y `lastNWeeks`. Por defecto solo entran semanas `CLOSED`; `includeOpen: true` incorpora explícitamente `OPEN + CLOSED` para análisis live.
+
+Quedan deliberadamente sin fórmula `Most Competitive Week`, Overall/Season Score, standings, líderes Male/Female, Grand Winners y Best Group. Fase 7A tampoco añade dashboard, charts ni filtros visuales; `index.html` solo carga el módulo para que Fase 7B pueda consumirlo.
+
 ## Persistencia
 
 | Uso | Nombre exacto |
@@ -222,6 +256,8 @@ Abrir, filtrar u ordenar Rankings es una operación de solo lectura: no llama al
 Abrir o navegar Weekly Spotlight tampoco guarda estado. Fase 5 no requiere migración, backup adicional ni cambios de esquema porque consume exclusivamente `weeks`, `weeklyVotes`, participantes, grupos, tags e IDs ya existentes.
 
 Abrir, filtrar u ordenar un perfil también es de solo lectura. Fase 6 no requiere migración, backup adicional ni cambios de esquema: la identidad, la foto y todo el historial se consultan desde las colecciones e IDs existentes. IndexedDB solo se lee para mostrar la imagen y nunca se usa para pruebas con datos reales.
+
+Ejecutar Core Analytics tampoco escribe estado. Fase 7A no requiere migración, backup ni cambio de esquema porque deriva exclusivamente desde participantes, grupos, tags, asignaciones, semanas y votos existentes; no abre IndexedDB.
 
 ## Archivado y borrado
 
@@ -246,11 +282,13 @@ Requiere Node.js 20 o superior y no instala paquetes:
 node --test tests/*.test.cjs
 ```
 
-Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, ambas migraciones y backups exactos, semanas ISO, cierre/reapertura, unicidad categorizada, conversión legacy, P1/P2, límite global de Standouts, reason tags, notas, métricas por categoría, desempates, UI contractual, Rankings Unranked, Weekly Spotlight, perfiles, historial categorizado, tendencias con huecos y errores de imágenes.
+Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, ambas migraciones y backups exactos, semanas ISO, cierre/reapertura, unicidad categorizada, conversión legacy, P1/P2, límite global de Standouts, reason tags, notas, métricas por categoría, desempates, UI contractual, Rankings Unranked, Weekly Spotlight, perfiles, historial categorizado, tendencias, Core Analytics y errores de imágenes.
 
 También se realizó un smoke test en un origen local aislado con roster ficticio: Female Vocal A=6, B=5, C=4, D=0 y E sin voto. El Top 3 mostró A/B/C, el ranking completo incluyó D y excluyó E. El cierre cambió Spotlight a OFFICIAL; la reapertura volvió a LIVE y una edición de C a 5 produjo `1, 2, 2, 4`. También se comprobaron Male, otra categoría, recap, motivos, badges y acceso al participante. El layout fue revisado en 320, 375, 768 y 1440 px sin overflow horizontal ni errores de consola.
 
 Para Fase 6 se ejecutó además un smoke aislado con un participante archivado y cinco resultados en Vocal/Stage. Se verificaron tres semanas únicas, tres victorias, cinco Top 3, mejores semanas empatadas, motivos y tags independientes, el hueco `Not evaluated`, orden histórico, navegación/Back, URL directa y los diálogos existentes. El perfil se revisó en 320, 375, 768 y 1440 px sin overflow horizontal ni errores de consola.
+
+El smoke aislado de Fase 7A usa seis participantes ficticios, ambos géneros, Vocal/Stage, cinco semanas cerradas y una abierta. Verifica joint winners, gaps, Normals, Duo Standouts, Solo Picks, Split Decisions, razones, consistencia, mejora, promedios, acuerdo/controversia, P1/P2, filtros temporales, archivado y `CLOSED` frente a `includeOpen`, sin acceder al almacenamiento real.
 
 ## Riesgos y decisiones pendientes
 
@@ -260,10 +298,12 @@ Para Fase 6 se ejecutó además un smoke aislado con un participante archivado y
 - La reapertura es una acción administrativa local sin autenticación; queda auditada con contador y último timestamp, no con identidad ni motivo.
 - El directorio histórico `Rankings` permanece deliberadamente `Unranked`; Fase 5 clasifica semanas concretas y no define todavía una política acumulada de temporada.
 - Los perfiles derivan nuevamente el ranking de cada semana/categoría consultada; con historiales muy grandes puede convenir una caché derivada e invalidable, nunca una duplicación autoritativa.
+- Core Analytics recalcula rankings para mantener una única fuente de verdad; un historial muy grande puede requerir memoización derivada e invalidable en Fase 7B.
+- Una muestra mínima de 3 reduce resultados estadísticos engañosos, pero seguirá siendo una muestra pequeña y debe mostrarse junto a cada resultado.
 - La limpieza de blobs huérfanos se hace de forma oportunista; una herramienta integral de mantenimiento/backup pertenece a la Fase 9.
 - Navegadores sin IndexedDB mantienen el participant manager, pero usan el fallback visual y no pueden guardar fotos.
 - La fórmula de `overallScore`, Male Performer of the Year y Female Performer of the Year requiere aprobación explícita antes de implementarse.
 
 ## Límite de fase
 
-La Fase 6 termina en perfiles derivados, récords por categoría, tendencias, Weekly Praise, victorias e historial semanal navegable. No se implementan Overall Score, standings acumulados, líderes globales, Grand Winners, Performer of the Year ni Analytics globales; el proyecto queda detenido antes de Fase 7.
+La Fase 7A termina en una API derivada y testeada de Core Analytics. No se implementan dashboard ni charts de Fase 7B, Overall/Season Score, standings, líderes Male/Female, Grand Winners, Best Group, Most Competitive Week ni Fase 8; el proyecto queda detenido antes de Fase 7B.
