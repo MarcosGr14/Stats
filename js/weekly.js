@@ -357,7 +357,7 @@
         openCurrentIsoWeek, closeWeek, reopenWeek,
         findVote, findLegacyVote, upsertVote, removeVote, assignLegacyVoteCategory,
         ratingScore, standoutCountForUser, deriveCategoryWeeklyMetrics,
-        compareWeeklyMetrics, deriveWeeklyRanking, createWeeklyPointsProvider,
+        compareWeeklyMetrics, sameRankMetrics, deriveWeeklyRanking, createWeeklyPointsProvider,
         weeklyProgress, filterWeeklyParticipants
     });
     root.StatsV2 = namespace;
