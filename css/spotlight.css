@@ -295,6 +295,17 @@
 .spotlight-recap-result { gap: var(--space-3); justify-content: space-between; margin-top: var(--space-3); }
 .spotlight-recap-result span { color: var(--color-muted); font-size: 0.68rem; font-weight: 850; text-transform: uppercase; }
 .spotlight-recap-result strong { max-width: 70%; font-size: 0.78rem; text-align: right; }
+.spotlight-recap-winners { max-width: 70%; display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: flex-end; }
+.spotlight-recap-winners button {
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid var(--color-border-strong);
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 850;
+}
 
 @media (max-width: 70rem) {
     .spotlight-podium { grid-template-columns: repeat(2, minmax(0, 1fr)); }

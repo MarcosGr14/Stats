@@ -4,7 +4,7 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.5.0-weekly-spotlight",
+        APP_VERSION: "2.6.0-profiles-history",
         SCHEMA_VERSION: 2,
         MAX_NAME_LENGTH: 80,
         MAX_TAG_NAME_LENGTH: 60,

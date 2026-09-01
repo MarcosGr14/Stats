@@ -25,6 +25,7 @@
         const commitState = options.commitState;
         const canWrite = options.canWrite;
         const notify = options.notify;
+        const viewParticipant = options.viewParticipant;
         const elements = {
             weekSelect: byId("weekly-week-select"), openWeek: byId("open-current-week"),
             closeWeek: byId("close-current-week"), reopenWeek: byId("reopen-current-week"),
@@ -142,11 +143,16 @@
             participant.categoryIds.forEach((categoryId) => summaries.append(createCategorySummary(participant, categoryId, week)));
             const footer = createElement("div", "weekly-card-footer");
             footer.append(createElement("p", "weekly-card-reasons", legacy ? "Choose the correct category for the preserved legacy vote." : "Each category is evaluated independently."));
+            const actions = createElement("div", "weekly-card-actions");
+            const profileAction = createElement("button", "button button--quiet", "View profile");
+            profileAction.type = "button"; profileAction.dataset.weeklyProfileId = participant.id;
+            actions.append(profileAction);
             if (week.status === "OPEN") {
                 const action = createElement("button", "button button--primary", "Review categories");
                 action.type = "button"; action.dataset.weeklyParticipantId = participant.id; action.disabled = !canWrite();
-                footer.append(action);
-            } else footer.append(createElement("span", "weekly-readonly-badge", "Read-only"));
+                actions.append(action);
+            } else actions.append(createElement("span", "weekly-readonly-badge", "Read-only"));
+            footer.append(actions);
             card.append(heading, summaries, footer);
             return card;
         }
@@ -374,6 +380,11 @@
                 .forEach((control) => control.addEventListener("change", render));
             elements.resetFilters.addEventListener("click", resetFilters);
             elements.grid.addEventListener("click", (event) => {
+                const profileButton = event.target.closest("button[data-weekly-profile-id]");
+                if (profileButton) {
+                    viewParticipant(profileButton.dataset.weeklyProfileId);
+                    return;
+                }
                 const button = event.target.closest("button[data-weekly-participant-id]");
                 if (button) openVoteDialog(button.dataset.weeklyParticipantId, button);
             });

@@ -1,0 +1,387 @@
+(function defineProfileView(root) {
+    "use strict";
+
+    const namespace = root.StatsV2 || {};
+    const constants = namespace.constants;
+    const profileHistory = namespace.profileHistory;
+    const imageStorage = namespace.imageStorage;
+
+    if (!constants || !profileHistory || !imageStorage) {
+        throw new Error("Stats V2 profile history and image storage must load before participant profiles.");
+    }
+
+    function element(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = String(text);
+        return node;
+    }
+
+    function initials(name) {
+        const words = String(name || "ST").trim().split(/\s+/).filter(Boolean);
+        if (words.length < 2) return (words[0] || "ST").slice(0, 2).toLocaleUpperCase("es");
+        return `${words[0][0]}${words[1][0]}`.toLocaleUpperCase("es");
+    }
+
+    function categoryLabel(categoryId) {
+        return constants.CATEGORIES.find((category) => category.id === categoryId)?.label || categoryId;
+    }
+
+    function createController(options) {
+        const getState = options.getState;
+        const goBack = options.goBack;
+        const editParticipant = options.editParticipant;
+        const manageTags = options.manageTags;
+        let participantId = null;
+        let trendCategoryId = null;
+        let photoUrl = null;
+        let currentProfile = null;
+        const elements = {
+            view: document.getElementById("profile"),
+            back: document.getElementById("profile-back"),
+            edit: document.getElementById("profile-edit"),
+            manageTags: document.getElementById("profile-manage-tags"),
+            photoImage: document.getElementById("profile-photo-image"),
+            photoFallback: document.getElementById("profile-photo-fallback"),
+            name: document.getElementById("profile-name"),
+            status: document.getElementById("profile-status"),
+            group: document.getElementById("profile-group"),
+            gender: document.getElementById("profile-gender"),
+            categoryChips: document.getElementById("profile-category-chips"),
+            wins: document.getElementById("profile-wins"),
+            topThree: document.getElementById("profile-top-three"),
+            weeks: document.getElementById("profile-weeks"),
+            categories: document.getElementById("profile-categories"),
+            bestWeek: document.getElementById("profile-best-week"),
+            mostPraised: document.getElementById("profile-most-praised"),
+            mostWins: document.getElementById("profile-most-wins"),
+            tagGroups: document.getElementById("profile-tag-groups"),
+            categoryGrid: document.getElementById("profile-category-grid"),
+            trendTabs: document.getElementById("profile-trend-tabs"),
+            trendChart: document.getElementById("profile-trend-chart"),
+            trendSummary: document.getElementById("profile-trend-summary"),
+            topReasons: document.getElementById("profile-top-reasons"),
+            badgeCounts: document.getElementById("profile-badge-counts"),
+            winList: document.getElementById("profile-win-list"),
+            historyCategory: document.getElementById("profile-history-category"),
+            historyOrder: document.getElementById("profile-history-order"),
+            historyList: document.getElementById("profile-history-list"),
+            historyEmpty: document.getElementById("profile-history-empty")
+        };
+
+        function revokePhoto() {
+            if (photoUrl) URL.revokeObjectURL(photoUrl);
+            photoUrl = null;
+        }
+
+        async function loadPhoto(participant) {
+            revokePhoto();
+            elements.photoImage.hidden = true;
+            elements.photoImage.removeAttribute("src");
+            elements.photoImage.alt = `Foto de ${participant.name}`;
+            elements.photoFallback.hidden = false;
+            elements.photoFallback.textContent = initials(participant.name);
+            if (!participant.imageId) return;
+            try {
+                const record = await imageStorage.getImage(participant.imageId);
+                if (!record?.blob || participant.id !== participantId) return;
+                photoUrl = URL.createObjectURL(record.blob);
+                elements.photoImage.src = photoUrl;
+                elements.photoImage.hidden = false;
+                elements.photoFallback.hidden = true;
+            } catch (_) {
+                // Identity and history remain available when the local image database is unavailable.
+            }
+        }
+
+        function categoryChip(categoryId) {
+            const chip = element("span", "profile-category-chip", categoryLabel(categoryId));
+            chip.dataset.category = categoryId;
+            return chip;
+        }
+
+        function renderIdentity(profile) {
+            const { participant, group, summary } = profile;
+            elements.name.textContent = participant.name;
+            elements.status.textContent = participant.archivedAt === null ? "Active" : "Archived";
+            elements.status.dataset.archived = String(participant.archivedAt !== null);
+            elements.group.textContent = group?.name || "Soloist / No group";
+            elements.gender.textContent = participant.gender === "female" ? "Female" : "Male";
+            const chips = document.createDocumentFragment();
+            profile.categoryIds.forEach((categoryId) => chips.append(categoryChip(categoryId)));
+            elements.categoryChips.replaceChildren(chips);
+            elements.wins.textContent = String(summary.wins);
+            elements.topThree.textContent = String(summary.topThreeAppearances);
+            elements.weeks.textContent = String(summary.weeksEvaluated);
+            elements.categories.textContent = String(summary.categories);
+            loadPhoto(participant);
+        }
+
+        function renderSummary(profile) {
+            const summary = profile.summary;
+            elements.bestWeek.textContent = summary.bestRecords.length > 0
+                ? summary.bestRecords.map((record) => `${record.week.label} · ${categoryLabel(record.categoryId)}`).join(" / ")
+                : "Not evaluated";
+            elements.mostPraised.textContent = summary.mostPraised
+                ? `${summary.mostPraised.tag.name} · ${summary.mostPraised.count} mention${summary.mostPraised.count === 1 ? "" : "s"}`
+                : "No weekly praise yet";
+            elements.mostWins.textContent = summary.mostWinsCategories.length > 0
+                ? summary.mostWinsCategories.map((stats) => `${categoryLabel(stats.categoryId)} · ${stats.wins} win${stats.wins === 1 ? "" : "s"}`).join(" / ")
+                : "No wins yet";
+        }
+
+        function renderProfileTags(profile) {
+            const definitions = [
+                ["strength", "Strengths"],
+                ["weakness", "Needs Work"],
+                ["neutral", "Special"]
+            ];
+            const fragment = document.createDocumentFragment();
+            definitions.forEach(([type, label]) => {
+                const group = element("article", "profile-tag-group");
+                group.append(element("h3", "", label));
+                const list = element("div", "profile-tag-list");
+                const tags = profile.profileTags[type];
+                if (tags.length === 0) list.append(element("p", "profile-tag-empty", "No profile tags"));
+                else tags.forEach((tag) => list.append(element("span", `profile-tag-pill profile-tag-pill--${type}`, tag.name)));
+                group.append(list);
+                fragment.append(group);
+            });
+            elements.tagGroups.replaceChildren(fragment);
+        }
+
+        function metric(label, value) {
+            const item = element("p");
+            item.append(element("strong", "", value), element("span", "", label));
+            return item;
+        }
+
+        function renderCategoryCards(profile) {
+            const fragment = document.createDocumentFragment();
+            profile.categoryStats.forEach((stats) => {
+                const card = element("article", "profile-category-card");
+                card.dataset.category = stats.categoryId;
+                card.append(element("h3", "", categoryLabel(stats.categoryId)));
+                const grid = element("div", "profile-record-grid");
+                grid.append(
+                    metric("Wins", stats.wins),
+                    metric("Top 3", stats.topThreeAppearances),
+                    metric("Best Score", stats.bestScore === null ? "—" : `${stats.bestScore} pts`),
+                    metric("Weeks", stats.weeksEvaluated)
+                );
+                card.append(grid);
+                const praise = element("p", "profile-record-praise");
+                praise.append(element("span", "", "Most Praised"), document.createTextNode(stats.mostPraised?.tag.name || "No weekly praise"));
+                card.append(praise);
+                const button = element("button", "button button--quiet", `View ${categoryLabel(stats.categoryId)} History`);
+                button.type = "button";
+                button.dataset.profileCategory = stats.categoryId;
+                card.append(button);
+                fragment.append(card);
+            });
+            elements.categoryGrid.replaceChildren(fragment);
+        }
+
+        function selectTrendCategory(categoryId, focus = false) {
+            if (!currentProfile?.categoryIds.includes(categoryId)) return;
+            trendCategoryId = categoryId;
+            renderTrend(currentProfile);
+            if (focus) requestAnimationFrame(() => document.getElementById(`profile-trend-tab-${categoryId}`)?.focus());
+        }
+
+        function renderTrendTabs(profile) {
+            const fragment = document.createDocumentFragment();
+            profile.categoryIds.forEach((categoryId, index) => {
+                const button = element("button", "", categoryLabel(categoryId));
+                button.type = "button";
+                button.id = `profile-trend-tab-${categoryId}`;
+                button.dataset.profileTrendCategory = categoryId;
+                button.setAttribute("role", "tab");
+                button.setAttribute("aria-selected", String(categoryId === trendCategoryId));
+                button.tabIndex = categoryId === trendCategoryId ? 0 : -1;
+                button.addEventListener("keydown", (event) => {
+                    let target = null;
+                    if (event.key === "ArrowRight") target = (index + 1) % profile.categoryIds.length;
+                    if (event.key === "ArrowLeft") target = (index - 1 + profile.categoryIds.length) % profile.categoryIds.length;
+                    if (event.key === "Home") target = 0;
+                    if (event.key === "End") target = profile.categoryIds.length - 1;
+                    if (target === null) return;
+                    event.preventDefault();
+                    selectTrendCategory(profile.categoryIds[target], true);
+                });
+                fragment.append(button);
+            });
+            elements.trendTabs.replaceChildren(fragment);
+        }
+
+        function renderTrend(profile) {
+            const stats = profile.categoryStats.find((item) => item.categoryId === trendCategoryId) || profile.categoryStats[0];
+            if (!stats) {
+                elements.trendChart.replaceChildren(element("p", "profile-section-empty", "No categories available."));
+                return;
+            }
+            trendCategoryId = stats.categoryId;
+            elements.view.style.setProperty("--profile-accent", `var(--color-${stats.categoryId})`);
+            renderTrendTabs(profile);
+            const fragment = document.createDocumentFragment();
+            stats.trend.forEach((point) => {
+                const item = element("div", "profile-trend-point");
+                item.dataset.evaluated = String(point.evaluated);
+                item.append(element("span", "profile-trend-score", point.evaluated ? `${point.weeklyPoints} pts` : "Gap"));
+                const track = element("div", "profile-trend-track");
+                if (point.evaluated) {
+                    const bar = element("span", "profile-trend-bar");
+                    bar.style.height = point.weeklyPoints === 0 ? "0.25rem" : `${Math.max(8, point.weeklyPoints / 6 * 100)}%`;
+                    track.append(bar);
+                } else {
+                    track.append(element("span", "profile-trend-gap", "···"));
+                }
+                item.append(track, element("span", "profile-trend-label", point.label));
+                fragment.append(item);
+            });
+            const summary = `${categoryLabel(stats.categoryId)} trend: ${stats.trend.map((point) => (
+                `${point.label} ${point.evaluated ? `${point.weeklyPoints} points` : "not evaluated"}`
+            )).join(", ")}.`;
+            elements.trendChart.setAttribute("aria-label", summary);
+            elements.trendSummary.textContent = summary;
+            elements.trendChart.replaceChildren(fragment);
+        }
+
+        function renderPraise(profile) {
+            const reasons = element("div", "profile-reason-list");
+            if (profile.topReasons.length === 0) reasons.append(element("p", "profile-section-empty", "No weekly praise yet."));
+            profile.topReasons.slice(0, 8).forEach((reason) => {
+                const pill = element("span", "profile-reason-pill", reason.tag.name);
+                pill.append(element("strong", "", `×${reason.count}`));
+                reasons.append(pill);
+            });
+            elements.topReasons.replaceChildren(reasons);
+
+            const badges = element("div", "profile-badge-list");
+            if (profile.badgeCounts.length === 0) badges.append(element("p", "profile-section-empty", "No historical badges yet."));
+            profile.badgeCounts.forEach((entry) => {
+                const pill = element("span", "profile-badge-pill", entry.badge.label);
+                pill.append(element("strong", "", `×${entry.count}`));
+                badges.append(pill);
+            });
+            elements.badgeCounts.replaceChildren(badges);
+        }
+
+        function renderWins(profile) {
+            const fragment = document.createDocumentFragment();
+            if (profile.winHistory.length === 0) fragment.append(element("p", "profile-section-empty", "No weekly wins yet."));
+            profile.winHistory.forEach((record) => {
+                const item = element("article", "profile-win-item");
+                item.append(
+                    element("strong", "", record.week.label),
+                    element("p", "", `${categoryLabel(record.categoryId)} · ${record.jointWinner ? "Joint Winner" : "Winner"}`),
+                    element("p", "", `${record.metrics.weeklyPoints} pts · ${record.metrics.votersCount}/2 voters · ${record.metrics.standoutCount} Standout${record.metrics.standoutCount === 1 ? "" : "s"}`)
+                );
+                fragment.append(item);
+            });
+            elements.winList.replaceChildren(fragment);
+        }
+
+        function renderHistoryOptions(profile) {
+            const selected = profile.categoryIds.includes(elements.historyCategory.value)
+                ? elements.historyCategory.value : "all";
+            const fragment = document.createDocumentFragment();
+            const all = element("option", "", "All Categories");
+            all.value = "all";
+            fragment.append(all);
+            profile.categoryIds.forEach((categoryId) => {
+                const option = element("option", "", categoryLabel(categoryId));
+                option.value = categoryId;
+                fragment.append(option);
+            });
+            elements.historyCategory.replaceChildren(fragment);
+            elements.historyCategory.value = selected;
+        }
+
+        function historyLabel(text, modifier = "") {
+            return element("span", `profile-history-label${modifier ? ` profile-history-label--${modifier}` : ""}`, text);
+        }
+
+        function renderHistory(profile) {
+            const records = profileHistory.getParticipantHistory(getState(), participantId, {
+                categoryId: elements.historyCategory.value,
+                order: elements.historyOrder.value
+            });
+            const fragment = document.createDocumentFragment();
+            records.forEach((record) => {
+                const item = element("article", "profile-history-item");
+                item.append(element("span", "profile-history-rank", `#${record.rank}`));
+                const identity = element("div", "profile-history-identity");
+                identity.append(
+                    element("h3", "", `${record.week.label} · ${categoryLabel(record.categoryId)}`),
+                    element("p", "", `${record.mode === "OFFICIAL" ? "Official" : "Live · Provisional"} · ${record.week.startDate} to ${record.week.endDate}`)
+                );
+                const meta = element("div", "profile-history-meta");
+                meta.append(
+                    element("strong", "", `${record.metrics.weeklyPoints} pts`),
+                    element("span", "", `${record.metrics.votersCount}/2 voters`),
+                    element("span", "", `${record.metrics.standoutCount} Standout${record.metrics.standoutCount === 1 ? "" : "s"}`)
+                );
+                if (record.winner) meta.append(historyLabel(record.jointWinner ? "Joint Winner" : "Winner", "winner"));
+                if (record.badge) meta.append(historyLabel(record.badge.label));
+                const reasons = element("div", "profile-history-reasons");
+                record.topReasonTags.forEach((reason) => reasons.append(element("span", "profile-reason-pill", `${reason.tag.name}${reason.count > 1 ? ` ×${reason.count}` : ""}`)));
+                item.append(identity, meta, reasons);
+                fragment.append(item);
+            });
+            elements.historyList.replaceChildren(fragment);
+            elements.historyEmpty.hidden = records.length > 0;
+        }
+
+        function render() {
+            const state = getState();
+            currentProfile = profileHistory.getParticipantProfile(state, participantId);
+            if (!trendCategoryId || !currentProfile.categoryIds.includes(trendCategoryId)) {
+                trendCategoryId = currentProfile.categoryIds[0] || null;
+            }
+            renderIdentity(currentProfile);
+            renderSummary(currentProfile);
+            renderProfileTags(currentProfile);
+            renderCategoryCards(currentProfile);
+            renderTrend(currentProfile);
+            renderPraise(currentProfile);
+            renderWins(currentProfile);
+            renderHistoryOptions(currentProfile);
+            renderHistory(currentProfile);
+        }
+
+        elements.back.addEventListener("click", goBack);
+        elements.edit.addEventListener("click", () => participantId && editParticipant(participantId));
+        elements.manageTags.addEventListener("click", () => participantId && manageTags(participantId));
+        elements.categoryGrid.addEventListener("click", (event) => {
+            const button = event.target.closest("button[data-profile-category]");
+            if (!button) return;
+            const categoryId = button.dataset.profileCategory;
+            selectTrendCategory(categoryId);
+            elements.historyCategory.value = categoryId;
+            renderHistory(currentProfile);
+            elements.trendTabs.scrollIntoView({ block: "center" });
+        });
+        elements.trendTabs.addEventListener("click", (event) => {
+            const button = event.target.closest("button[data-profile-trend-category]");
+            if (button) selectTrendCategory(button.dataset.profileTrendCategory);
+        });
+        elements.historyCategory.addEventListener("change", () => renderHistory(currentProfile));
+        elements.historyOrder.addEventListener("change", () => renderHistory(currentProfile));
+
+        return Object.freeze({
+            activate(nextParticipantId) {
+                if (nextParticipantId !== participantId) {
+                    participantId = nextParticipantId;
+                    trendCategoryId = null;
+                    elements.historyCategory.value = "all";
+                    elements.historyOrder.value = "newest";
+                }
+                render();
+            }
+        });
+    }
+
+    namespace.profileView = Object.freeze({ createController });
+    root.StatsV2 = namespace;
+})(globalThis);

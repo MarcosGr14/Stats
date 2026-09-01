@@ -6,24 +6,27 @@
     <meta name="description" content="Stats V2: administra participantes y registra votaciones semanales P1/P2 con datos locales.">
     <meta name="theme-color" content="#0B0B0F">
     <title>Participants · Stats V2</title>
-    <link rel="stylesheet" href="css/global.css?v=2.5.0">
-    <link rel="stylesheet" href="css/components.css?v=2.5.0">
-    <link rel="stylesheet" href="css/app.css?v=2.5.0">
-    <link rel="stylesheet" href="css/weekly.css?v=2.5.0">
-    <link rel="stylesheet" href="css/spotlight.css?v=2.5.0">
-    <script src="js/constants.js?v=2.5.0" defer></script>
-    <script src="js/data.js?v=2.5.0" defer></script>
-    <script src="js/storage.js?v=2.5.0" defer></script>
-    <script src="js/weekly-migration.js?v=2.5.0" defer></script>
-    <script src="js/weekly.js?v=2.5.0" defer></script>
-    <script src="js/spotlight.js?v=2.5.0" defer></script>
-    <script src="js/participants.js?v=2.5.0" defer></script>
-    <script src="js/tags.js?v=2.5.0" defer></script>
-    <script src="js/rankings.js?v=2.5.0" defer></script>
-    <script src="js/image-storage.js?v=2.5.0" defer></script>
-    <script src="js/weekly-view.js?v=2.5.0" defer></script>
-    <script src="js/spotlight-view.js?v=2.5.0" defer></script>
-    <script src="js/app.js?v=2.5.0" defer></script>
+    <link rel="stylesheet" href="css/global.css?v=2.6.0">
+    <link rel="stylesheet" href="css/components.css?v=2.6.0">
+    <link rel="stylesheet" href="css/app.css?v=2.6.0">
+    <link rel="stylesheet" href="css/weekly.css?v=2.6.0">
+    <link rel="stylesheet" href="css/spotlight.css?v=2.6.0">
+    <link rel="stylesheet" href="css/profile.css?v=2.6.0">
+    <script src="js/constants.js?v=2.6.0" defer></script>
+    <script src="js/data.js?v=2.6.0" defer></script>
+    <script src="js/storage.js?v=2.6.0" defer></script>
+    <script src="js/weekly-migration.js?v=2.6.0" defer></script>
+    <script src="js/weekly.js?v=2.6.0" defer></script>
+    <script src="js/spotlight.js?v=2.6.0" defer></script>
+    <script src="js/profile-history.js?v=2.6.0" defer></script>
+    <script src="js/participants.js?v=2.6.0" defer></script>
+    <script src="js/tags.js?v=2.6.0" defer></script>
+    <script src="js/rankings.js?v=2.6.0" defer></script>
+    <script src="js/image-storage.js?v=2.6.0" defer></script>
+    <script src="js/weekly-view.js?v=2.6.0" defer></script>
+    <script src="js/spotlight-view.js?v=2.6.0" defer></script>
+    <script src="js/profile-view.js?v=2.6.0" defer></script>
+    <script src="js/app.js?v=2.6.0" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -47,7 +50,7 @@
 
             <div class="build-status" title="Fase actual del proyecto">
                 <span class="status-dot" aria-hidden="true"></span>
-                Phase 5
+                Phase 6
             </div>
         </header>
 
@@ -146,6 +149,113 @@
                     <p id="empty-copy">Add your first performer and assign every category where they stand out.</p>
                     <button class="button button--secondary" id="empty-add-participant" type="button">Add first participant</button>
                 </div>
+            </section>
+
+            <section class="profile-view" id="profile" aria-labelledby="profile-name" hidden>
+                <div class="profile-top-actions">
+                    <button class="button button--quiet" id="profile-back" type="button"><span aria-hidden="true">←</span> Back</button>
+                    <div>
+                        <button class="button button--quiet" id="profile-manage-tags" type="button">Manage Tags</button>
+                        <button class="button button--secondary" id="profile-edit" type="button">Edit Participant</button>
+                    </div>
+                </div>
+
+                <header class="profile-hero">
+                    <div class="profile-photo" id="profile-photo">
+                        <img id="profile-photo-image" alt="" hidden>
+                        <span id="profile-photo-fallback" aria-hidden="true">ST</span>
+                    </div>
+                    <div class="profile-identity">
+                        <p class="eyebrow">Artist dossier · Performance record</p>
+                        <div class="profile-name-row">
+                            <h1 id="profile-name">Participant</h1>
+                            <span class="profile-status" id="profile-status">Active</span>
+                        </div>
+                        <p class="profile-group" id="profile-group">Soloist / No group</p>
+                        <div class="profile-identity-meta">
+                            <span id="profile-gender">Female</span>
+                            <div class="profile-category-chips" id="profile-category-chips"></div>
+                        </div>
+                    </div>
+                    <div class="profile-header-metrics" aria-label="Profile summary">
+                        <p><strong id="profile-wins">0</strong><span>Wins</span></p>
+                        <p><strong id="profile-top-three">0</strong><span>Top 3</span></p>
+                        <p><strong id="profile-weeks">0</strong><span>Weeks</span></p>
+                        <p><strong id="profile-categories">0</strong><span>Categories</span></p>
+                    </div>
+                </header>
+
+                <section class="profile-section profile-summary" aria-labelledby="profile-summary-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">Career snapshot</p><h2 id="profile-summary-title">Summary</h2></div>
+                        <p>Derived from weekly voting history</p>
+                    </div>
+                    <div class="profile-summary-grid">
+                        <article><span>Best Week</span><strong id="profile-best-week">Not evaluated</strong></article>
+                        <article><span>Most Praised</span><strong id="profile-most-praised">No weekly praise yet</strong></article>
+                        <article><span>Most Wins Category</span><strong id="profile-most-wins">No wins yet</strong></article>
+                    </div>
+                </section>
+
+                <section class="profile-section profile-tags" aria-labelledby="profile-tags-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">Permanent traits</p><h2 id="profile-tags-title">Profile Tags</h2></div>
+                        <p>Profile traits are separate from weekly praise</p>
+                    </div>
+                    <div class="profile-tag-groups" id="profile-tag-groups"></div>
+                </section>
+
+                <section class="profile-section" aria-labelledby="profile-categories-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">Independent disciplines</p><h2 id="profile-categories-title">Category Records</h2></div>
+                        <p>No category scores are combined</p>
+                    </div>
+                    <div class="profile-category-grid" id="profile-category-grid"></div>
+                </section>
+
+                <section class="profile-section profile-trend-section" aria-labelledby="profile-trend-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">Week by week</p><h2 id="profile-trend-title">Performance Trend</h2></div>
+                        <p>Not evaluated is shown as a gap, never as zero</p>
+                    </div>
+                    <div class="profile-category-tabs" id="profile-trend-tabs" role="tablist" aria-label="Trend category"></div>
+                    <div class="profile-trend-chart" id="profile-trend-chart" role="img" aria-label="Performance trend"></div>
+                    <p class="sr-only" id="profile-trend-summary"></p>
+                </section>
+
+                <section class="profile-section profile-praise" aria-labelledby="profile-praise-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">Historical reasons</p><h2 id="profile-praise-title">Weekly Praise</h2></div>
+                        <p>Derived only from weekly reason tags</p>
+                    </div>
+                    <div class="profile-praise-grid">
+                        <div><h3>Most Praised</h3><div id="profile-top-reasons"></div></div>
+                        <div><h3>Historical Badges</h3><div id="profile-badge-counts"></div></div>
+                    </div>
+                </section>
+
+                <section class="profile-section" aria-labelledby="profile-wins-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">First-place record</p><h2 id="profile-wins-title">Wins</h2></div>
+                        <p>Joint winners count as one full win</p>
+                    </div>
+                    <div class="profile-win-list" id="profile-win-list"></div>
+                </section>
+
+                <section class="profile-section" aria-labelledby="profile-history-title">
+                    <div class="profile-history-heading">
+                        <div><p class="micro-label">Complete record</p><h2 id="profile-history-title">Weekly History</h2></div>
+                        <div class="profile-history-controls">
+                            <label class="select-control" for="profile-history-category"><span>Category</span><select id="profile-history-category"><option value="all">All Categories</option></select></label>
+                            <label class="select-control" for="profile-history-order"><span>Order</span><select id="profile-history-order"><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select></label>
+                        </div>
+                    </div>
+                    <div class="profile-history-list" id="profile-history-list"></div>
+                    <div class="profile-history-empty" id="profile-history-empty" role="status" hidden>
+                        <h3>No evaluations in this category</h3>
+                        <p>Not evaluated weeks are not converted into zero-point records.</p>
+                    </div>
+                </section>
             </section>
 
             <section class="weekly-view" id="weekly" aria-labelledby="weekly-title" hidden>

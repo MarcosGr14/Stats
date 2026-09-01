@@ -214,12 +214,19 @@
                 card.append(button);
                 results.forEach(({ gender, winners, evaluatedCount }) => {
                     const line = element("div", "spotlight-recap-result");
-                    line.append(
-                        element("span", "", genderLabel(gender)),
-                        element("strong", "", winners.length > 0
-                            ? winners.map((winner) => winner.participant.name).join(" · ")
-                            : evaluatedCount > 0 ? "No winner" : "No results")
-                    );
+                    line.append(element("span", "", genderLabel(gender)));
+                    if (winners.length > 0) {
+                        const winnerList = element("span", "spotlight-recap-winners");
+                        winners.forEach((winner) => {
+                            const winnerButton = element("button", "", winner.participant.name);
+                            winnerButton.type = "button";
+                            winnerButton.dataset.spotlightParticipantId = winner.participant.id;
+                            winnerList.append(winnerButton);
+                        });
+                        line.append(winnerList);
+                    } else {
+                        line.append(element("strong", "", evaluatedCount > 0 ? "No winner" : "No results"));
+                    }
                     card.append(line);
                 });
                 fragment.append(card);

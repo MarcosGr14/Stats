@@ -13,6 +13,8 @@
     const weeklyViewService = namespace && namespace.weeklyView;
     const spotlightService = namespace && namespace.spotlight;
     const spotlightViewService = namespace && namespace.spotlightView;
+    const profileHistoryService = namespace && namespace.profileHistory;
+    const profileViewService = namespace && namespace.profileView;
     const imageStorage = namespace && namespace.imageStorage;
 
     let state = null;
@@ -31,6 +33,9 @@
     let rankingCategory = "vocal";
     let weeklyController = null;
     let spotlightController = null;
+    let profileController = null;
+    let currentProfileId = null;
+    let profileHasInternalReturn = false;
     let elements = {};
 
     function byId(id) {
@@ -258,6 +263,7 @@
         meta.append(createElement("span", "gender-label", participant.gender));
         const actions = createElement("div", "card-actions");
         actions.append(
+            actionButton("View profile", "profile", participant.id),
             actionButton("Manage tags", "tags", participant.id),
             actionButton("Edit", "edit", participant.id),
             actionButton(participant.archivedAt ? "Restore" : "Archive", participant.archivedAt ? "restore" : "archive", participant.id),
@@ -453,27 +459,46 @@
         if (root.location.hash === "#weekly") return "weekly";
         if (root.location.hash === "#spotlight") return "spotlight";
         if (root.location.hash === "#rankings") return "rankings";
+        if (root.location.hash.startsWith("#profile?")) return "profile";
         return "participants";
     }
 
+    function profileIdFromLocation() {
+        if (!root.location.hash.startsWith("#profile?")) return null;
+        const query = root.location.hash.slice(root.location.hash.indexOf("?") + 1);
+        return new URLSearchParams(query).get("participant");
+    }
+
     function activateView(view, shouldRender = true) {
-        activeView = ["participants", "weekly", "spotlight", "rankings"].includes(view) ? view : "participants";
+        activeView = ["participants", "profile", "weekly", "spotlight", "rankings"].includes(view) ? view : "participants";
         elements.participantManager.hidden = activeView !== "participants";
+        elements.profileView.hidden = activeView !== "profile";
         elements.weeklyView.hidden = activeView !== "weekly";
         elements.spotlightView.hidden = activeView !== "spotlight";
         elements.rankingsView.hidden = activeView !== "rankings";
         [elements.navParticipants, elements.navWeekly, elements.navSpotlight, elements.navRankings]
             .forEach((link) => link.removeAttribute("aria-current"));
         if (activeView === "participants") elements.navParticipants.setAttribute("aria-current", "page");
+        if (activeView === "profile") elements.navParticipants.setAttribute("aria-current", "page");
         if (activeView === "weekly") elements.navWeekly.setAttribute("aria-current", "page");
         if (activeView === "spotlight") elements.navSpotlight.setAttribute("aria-current", "page");
         if (activeView === "rankings") elements.navRankings.setAttribute("aria-current", "page");
-        const titles = { participants: "Participants", weekly: "Weekly Voting", spotlight: "Weekly Spotlight", rankings: "Rankings" };
-        document.title = `${titles[activeView]} · Stats V2`;
+        const titles = { participants: "Participants", profile: "Participant Profile", weekly: "Weekly Voting", spotlight: "Weekly Spotlight", rankings: "Rankings" };
+        const profileParticipant = activeView === "profile" ? findParticipant(profileIdFromLocation() || currentProfileId) : null;
+        document.title = `${profileParticipant?.name || titles[activeView]} · Stats V2`;
         if (shouldRender) {
             if (activeView === "rankings") renderRankings();
             else if (activeView === "weekly") weeklyController?.activate();
             else if (activeView === "spotlight") spotlightController?.activate();
+            else if (activeView === "profile") {
+                const participantId = profileIdFromLocation() || currentProfileId;
+                if (findParticipant(participantId)) {
+                    currentProfileId = participantId;
+                    profileController?.activate(participantId);
+                } else {
+                    navigateToView("participants");
+                }
+            }
             else renderParticipants();
         }
     }
@@ -504,20 +529,24 @@
         renderRankings();
     }
 
-    function viewParticipantFromRankings(participantId) {
+    function openParticipantProfile(participantId) {
         const participant = findParticipant(participantId);
         if (!participant) return;
-        elements.search.value = participant.name;
-        elements.genderFilter.value = "all";
-        elements.statusFilter.value = participant.archivedAt === null ? "active" : "archived";
-        elements.categoryFilter.value = "all";
-        elements.tagFilter.value = "all";
-        elements.sort.value = "a-z";
+        profileHasInternalReturn = activeView !== "profile";
+        currentProfileId = participantId;
+        const targetHash = `#profile?participant=${encodeURIComponent(participantId)}`;
+        if (root.location.hash !== targetHash) root.history.pushState(null, "", targetHash);
+        activateView("profile");
+        elements.profileView.scrollIntoView({ block: "start" });
+    }
+
+    function backFromProfile() {
+        if (profileHasInternalReturn) {
+            profileHasInternalReturn = false;
+            root.history.back();
+            return;
+        }
         navigateToView("participants");
-        requestAnimationFrame(() => {
-            const card = [...elements.grid.children].find((item) => item.dataset.participantId === participantId);
-            if (card) card.focus();
-        });
     }
 
     function renderAll() {
@@ -1097,6 +1126,10 @@
 
     function handleParticipantAction(action, participantId) {
         try {
+            if (action === "profile") {
+                openParticipantProfile(participantId);
+                return;
+            }
             if (action === "tags") {
                 openTagDialog(participantId);
                 return;
@@ -1191,6 +1224,7 @@
     function cacheElements() {
         elements = {
             participantManager: byId("participants"),
+            profileView: byId("profile"),
             weeklyView: byId("weekly"),
             spotlightView: byId("spotlight"),
             rankingsView: byId("rankings"),
@@ -1421,7 +1455,7 @@
         elements.resetRankingFilters.addEventListener("click", resetRankingFilters);
         elements.rankingList.addEventListener("click", (event) => {
             const button = event.target.closest("button[data-ranking-participant-id]");
-            if (button) viewParticipantFromRankings(button.dataset.rankingParticipantId);
+            if (button) openParticipantProfile(button.dataset.rankingParticipantId);
         });
         elements.rankingEmptyAction.addEventListener("click", () => {
             if (elements.rankingEmptyAction.dataset.action === "reset") resetRankingFilters();
@@ -1432,8 +1466,8 @@
     function initialize() {
         if (!constants || !data || !storage || !participantService || !tagService || !rankingsService
             || !weeklyService || !weeklyMigration || !weeklyViewService || !spotlightService
-            || !spotlightViewService || !imageStorage) {
-            throw new Error("Stats V2 participant, tag, weekly, Spotlight and ranking modules did not load correctly.");
+            || !spotlightViewService || !profileHistoryService || !profileViewService || !imageStorage) {
+            throw new Error("Stats V2 participant, tag, weekly, Spotlight, profile and ranking modules did not load correctly.");
         }
 
         cacheElements();
@@ -1478,11 +1512,18 @@
             getState: () => state,
             commitState,
             canWrite: () => writable,
-            notify: showToast
+            notify: showToast,
+            viewParticipant: openParticipantProfile
         });
         spotlightController = spotlightViewService.createController({
             getState: () => state,
-            viewParticipant: viewParticipantFromRankings
+            viewParticipant: openParticipantProfile
+        });
+        profileController = profileViewService.createController({
+            getState: () => state,
+            goBack: backFromProfile,
+            editParticipant: openParticipantDialog,
+            manageTags: openTagDialog
         });
         activeView = activeViewFromLocation();
         showStorageStatus(result);
