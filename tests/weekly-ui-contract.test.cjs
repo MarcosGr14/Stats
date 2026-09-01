@@ -1,0 +1,51 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+
+const projectRoot = path.resolve(__dirname, "..");
+const html = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
+const view = fs.readFileSync(path.join(projectRoot, "js", "weekly-view.js"), "utf8");
+const css = fs.readFileSync(path.join(projectRoot, "css", "weekly.css"), "utf8");
+const app = fs.readFileSync(path.join(projectRoot, "js", "app.js"), "utf8");
+
+test("exposes Weekly navigation and explicit week creation without automatic opening", () => {
+    assert.match(html, /id="nav-weekly" href="#weekly"/);
+    assert.match(html, /id="open-current-week"[^>]*>Open current ISO week/);
+    assert.doesNotMatch(app, /openCurrentIsoWeek\(/);
+    assert.match(view, /elements\.openWeek\.addEventListener\("click", openCurrentWeek\)/);
+});
+
+test("weekly voting controls communicate user, rating, removal and closed state accessibly", () => {
+    assert.match(html, /id="weekly-user-switch" role="group" aria-label="Current voter"/);
+    assert.equal((html.match(/data-weekly-rating=/g) || []).length, 4);
+    assert.equal((html.match(/aria-pressed="false"/g) || []).length >= 4, true);
+    assert.match(html, /Remove evaluation/);
+    assert.match(html, /role="alert" aria-live="assertive"/);
+    assert.match(view, /week\.status !== "OPEN"/);
+    assert.doesNotMatch(html + view, /Reopen Week/i);
+});
+
+test("weekly reasons and notes have the approved UI limits", () => {
+    assert.match(html, /Optional · Up to 3/);
+    assert.match(html, /never change profile tags/);
+    assert.match(html, /id="weekly-note" maxlength="500"/);
+    assert.match(view, /MAX_WEEKLY_REASON_TAGS/);
+    assert.doesNotMatch(view, /\.innerHTML\s*=/);
+});
+
+test("weekly assets load before the app while Rankings remains explicitly Unranked", () => {
+    assert.ok(html.indexOf("js/weekly-migration.js") < html.indexOf("js/app.js"));
+    assert.ok(html.indexOf("js/weekly.js") < html.indexOf("js/app.js"));
+    assert.ok(html.indexOf("js/weekly-view.js") < html.indexOf("js/app.js"));
+    assert.match(html, /<span class="unranked-badge">Unranked<\/span>/);
+    assert.match(app, /scoreProvider: null/);
+});
+
+test("weekly layout contains mobile, tablet and desktop safeguards", () => {
+    assert.match(css, /@media \(max-width: 70rem\)/);
+    assert.match(css, /@media \(max-width: 44rem\)/);
+    assert.match(css, /@media \(max-width: 32rem\)/);
+    assert.match(css, /grid-template-columns: 1fr/);
+    assert.match(css, /width: min\(54rem, calc\(100% - 2rem\)\)/);
+});

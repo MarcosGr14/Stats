@@ -218,3 +218,39 @@ test("deletes an unused custom tag and allows safe edits only before assignment"
     assert.equal(updated.tag.name, "Award Show Monster");
     assert.equal(deleted.state.tags.some((tag) => tag.id === updated.tag.id), false);
 });
+
+test("protects custom tags referenced by historical weekly reasons", () => {
+    const initial = tags.createCustomTag(migratedState(), {
+        name: "Weekly Spark",
+        categoryId: "general",
+        type: "neutral"
+    }, timestamp);
+    const state = initial.state;
+    state.weeks.push(data.createWeek({
+        id: "2026-W36",
+        label: "W36",
+        startDate: "2026-08-31",
+        endDate: "2026-09-06",
+        status: "OPEN"
+    }, timestamp));
+    state.settings.activeWeekId = "2026-W36";
+    state.weeklyVotes.push(data.createWeeklyVote({
+        id: "vote-weekly-reason",
+        weekId: "2026-W36",
+        participantId: "participant-ningning",
+        userId: "p1",
+        rating: "good",
+        reasonTagIds: [initial.tag.id]
+    }, timestamp));
+
+    const usage = tags.tagUsage(state, initial.tag.id);
+    assert.equal(usage.totalAssignments, 0);
+    assert.equal(usage.reasonVoteCount, 1);
+    assert.equal(usage.totalReferences, 1);
+    assert.throws(() => tags.updateCustomTag(state, initial.tag.id, {
+        name: "Changed",
+        categoryId: "general",
+        type: "neutral"
+    }), (error) => error.code === "TAG_IN_USE");
+    assert.throws(() => tags.deleteCustomTag(state, initial.tag.id), (error) => error.code === "TAG_IN_USE");
+});
