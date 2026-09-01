@@ -6,21 +6,21 @@
     <meta name="description" content="Stats V2: administra participantes y registra votaciones semanales P1/P2 con datos locales.">
     <meta name="theme-color" content="#0B0B0F">
     <title>Participants · Stats V2</title>
-    <link rel="stylesheet" href="css/global.css?v=2.4.0">
-    <link rel="stylesheet" href="css/components.css?v=2.4.0">
-    <link rel="stylesheet" href="css/app.css?v=2.4.0">
-    <link rel="stylesheet" href="css/weekly.css?v=2.4.0">
-    <script src="js/constants.js?v=2.4.0" defer></script>
-    <script src="js/data.js?v=2.4.0" defer></script>
-    <script src="js/storage.js?v=2.4.0" defer></script>
-    <script src="js/weekly-migration.js?v=2.4.0" defer></script>
-    <script src="js/weekly.js?v=2.4.0" defer></script>
-    <script src="js/participants.js?v=2.4.0" defer></script>
-    <script src="js/tags.js?v=2.4.0" defer></script>
-    <script src="js/rankings.js?v=2.4.0" defer></script>
-    <script src="js/image-storage.js?v=2.4.0" defer></script>
-    <script src="js/weekly-view.js?v=2.4.0" defer></script>
-    <script src="js/app.js?v=2.4.0" defer></script>
+    <link rel="stylesheet" href="css/global.css?v=2.4.1">
+    <link rel="stylesheet" href="css/components.css?v=2.4.1">
+    <link rel="stylesheet" href="css/app.css?v=2.4.1">
+    <link rel="stylesheet" href="css/weekly.css?v=2.4.1">
+    <script src="js/constants.js?v=2.4.1" defer></script>
+    <script src="js/data.js?v=2.4.1" defer></script>
+    <script src="js/storage.js?v=2.4.1" defer></script>
+    <script src="js/weekly-migration.js?v=2.4.1" defer></script>
+    <script src="js/weekly.js?v=2.4.1" defer></script>
+    <script src="js/participants.js?v=2.4.1" defer></script>
+    <script src="js/tags.js?v=2.4.1" defer></script>
+    <script src="js/rankings.js?v=2.4.1" defer></script>
+    <script src="js/image-storage.js?v=2.4.1" defer></script>
+    <script src="js/weekly-view.js?v=2.4.1" defer></script>
+    <script src="js/app.js?v=2.4.1" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -43,7 +43,7 @@
 
             <div class="build-status" title="Fase actual del proyecto">
                 <span class="status-dot" aria-hidden="true"></span>
-                Phase 4
+                Phase 4.1
             </div>
         </header>
 
@@ -152,7 +152,7 @@
                             <h1 id="weekly-title">Weekly Voting</h1>
                             <span class="week-status" id="weekly-status">No week</span>
                         </div>
-                        <p class="manager-intro">Una evaluación general por participante, usuario y semana. Normal es una evaluación; Not evaluated es ausencia de voto.</p>
+                        <p class="manager-intro">Cada categoría tiene su propia evaluación. Normal es una evaluación; Not evaluated es ausencia de voto en esa categoría.</p>
                     </div>
                     <div class="week-actions">
                         <label class="select-control" for="weekly-week-select">
@@ -163,6 +163,7 @@
                         </label>
                         <button class="button button--primary" id="open-current-week" type="button">Open current ISO week</button>
                         <button class="button button--danger" id="close-current-week" type="button" hidden>Close Week</button>
+                        <button class="button button--secondary" id="reopen-current-week" type="button" hidden>Reopen Week</button>
                     </div>
                 </header>
 
@@ -190,6 +191,11 @@
                             <p><strong id="weekly-standout-remaining">5</strong><span>Remaining</span></p>
                         </div>
                     </section>
+
+                    <div class="weekly-legacy-warning" id="weekly-legacy-warning" role="status" hidden>
+                        <strong>Uncategorized legacy votes need review.</strong>
+                        <span id="weekly-legacy-warning-copy"></span>
+                    </div>
 
                     <section class="weekly-toolbar" aria-label="Search and filter weekly participants">
                         <label class="search-control weekly-search" for="weekly-search">
@@ -594,8 +600,16 @@
             </header>
             <div class="weekly-vote-body">
                 <div class="form-errors" id="weekly-vote-error" role="alert" aria-live="assertive" hidden></div>
+                <div class="weekly-category-tabs" id="weekly-category-tabs" role="tablist" aria-label="Evaluation category"></div>
+                <div class="weekly-legacy-conversion" id="weekly-legacy-conversion" hidden>
+                    <div>
+                        <strong>Legacy vote without category</strong>
+                        <p id="weekly-legacy-conversion-copy"></p>
+                    </div>
+                    <button class="button button--secondary" id="assign-legacy-category" type="button">Assign legacy vote here</button>
+                </div>
                 <fieldset class="weekly-rating-fieldset">
-                    <legend>Rating <strong aria-hidden="true">*</strong></legend>
+                    <legend><span id="weekly-rating-category">Category</span> rating <strong aria-hidden="true">*</strong></legend>
                     <div class="weekly-rating-options" id="weekly-rating-options">
                         <button class="weekly-rating weekly-rating--standout" type="button" data-weekly-rating="standout" aria-pressed="false"><strong>Standout</strong><span>3 pts</span></button>
                         <button class="weekly-rating weekly-rating--impressed" type="button" data-weekly-rating="impressed" aria-pressed="false"><strong>Impressed</strong><span>2 pts</span></button>
@@ -639,10 +653,21 @@
         <div class="confirm-symbol" aria-hidden="true">!</div>
         <p class="eyebrow">Freeze weekly results</p>
         <h2 id="close-week-dialog-title">Close this week?</h2>
-        <p id="close-week-dialog-message">Votes will become read-only. Reopening is not available in Phase 4.</p>
+        <p id="close-week-dialog-message">Votes will become read-only. The week can later be reopened explicitly.</p>
         <div class="dialog-actions">
             <button class="button button--quiet" id="cancel-close-week" type="button">Cancel</button>
             <button class="button button--danger" id="confirm-close-week" type="button">Close Week</button>
+        </div>
+    </dialog>
+
+    <dialog class="app-dialog confirm-dialog" id="reopen-week-dialog" aria-labelledby="reopen-week-dialog-title">
+        <div class="confirm-symbol" aria-hidden="true">↻</div>
+        <p class="eyebrow">Administrative action</p>
+        <h2 id="reopen-week-dialog-title">Reopen this week?</h2>
+        <p id="reopen-week-dialog-message">This will allow weekly votes to be edited again.</p>
+        <div class="dialog-actions">
+            <button class="button button--quiet" id="cancel-reopen-week" type="button">Cancel</button>
+            <button class="button button--primary" id="confirm-reopen-week" type="button">Reopen Week</button>
         </div>
     </dialog>
 
