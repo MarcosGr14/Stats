@@ -39,12 +39,12 @@
     function assertName(name, field = "name") {
         const normalized = normalizeName(name);
         if (!normalized) {
-            throw new ParticipantError("EMPTY_NAME", `${field} is required.`);
+            throw new ParticipantError("EMPTY_NAME", `${field} es obligatorio.`);
         }
         if (normalized.length > constants.MAX_NAME_LENGTH) {
             throw new ParticipantError(
                 "NAME_TOO_LONG",
-                `${field} must be ${constants.MAX_NAME_LENGTH} characters or fewer.`
+                `${field} admite hasta ${constants.MAX_NAME_LENGTH} caracteres.`
             );
         }
         return normalized;
@@ -52,7 +52,7 @@
 
     function assertGroupExists(state, groupId) {
         if (groupId !== null && !state.groups.some((group) => group.id === groupId)) {
-            throw new ParticipantError("MISSING_GROUP", "The selected group does not exist.");
+            throw new ParticipantError("MISSING_GROUP", "El grupo seleccionado no existe.");
         }
     }
 
@@ -65,7 +65,7 @@
         if (duplicate) {
             throw new ParticipantError(
                 "DUPLICATE_PARTICIPANT",
-                `An active participant named ${normalizeName(name)} already exists.`
+                `Ya existe un participante activo llamado ${normalizeName(name)}.`
             );
         }
     }
@@ -73,14 +73,14 @@
     function findParticipant(state, participantId) {
         const participant = state.participants.find((item) => item.id === participantId);
         if (!participant) {
-            throw new ParticipantError("NOT_FOUND", "Participant not found.");
+            throw new ParticipantError("NOT_FOUND", "Participante no encontrado.");
         }
         return participant;
     }
 
     function createGroup(state, name, timestamp = new Date().toISOString()) {
         assertState(state);
-        const normalized = assertName(name, "group name");
+        const normalized = assertName(name, "El nombre del grupo");
         const existing = state.groups.find((group) => comparableName(group.name) === comparableName(normalized));
         if (existing) {
             return { state: cloneState(state), group: { ...existing }, created: false };
@@ -181,7 +181,7 @@
         if (!deletion.allowed) {
             throw new ParticipantError(
                 "ARCHIVE_REQUIRED",
-                "This participant has historical relations and must be archived instead."
+                "Este participante tiene historial y debe archivarse."
             );
         }
 

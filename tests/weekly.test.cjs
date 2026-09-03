@@ -70,7 +70,7 @@ test("opens explicitly, allows one OPEN week and closes read-only", () => {
     const closed = weekly.closeWeek(opened.state, opened.week.id, "2026-09-06T23:00:00.000Z");
     assert.equal(closed.week.status, "CLOSED");
     assert.equal(closed.state.settings.activeWeekId, null);
-    assert.throws(() => vote(closed.state, "participant-1", "rap", "p1", "good"), /week does not exist|read-only/);
+    assert.throws(() => vote(closed.state, "participant-1", "rap", "p1", "good"), (error) => error.code === "WEEK_NOT_FOUND");
 });
 
 test("reopens only CLOSED weeks with an explicit audit trail and can close again", () => {
@@ -110,9 +110,7 @@ test("rejects reopening OPEN and reopening while another week is OPEN", () => {
     assert.throws(() => weekly.reopenWeek(state, "2026-W35"), (error) => error.code === "WEEK_OPEN");
     state = weekly.closeWeek(state, "2026-W35", timestamp).state;
     state = openWeek(state, timestamp);
-    assert.throws(() => weekly.reopenWeek(state, "2026-W35"), (error) => (
-        error.code === "OPEN_WEEK_EXISTS" && /Close the currently open week/.test(error.message)
-    ));
+    assert.throws(() => weekly.reopenWeek(state, "2026-W35"), (error) => error.code === "OPEN_WEEK_EXISTS");
 });
 
 test("stores independent category votes for the same participant and user", () => {

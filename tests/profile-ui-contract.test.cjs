@@ -32,7 +32,7 @@ test("exposes a complete participant dossier with reusable edit and tag actions"
 });
 
 test("routes Participant Manager, Rankings, Weekly and Spotlight records to the profile URL", () => {
-    assert.match(app, /actionButton\("View profile", "profile"/);
+    assert.match(app, /actionButton\("Ver perfil", "profile"/);
     assert.match(app, /dataset\.rankingParticipantId/);
     assert.match(weeklyView, /dataset\.weeklyProfileId/);
     assert.match(spotlightView, /dataset\.spotlightParticipantId/);
@@ -42,9 +42,9 @@ test("routes Participant Manager, Rankings, Weekly and Spotlight records to the 
 });
 
 test("provides accessible category-specific trends and textual gaps", () => {
-    assert.match(html, /id="profile-trend-tabs" role="tablist" aria-label="Trend category"/);
-    assert.match(html, /id="profile-trend-chart" role="img" aria-label="Performance trend"/);
-    assert.match(view, /not evaluated/);
+    assert.match(html, /id="profile-trend-tabs" role="tablist" aria-label="Categoría de la evolución"/);
+    assert.match(html, /id="profile-trend-chart" role="img" aria-label="Evolución"/);
+    assert.match(view, /sin evaluar/);
     assert.match(view, /weeklyPoints === 0/);
     assert.match(view, /ArrowRight/);
     assert.match(view, /ArrowLeft/);

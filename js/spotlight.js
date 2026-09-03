@@ -34,16 +34,16 @@
     function deriveResultBadge(votes) {
         const scores = votes.map((vote) => weekly.ratingScore(vote.rating)).filter((score) => score !== null);
         if (scores.length === 2 && scores.every((score) => score === 3)) {
-            return { id: "duo-standout", label: "Duo Standout" };
+            return { id: "duo-standout", label: "Destacado por ambos" };
         }
         if (scores.length === 2 && Math.max(...scores) - Math.min(...scores) === 3) {
-            return { id: "split-decision", label: "Split Decision" };
+            return { id: "split-decision", label: "Opiniones divididas" };
         }
         if (scores.length === 2 && scores.every((score) => score >= 1)) {
-            return { id: "duo-approved", label: "Duo Approved" };
+            return { id: "duo-approved", label: "Aprobado por ambos" };
         }
         if (scores.length === 1 && scores[0] > 0) {
-            return { id: "solo-pick", label: "Solo Pick" };
+            return { id: "solo-pick", label: "Elección individual" };
         }
         return null;
     }

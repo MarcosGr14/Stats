@@ -17,7 +17,7 @@
         return constants.CATEGORIES.find((category) => category.id === categoryId)?.label || categoryId;
     }
     function ratingLabel(ratingId) {
-        return constants.RATING_OPTIONS.find((rating) => rating.id === ratingId)?.label || "Not evaluated";
+        return constants.RATING_OPTIONS.find((rating) => rating.id === ratingId)?.label || "Sin evaluar";
     }
 
     function createController(options) {
@@ -73,7 +73,7 @@
             return state().settings.voters.find((voter) => voter.id === activeUserId) || { id: activeUserId, name: activeUserId.toUpperCase() };
         }
         function groupName(groupId) {
-            return groupId ? state().groups.find((group) => group.id === groupId)?.name || "Unknown group" : "Soloist";
+            return groupId ? state().groups.find((group) => group.id === groupId)?.name || "Grupo desconocido" : "Solista";
         }
         function ensureSelection() {
             const weeks = [...state().weeks].sort((left, right) => right.id.localeCompare(left.id));
@@ -85,9 +85,9 @@
         function renderWeekSelect() {
             const weeks = [...state().weeks].sort((left, right) => right.id.localeCompare(left.id));
             const fragment = document.createDocumentFragment();
-            if (weeks.length === 0) fragment.append(createElement("option", "", "No weeks yet"));
+            if (weeks.length === 0) fragment.append(createElement("option", "", "Aún no hay semanas"));
             weeks.forEach((week) => {
-                const option = createElement("option", "", `${week.label} · ${week.status}`);
+                const option = createElement("option", "", `${week.label} · ${week.status === "OPEN" ? "ABIERTA" : "CERRADA"}`);
                 option.value = week.id;
                 option.selected = week.id === selectedWeekId;
                 fragment.append(option);
@@ -98,8 +98,8 @@
         function renderGroupOptions() {
             const current = elements.groupFilter.value || "all";
             const fragment = document.createDocumentFragment();
-            const all = createElement("option", "", "All groups"); all.value = "all"; fragment.append(all);
-            const solo = createElement("option", "", "Soloists"); solo.value = "soloist"; fragment.append(solo);
+            const all = createElement("option", "", "Todos"); all.value = "all"; fragment.append(all);
+            const solo = createElement("option", "", "Solistas"); solo.value = "soloist"; fragment.append(solo);
             [...state().groups].sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" })).forEach((group) => {
                 const option = createElement("option", "", group.name); option.value = group.id; fragment.append(option);
             });
@@ -116,7 +116,7 @@
                 fragment.append(button);
             });
             elements.userSwitch.replaceChildren(fragment);
-            elements.voterClarity.textContent = `Editing votes for ${currentVoter().name} (${activeUserId.toUpperCase()}) only.`;
+            elements.voterClarity.textContent = `Editando solo los votos de ${currentVoter().name} (${activeUserId.toUpperCase()}).`;
         }
         function createCategoryBadge(categoryId) {
             return createElement("span", `category-badge category-badge--${categoryId}`, categoryLabel(categoryId));
@@ -127,7 +127,7 @@
             const row = createElement("div", "weekly-category-summary");
             const identity = createElement("div", "weekly-category-summary__identity");
             identity.append(createCategoryBadge(categoryId), createElement("span", `weekly-state weekly-state--${vote?.rating || "none"}`, ratingLabel(vote?.rating)));
-            const points = createElement("span", "weekly-category-points", metrics.votesCount ? `${metrics.weeklyPoints} pts · ${metrics.votersCount}/2` : "No score");
+            const points = createElement("span", "weekly-category-points", metrics.votesCount ? `${metrics.weeklyPoints} pts · ${metrics.votersCount}/2` : "Sin puntaje");
             row.append(identity, points);
             return row;
         }
@@ -137,21 +137,21 @@
             const identity = createElement("div");
             identity.append(createElement("h2", "", participant.name), createElement("p", "", groupName(participant.groupId)));
             const legacy = weekly.findLegacyVote(state(), week.id, participant.id, activeUserId);
-            if (legacy) heading.append(identity, createElement("span", "weekly-state weekly-state--legacy", "Legacy vote"));
+            if (legacy) heading.append(identity, createElement("span", "weekly-state weekly-state--legacy", "Voto anterior"));
             else heading.append(identity);
             const summaries = createElement("div", "weekly-category-summaries");
             participant.categoryIds.forEach((categoryId) => summaries.append(createCategorySummary(participant, categoryId, week)));
             const footer = createElement("div", "weekly-card-footer");
-            footer.append(createElement("p", "weekly-card-reasons", legacy ? "Choose the correct category for the preserved legacy vote." : "Each category is evaluated independently."));
+            footer.append(createElement("p", "weekly-card-reasons", legacy ? "Asigna el voto anterior a la categoría correcta." : "Cada categoría se evalúa por separado."));
             const actions = createElement("div", "weekly-card-actions");
-            const profileAction = createElement("button", "button button--quiet", "View profile");
+            const profileAction = createElement("button", "button button--quiet", "Ver perfil");
             profileAction.type = "button"; profileAction.dataset.weeklyProfileId = participant.id;
             actions.append(profileAction);
             if (week.status === "OPEN") {
-                const action = createElement("button", "button button--primary", "Review categories");
+                const action = createElement("button", "button button--primary", "Evaluar categorías");
                 action.type = "button"; action.dataset.weeklyParticipantId = participant.id; action.disabled = !canWrite();
                 actions.append(action);
-            } else actions.append(createElement("span", "weekly-readonly-badge", "Read-only"));
+            } else actions.append(createElement("span", "weekly-readonly-badge", "Solo consulta"));
             footer.append(actions);
             card.append(heading, summaries, footer);
             return card;
@@ -166,7 +166,7 @@
             const fragment = document.createDocumentFragment();
             participants.forEach((participant) => fragment.append(createVoteCard(participant, week)));
             elements.grid.replaceChildren(fragment);
-            elements.resultsSummary.textContent = `${participants.length} performer${participants.length === 1 ? "" : "s"}`;
+            elements.resultsSummary.textContent = `${participants.length} participante${participants.length === 1 ? "" : "s"}`;
             elements.noResults.hidden = participants.length > 0;
         }
         function renderProgress(week) {
@@ -175,17 +175,17 @@
             elements.standoutCount.textContent = `${progress.standoutsUsed} / ${constants.MAX_WEEKLY_STANDOUTS}`;
             elements.standoutRemaining.textContent = progress.standoutsRemaining;
             elements.standoutProgress.dataset.limitReached = String(progress.standoutLimitReached);
-            elements.standoutProgress.setAttribute("aria-label", `${progress.standoutsUsed} of ${constants.MAX_WEEKLY_STANDOUTS} Standouts used across all categories`);
+            elements.standoutProgress.setAttribute("aria-label", `${progress.standoutsUsed} de ${constants.MAX_WEEKLY_STANDOUTS} destacados usados en todas las categorías`);
         }
         function renderLegacyWarning(week) {
             const legacyCount = state().weeklyVotes.filter((vote) => vote.weekId === week.id && vote.legacyUncategorized === true).length;
             elements.legacyWarning.hidden = legacyCount === 0;
-            elements.legacyWarningCopy.textContent = legacyCount === 0 ? "" : `${legacyCount} preserved vote${legacyCount === 1 ? "" : "s"}. Reopen the week if needed, then open the participant to assign each vote manually.`;
+            elements.legacyWarningCopy.textContent = legacyCount === 0 ? "" : `${legacyCount} voto${legacyCount === 1 ? "" : "s"} anterior${legacyCount === 1 ? "" : "es"}. Reabre la semana si hace falta y asígnalos manualmente.`;
         }
         function render() {
             if (state()?.meta?.weeklyVotingVersion !== 2) {
                 selectedWeekId = null;
-                elements.weekSelect.replaceChildren(createElement("option", "", "Weekly Voting unavailable"));
+                elements.weekSelect.replaceChildren(createElement("option", "", "Votación semanal no disponible"));
                 elements.weekSelect.disabled = true; elements.openWeek.disabled = true;
                 elements.closeWeek.hidden = true; elements.reopenWeek.hidden = true;
                 elements.empty.hidden = false; elements.workspace.hidden = true;
@@ -196,15 +196,15 @@
             const week = currentWeek();
             elements.empty.hidden = Boolean(week); elements.workspace.hidden = !week; elements.openWeek.disabled = !canWrite();
             if (!week) {
-                elements.status.textContent = "No week"; elements.status.dataset.state = "none";
+                elements.status.textContent = "Sin semana"; elements.status.dataset.state = "none";
                 elements.closeWeek.hidden = true; elements.reopenWeek.hidden = true; return;
             }
-            elements.status.textContent = week.status; elements.status.dataset.state = week.status.toLocaleLowerCase("en");
+            elements.status.textContent = week.status === "OPEN" ? "ABIERTA" : "CERRADA"; elements.status.dataset.state = week.status.toLocaleLowerCase("en");
             elements.periodTitle.textContent = `${week.label} · ${week.id}`;
-            elements.weekRange.textContent = `${weekly.formatWeekRange(week)} · Monday-Sunday`;
+            elements.weekRange.textContent = `${weekly.formatWeekRange(week)} · lunes-domingo`;
             elements.closeWeek.hidden = week.status !== "OPEN"; elements.closeWeek.disabled = !canWrite();
             elements.reopenWeek.hidden = week.status !== "CLOSED"; elements.reopenWeek.disabled = !canWrite();
-            elements.readonlyCopy.textContent = week.status === "OPEN" ? "OPEN · Category votes can be edited" : "CLOSED · Official and read-only";
+            elements.readonlyCopy.textContent = week.status === "OPEN" ? "ABIERTA · Puedes editar los votos" : "CERRADA · Resultados oficiales";
             renderUserSwitch(); renderProgress(week); renderLegacyWarning(week); renderCards(week);
         }
 
@@ -218,7 +218,7 @@
                 const tag = state().tags.find((item) => item.id === tagId); if (!tag) return;
                 const chip = createElement("button", "weekly-selected-reason", `${tag.name} ×`);
                 chip.type = "button"; chip.dataset.weeklyRemoveReason = tag.id;
-                chip.setAttribute("aria-label", `Remove weekly reason ${tag.name}`); fragment.append(chip);
+                chip.setAttribute("aria-label", `Quitar motivo semanal ${tag.name}`); fragment.append(chip);
             });
             elements.selectedReasons.replaceChildren(fragment);
             elements.reasonCount.textContent = `${selectedReasonIds.size} / ${constants.MAX_WEEKLY_REASON_TAGS}`;
@@ -239,9 +239,9 @@
                 const button = createElement("button", "weekly-reason-option", tag.name);
                 button.type = "button"; button.dataset.weeklyReasonId = tag.id;
                 button.setAttribute("aria-pressed", String(selectedReasonIds.has(tag.id)));
-                button.append(createElement("small", "", tag.categoryId)); fragment.append(button);
+                button.append(createElement("small", "", tag.categoryId === "general" ? "General" : categoryLabel(tag.categoryId))); fragment.append(button);
             });
-            if (!matching.length) fragment.append(createElement("p", "weekly-reason-empty", "No reasons match this search."));
+            if (!matching.length) fragment.append(createElement("p", "weekly-reason-empty", "No hay motivos con esta búsqueda."));
             elements.reasonList.replaceChildren(fragment);
         }
         function renderCategoryTabs(participant) {
@@ -261,9 +261,9 @@
             elements.legacyConversion.hidden = !legacy;
             if (!legacy) return;
             const hasCategoryVote = Boolean(weekly.findVote(state(), currentWeek().id, participant.id, editingCategoryId, activeUserId));
-            elements.legacyConversionCopy.textContent = `${ratingLabel(legacy.rating)} · ${legacy.note || "No note"}. Assign it to ${categoryLabel(editingCategoryId)} without changing its ID, reasons or note.`;
+            elements.legacyConversionCopy.textContent = `${ratingLabel(legacy.rating)} · ${legacy.note || "Sin nota"}. Asígnalo a ${categoryLabel(editingCategoryId)}.`;
             elements.assignLegacyCategory.disabled = hasCategoryVote;
-            elements.assignLegacyCategory.textContent = hasCategoryVote ? "Category already evaluated" : `Assign to ${categoryLabel(editingCategoryId)}`;
+            elements.assignLegacyCategory.textContent = hasCategoryVote ? "Categoría ya evaluada" : `Asignar a ${categoryLabel(editingCategoryId)}`;
         }
         function loadCategory(categoryId) {
             const participant = state().participants.find((item) => item.id === editingParticipantId);
@@ -272,7 +272,7 @@
             const existing = weekly.findVote(state(), currentWeek().id, participant.id, categoryId, activeUserId);
             selectedRating = existing?.rating || null; selectedReasonIds = new Set(existing?.reasonTagIds || []);
             elements.note.value = existing?.note || ""; elements.noteCount.textContent = elements.note.value.length;
-            elements.removeVote.hidden = !existing; elements.saveVote.textContent = existing ? "Save category changes" : "Save category evaluation";
+            elements.removeVote.hidden = !existing; elements.saveVote.textContent = existing ? "Guardar cambios" : "Guardar evaluación";
             elements.ratingCategory.textContent = categoryLabel(categoryId);
             elements.reasonSearch.value = ""; showVoteError(); syncRatingButtons();
             renderCategoryTabs(participant); renderLegacyConversion(participant); renderSelectedReasons(); renderReasonList();
@@ -286,9 +286,9 @@
             const filteredCategory = elements.categoryFilter.value;
             editingCategoryId = participant.categoryIds.includes(filteredCategory) ? filteredCategory : participant.categoryIds[0];
             returnFocusElement = trigger || document.activeElement;
-            elements.voteKicker.textContent = `${week.label} · Voting as ${currentVoter().name} (${activeUserId.toUpperCase()})`;
-            elements.voteTitle.textContent = `Evaluate ${participant.name}`;
-            elements.voteIdentity.textContent = `${groupName(participant.groupId)} · ${week.id} · Save each category separately`;
+            elements.voteKicker.textContent = `${week.label} · Votando como ${currentVoter().name} (${activeUserId.toUpperCase()})`;
+            elements.voteTitle.textContent = `Evaluar a ${participant.name}`;
+            elements.voteIdentity.textContent = `${groupName(participant.groupId)} · Guarda cada categoría por separado`;
             loadCategory(editingCategoryId); elements.voteDialog.showModal();
             (elements.ratingOptions.find((button) => button.dataset.weeklyRating === selectedRating) || elements.categoryTabs.querySelector("button"))?.focus();
         }
@@ -300,7 +300,7 @@
         function submitVote(event) {
             event.preventDefault(); const week = currentWeek();
             if (!week || !editingParticipantId || !editingCategoryId) return;
-            if (!selectedRating) { showVoteError("Select a rating. Not evaluated is represented by no saved record for this category."); return; }
+            if (!selectedRating) { showVoteError("Selecciona una valoración. Sin evaluar significa que no hay un voto guardado."); return; }
             try {
                 const result = weekly.upsertVote(state(), {
                     weekId: week.id, participantId: editingParticipantId, categoryId: editingCategoryId,
@@ -309,7 +309,7 @@
                 });
                 const participantName = state().participants.find((participant) => participant.id === editingParticipantId)?.name;
                 commitState(result.state); loadCategory(editingCategoryId);
-                notify(`${participantName} · ${categoryLabel(editingCategoryId)}: ${ratingLabel(result.vote.rating)} saved.`);
+                notify(`${participantName} · ${categoryLabel(editingCategoryId)}: ${ratingLabel(result.vote.rating)} guardado.`);
             } catch (error) { showVoteError(error.message); }
         }
         function removeEvaluation() {
@@ -317,7 +317,7 @@
             try {
                 const result = weekly.removeVote(state(), week.id, editingParticipantId, editingCategoryId, activeUserId);
                 commitState(result.state); loadCategory(editingCategoryId);
-                notify(`${categoryLabel(editingCategoryId)} is now Not evaluated for ${currentVoter().name}.`);
+                notify(`${categoryLabel(editingCategoryId)} quedó sin evaluar para ${currentVoter().name}.`);
             } catch (error) { showVoteError(error.message); }
         }
         function assignLegacyCategory() {
@@ -326,7 +326,7 @@
             try {
                 const result = weekly.assignLegacyVoteCategory(state(), legacy.id, editingCategoryId);
                 commitState(result.state); loadCategory(editingCategoryId);
-                notify(`Legacy vote assigned to ${categoryLabel(editingCategoryId)}. Its ID, reasons and note were preserved.`);
+                notify(`Voto anterior asignado a ${categoryLabel(editingCategoryId)}. Se conservaron sus datos.`);
             } catch (error) { showVoteError(error.message); }
         }
 
@@ -335,31 +335,31 @@
             try {
                 const result = weekly.openCurrentIsoWeek(state()); selectedWeekId = result.week.id;
                 if (result.created || state().settings.activeWeekId !== result.week.id) commitState(result.state); else render();
-                notify(result.created ? `${result.week.label} opened for weekly voting.` : `${result.week.label} selected.`);
+                notify(result.created ? `${result.week.label} abierta para votar.` : `${result.week.label} seleccionada.`);
             } catch (error) { notify(error.message, "error"); }
         }
         function openCloseDialog() {
             const week = currentWeek(); if (!week || week.status !== "OPEN") return;
-            returnFocusElement = elements.closeWeek; elements.closeDialogTitle.textContent = `Close ${week.label}?`;
-            elements.closeDialogMessage.textContent = `${week.id} will become read-only. Votes, categories, reasons, notes and IDs will be preserved.`;
+            returnFocusElement = elements.closeWeek; elements.closeDialogTitle.textContent = `¿Cerrar ${week.label}?`;
+            elements.closeDialogMessage.textContent = "La semana quedará en modo de consulta. Se conservarán todos los votos.";
             elements.closeDialog.showModal(); elements.cancelCloseWeek.focus();
         }
         function closeCloseDialog() { if (elements.closeDialog.open) elements.closeDialog.close(); if (returnFocusElement?.isConnected) returnFocusElement.focus(); returnFocusElement = null; }
         function confirmCloseWeek() {
             const week = currentWeek(); if (!week) return;
-            try { const result = weekly.closeWeek(state(), week.id); commitState(result.state); closeCloseDialog(); notify(`${week.label} closed. Weekly results are now official and read-only.`); }
+            try { const result = weekly.closeWeek(state(), week.id); commitState(result.state); closeCloseDialog(); notify(`${week.label} cerrada. Los resultados ya son oficiales.`); }
             catch (error) { closeCloseDialog(); notify(error.message, "error"); }
         }
         function openReopenDialog() {
             const week = currentWeek(); if (!week || week.status !== "CLOSED") return;
-            returnFocusElement = elements.reopenWeek; elements.reopenDialogTitle.textContent = `Reopen ${week.label}?`;
-            elements.reopenDialogMessage.textContent = "This will allow weekly votes to be edited again. Existing votes and audit history remain intact.";
+            returnFocusElement = elements.reopenWeek; elements.reopenDialogTitle.textContent = `¿Reabrir ${week.label}?`;
+            elements.reopenDialogMessage.textContent = "Podrás volver a editar los votos. El historial se conservará.";
             elements.reopenDialog.showModal(); elements.cancelReopenWeek.focus();
         }
         function closeReopenDialog() { if (elements.reopenDialog.open) elements.reopenDialog.close(); if (returnFocusElement?.isConnected) returnFocusElement.focus(); returnFocusElement = null; }
         function confirmReopenWeek() {
             const week = currentWeek(); if (!week) return;
-            try { const result = weekly.reopenWeek(state(), week.id); commitState(result.state); closeReopenDialog(); notify(`${week.label} reopened. Category votes can be edited again.`); }
+            try { const result = weekly.reopenWeek(state(), week.id); commitState(result.state); closeReopenDialog(); notify(`${week.label} reabierta. Ya puedes editar los votos.`); }
             catch (error) { closeReopenDialog(); notify(error.message, "error"); }
         }
         function resetFilters() {
@@ -400,7 +400,7 @@
                 const button = event.target.closest("button[data-weekly-reason-id]"); if (!button) return;
                 const tagId = button.dataset.weeklyReasonId;
                 if (selectedReasonIds.has(tagId)) selectedReasonIds.delete(tagId);
-                else if (selectedReasonIds.size >= constants.MAX_WEEKLY_REASON_TAGS) { showVoteError(`Choose up to ${constants.MAX_WEEKLY_REASON_TAGS} weekly reasons.`); return; }
+                else if (selectedReasonIds.size >= constants.MAX_WEEKLY_REASON_TAGS) { showVoteError(`Elige hasta ${constants.MAX_WEEKLY_REASON_TAGS} motivos semanales.`); return; }
                 else selectedReasonIds.add(tagId);
                 showVoteError(); renderSelectedReasons(); renderReasonList();
             });

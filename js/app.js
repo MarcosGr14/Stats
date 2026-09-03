@@ -65,8 +65,12 @@
     }
 
     function groupName(groupId) {
-        if (!groupId) return "Soloist / No group";
-        return state.groups.find((group) => group.id === groupId)?.name || "Unknown group";
+        if (!groupId) return "Solista / Sin grupo";
+        return state.groups.find((group) => group.id === groupId)?.name || "Grupo desconocido";
+    }
+
+    function genderLabel(gender) {
+        return gender === "female" ? "Mujer" : "Hombre";
     }
 
     function setText(id, value) {
@@ -91,7 +95,7 @@
             ready: `Datos locales listos${legacyNote}`,
             initialized: `Estado V2 inicializado${legacyNote}`,
             migrated: "Datos preservados · módulos V2 actualizados",
-            "weekly-migrated": "Datos preservados · Weekly Voting listo",
+            "weekly-migrated": "Datos preservados · Votación semanal lista",
             "category-voting-migrated": "Datos preservados · Votos por categoría listos",
             invalid: "Datos V2 inválidos · edición bloqueada",
             unavailable: "Almacenamiento no disponible · edición bloqueada"
@@ -105,7 +109,7 @@
 
     function commitState(nextState) {
         if (!writable) {
-            throw new Error("Persistent storage is not available.");
+            throw new Error("El almacenamiento no está disponible.");
         }
         state = storage.save(nextState);
         renderAll();
@@ -119,7 +123,7 @@
         setText("active-count", active);
         setText("archived-count", archived);
         setText("group-count", state.groups.length);
-        setText("schema-version", `Schema v${constants.SCHEMA_VERSION}`);
+        setText("schema-version", "Datos locales");
         elements.participantCount.setAttribute(
             "aria-label",
             `${state.participants.length} participante${state.participants.length === 1 ? "" : "s"}`
@@ -128,7 +132,7 @@
 
     function renderGroupOptions(selectedValue = elements.groupSelect.value) {
         const fragment = document.createDocumentFragment();
-        const noGroup = createElement("option", "", "Soloist / No group");
+        const noGroup = createElement("option", "", "Solista / Sin grupo");
         noGroup.value = "";
         fragment.append(noGroup);
 
@@ -190,7 +194,7 @@
             remove.dataset.tagAction = "remove";
             remove.dataset.tagId = tag.id;
             remove.dataset.participantId = participantId;
-            remove.setAttribute("aria-label", `Remove ${tag.name}`);
+            remove.setAttribute("aria-label", `Quitar ${tag.name}`);
             chip.append(remove);
         }
         return chip;
@@ -198,7 +202,7 @@
 
     function renderTagFilterOptions(selectedValue = elements.tagFilter.value) {
         const fragment = document.createDocumentFragment();
-        const allOption = createElement("option", "", "All tags");
+        const allOption = createElement("option", "", "Todos");
         allOption.value = "all";
         fragment.append(allOption);
         [...state.tags]
@@ -233,7 +237,7 @@
         const fallback = createElement("span", "card-photo-fallback", initials(participant.name));
         photo.append(image, fallback);
         if (participant.archivedAt !== null) {
-            photo.append(createElement("span", "archived-badge", "Archived"));
+            photo.append(createElement("span", "archived-badge", "Archivado"));
         }
         if (participant.imageId) loadCardImage(participant.imageId, image, fallback);
 
@@ -250,24 +254,24 @@
         const activeTags = tagService.activeTagsForParticipant(state, participant.id).map((item) => item.tag);
         const tagPreview = createElement("div", "card-tag-preview");
         if (activeTags.length === 0) {
-            tagPreview.append(createElement("span", "card-tag-empty", "No tags yet"));
+            tagPreview.append(createElement("span", "card-tag-empty", "Sin tags"));
         } else {
             activeTags.slice(0, 3).forEach((tag) => tagPreview.append(createTagChip(tag)));
             if (activeTags.length > 3) {
-                tagPreview.append(createElement("span", "tag-more", `+${activeTags.length - 3} more`));
+                tagPreview.append(createElement("span", "tag-more", `+${activeTags.length - 3} más`));
             }
         }
         body.append(tagPreview);
 
         const meta = createElement("div", "participant-meta");
-        meta.append(createElement("span", "gender-label", participant.gender));
+        meta.append(createElement("span", "gender-label", genderLabel(participant.gender)));
         const actions = createElement("div", "card-actions");
         actions.append(
-            actionButton("View profile", "profile", participant.id),
-            actionButton("Manage tags", "tags", participant.id),
-            actionButton("Edit", "edit", participant.id),
-            actionButton(participant.archivedAt ? "Restore" : "Archive", participant.archivedAt ? "restore" : "archive", participant.id),
-            actionButton("Delete", "delete", participant.id)
+            actionButton("Ver perfil", "profile", participant.id),
+            actionButton("Administrar tags", "tags", participant.id),
+            actionButton("Editar", "edit", participant.id),
+            actionButton(participant.archivedAt ? "Restaurar" : "Archivar", participant.archivedAt ? "restore" : "archive", participant.id),
+            actionButton("Eliminar", "delete", participant.id)
         );
         meta.append(actions);
         body.append(meta);
@@ -293,16 +297,16 @@
         if (!isEmpty) return;
 
         if (hasParticipants) {
-            setText("empty-kicker", "No matching performers");
-            setText("empty-title", "No results found");
-            setText("empty-copy", "Try another search or clear the active filters.");
-            elements.emptyButton.textContent = "Reset filters";
+            setText("empty-kicker", "Sin coincidencias");
+            setText("empty-title", "No hay participantes con estos filtros");
+            setText("empty-copy", "Prueba otra búsqueda o limpia los filtros.");
+            elements.emptyButton.textContent = "Limpiar filtros";
             elements.emptyButton.dataset.action = "reset";
         } else {
-            setText("empty-kicker", "Your roster starts here");
-            setText("empty-title", "No participants yet");
-            setText("empty-copy", "Add your first performer and assign every category where they stand out.");
-            elements.emptyButton.textContent = "Add first participant";
+            setText("empty-kicker", "Tu lista empieza aquí");
+            setText("empty-title", "Aún no hay participantes");
+            setText("empty-copy", "Agrega tu primer participante.");
+            elements.emptyButton.textContent = "Agregar participante";
             elements.emptyButton.dataset.action = "add";
         }
     }
@@ -315,16 +319,16 @@
         elements.grid.replaceChildren(fragment);
 
         const statusLabel = elements.statusFilter.options[elements.statusFilter.selectedIndex].text.toLocaleLowerCase("es");
-        elements.resultSummary.textContent = `${filtered.length} ${statusLabel} performer${filtered.length === 1 ? "" : "s"}`;
+        elements.resultSummary.textContent = `${filtered.length} participante${filtered.length === 1 ? "" : "s"} ${filtered.length === 1 ? statusLabel.replace(/s$/, "") : statusLabel}`;
         renderEmptyState(filtered.length);
     }
 
     function renderRankingFilterOptions() {
         const selectedGroup = elements.rankingGroupFilter.value || "all";
         const groupFragment = document.createDocumentFragment();
-        const allGroups = createElement("option", "", "All Groups");
+        const allGroups = createElement("option", "", "Todos");
         allGroups.value = "all";
-        const soloists = createElement("option", "", "Soloist / No group");
+        const soloists = createElement("option", "", "Solistas / Sin grupo");
         soloists.value = "soloist";
         groupFragment.append(allGroups, soloists);
         [...state.groups]
@@ -341,7 +345,7 @@
 
         const selectedTag = elements.rankingTagFilter.value || "all";
         const tagFragment = document.createDocumentFragment();
-        const allTags = createElement("option", "", "All Tags");
+        const allTags = createElement("option", "", "Todos");
         allTags.value = "all";
         tagFragment.append(allTags);
         [...state.tags]
@@ -378,7 +382,7 @@
         row.dataset.archived = String(participant.archivedAt !== null);
         row.dataset.participantId = participant.id;
 
-        const status = createElement("span", "ranking-status", "Unranked");
+        const status = createElement("span", "ranking-status", "Sin ranking");
         const photo = createElement("div", "ranking-photo");
         const image = createElement("img");
         image.alt = `Foto de ${participant.name}`;
@@ -391,20 +395,20 @@
         const nameLine = createElement("div", "ranking-name-line");
         nameLine.append(createElement("h3", "", participant.name));
         if (participant.archivedAt !== null) {
-            nameLine.append(createElement("span", "ranking-archived", "Archived"));
+            nameLine.append(createElement("span", "ranking-archived", "Archivado"));
         }
-        copy.append(nameLine, createElement("p", "ranking-group", item.group ? item.group.name : "Soloist / No group"));
+        copy.append(nameLine, createElement("p", "ranking-group", item.group ? item.group.name : "Solista / Sin grupo"));
 
         const details = createElement("div", "ranking-details");
         details.append(createCategoryBadge(rankingCategory));
         const tags = createElement("div", "ranking-tags");
         item.tags.slice(0, 3).forEach((tag) => tags.append(createTagChip(tag)));
-        if (item.tags.length > 3) tags.append(createElement("span", "tag-more", `+${item.tags.length - 3} more`));
+        if (item.tags.length > 3) tags.append(createElement("span", "tag-more", `+${item.tags.length - 3} más`));
         if (item.tags.length > 0) details.append(tags);
-        details.append(createElement("span", "gender-label", participant.gender));
+        details.append(createElement("span", "gender-label", genderLabel(participant.gender)));
         copy.append(details);
 
-        const view = createElement("button", "button button--quiet ranking-view-button", "View participant");
+        const view = createElement("button", "button button--quiet ranking-view-button", "Ver perfil");
         view.type = "button";
         view.dataset.rankingParticipantId = participant.id;
         row.append(status, photo, copy, view);
@@ -421,14 +425,14 @@
             participant.archivedAt === null && participant.categoryIds.includes(rankingCategory)
         ));
         if (hasCategoryParticipants) {
-            elements.rankingEmptyTitle.textContent = "No participants match these filters.";
-            elements.rankingEmptyCopy.textContent = "Try another search or clear the active ranking filters.";
-            elements.rankingEmptyAction.textContent = "Reset filters";
+            elements.rankingEmptyTitle.textContent = "No hay participantes con estos filtros.";
+            elements.rankingEmptyCopy.textContent = "Prueba otra búsqueda o limpia los filtros.";
+            elements.rankingEmptyAction.textContent = "Limpiar filtros";
             elements.rankingEmptyAction.dataset.action = "reset";
         } else {
-            elements.rankingEmptyTitle.textContent = `No ${label} participants added yet.`;
-            elements.rankingEmptyCopy.textContent = "Add this category in Participant Manager to see performers here.";
-            elements.rankingEmptyAction.textContent = "Open Participants";
+            elements.rankingEmptyTitle.textContent = `Aún no hay participantes en ${label}.`;
+            elements.rankingEmptyCopy.textContent = "Agrega esta categoría desde Participantes.";
+            elements.rankingEmptyAction.textContent = "Abrir participantes";
             elements.rankingEmptyAction.dataset.action = "participants";
         }
     }
@@ -450,8 +454,8 @@
         if (activeTab) elements.rankingPanel.setAttribute("aria-labelledby", activeTab.id);
 
         const label = rankingCategoryLabel();
-        elements.rankingDirectoryTitle.textContent = `${label} directory`;
-        elements.rankingResultCount.textContent = `${result.items.length} performer${result.items.length === 1 ? "" : "s"}`;
+        elements.rankingDirectoryTitle.textContent = `Participantes de ${label}`;
+        elements.rankingResultCount.textContent = `${result.items.length} participante${result.items.length === 1 ? "" : "s"}`;
         renderRankingEmptyState(result);
     }
 
@@ -483,7 +487,7 @@
         if (activeView === "weekly") elements.navWeekly.setAttribute("aria-current", "page");
         if (activeView === "spotlight") elements.navSpotlight.setAttribute("aria-current", "page");
         if (activeView === "rankings") elements.navRankings.setAttribute("aria-current", "page");
-        const titles = { participants: "Participants", profile: "Participant Profile", weekly: "Weekly Voting", spotlight: "Weekly Spotlight", rankings: "Rankings" };
+        const titles = { participants: "Participantes", profile: "Perfil", weekly: "Votación semanal", spotlight: "Destacados de la semana", rankings: "Rankings" };
         const profileParticipant = activeView === "profile" ? findParticipant(profileIdFromLocation() || currentProfileId) : null;
         document.title = `${profileParticipant?.name || titles[activeView]} · Stats V2`;
         if (shouldRender) {
@@ -629,20 +633,20 @@
             if (!tag.predefined) {
                 const actions = createElement("div", "tag-catalog-actions");
                 const usage = tagService.tagUsage(state, tag.id);
-                const edit = createElement("button", "text-button", "Edit");
+                const edit = createElement("button", "text-button", "Editar");
                 edit.type = "button";
                 edit.dataset.tagAction = "edit-custom";
                 edit.dataset.tagId = tag.id;
                 edit.disabled = usage.totalReferences > 0;
                 edit.setAttribute(
                     "aria-label",
-                    usage.totalReferences > 0 ? `Edit ${tag.name}, unavailable while in use` : `Edit ${tag.name}`
+                    usage.totalReferences > 0 ? `Editar ${tag.name}, no disponible mientras esté en uso` : `Editar ${tag.name}`
                 );
-                const remove = createElement("button", "text-button text-button--danger", "Delete");
+                const remove = createElement("button", "text-button text-button--danger", "Eliminar");
                 remove.type = "button";
                 remove.dataset.tagAction = "delete-custom";
                 remove.dataset.tagId = tag.id;
-                remove.setAttribute("aria-label", `Delete custom tag ${tag.name}`);
+                remove.setAttribute("aria-label", `Eliminar tag personalizado ${tag.name}`);
                 actions.append(edit, remove);
                 row.append(actions);
             }
@@ -656,7 +660,7 @@
     function renderTagDialog() {
         const participant = findParticipant(tagParticipantId);
         if (!participant) return;
-        elements.tagDialogTitle.textContent = `Manage ${participant.name}`;
+        elements.tagDialogTitle.textContent = `Administrar tags de ${participant.name}`;
         elements.tagDialogIdentity.textContent = groupName(participant.groupId);
         renderAssignedTags();
         renderTagCatalog();
@@ -668,16 +672,16 @@
         elements.customTagId.value = "";
         elements.customTagAssignField.hidden = false;
         elements.customTagError.textContent = "";
-        elements.customTagFormTitle.textContent = "Create custom tag";
-        elements.saveCustomTag.textContent = "Create and assign";
+        elements.customTagFormTitle.textContent = "Crear tag personalizado";
+        elements.saveCustomTag.textContent = "Crear y asignar";
     }
 
     function updateCustomTagSubmitLabel() {
         if (elements.customTagId.value) {
-            elements.saveCustomTag.textContent = "Save changes";
+            elements.saveCustomTag.textContent = "Guardar cambios";
             return;
         }
-        elements.saveCustomTag.textContent = elements.assignCustomTag.checked ? "Create and assign" : "Create tag";
+        elements.saveCustomTag.textContent = elements.assignCustomTag.checked ? "Crear y asignar" : "Crear tag";
     }
 
     function showCustomTagForm(tag = null) {
@@ -688,7 +692,7 @@
         elements.customTagCategory.value = tag ? tag.categoryId : "general";
         elements.customTagType.value = tag ? tag.type : "neutral";
         elements.customTagAssignField.hidden = Boolean(tag);
-        elements.customTagFormTitle.textContent = tag ? `Edit ${tag.name}` : "Create custom tag";
+        elements.customTagFormTitle.textContent = tag ? `Editar ${tag.name}` : "Crear tag personalizado";
         updateCustomTagSubmitLabel();
         requestAnimationFrame(() => elements.customTagName.focus());
     }
@@ -804,7 +808,7 @@
         if (!tag || tag.predefined) return;
         const usage = tagService.tagUsage(state, tag.id);
         pendingTagDeleteId = tag.id;
-        elements.tagDeleteDialogTitle.textContent = `Delete ${tag.name}?`;
+        elements.tagDeleteDialogTitle.textContent = `¿Eliminar ${tag.name}?`;
         elements.confirmTagDelete.disabled = usage.totalReferences > 0;
         elements.tagDeleteDialogMessage.textContent = usage.totalReferences > 0
             ? `${tag.name} conserva ${usage.totalAssignments} relación(es) de perfil y ${usage.reasonVoteCount} razón(es) semanales. No puede borrarse ni romper el historial.`
@@ -906,9 +910,9 @@
 
         const participant = participantId ? findParticipant(participantId) : null;
         elements.participantId.value = participant ? participant.id : "";
-        elements.dialogKicker.textContent = participant ? "Edit roster entry" : "New roster entry";
-        elements.dialogTitle.textContent = participant ? `Edit ${participant.name}` : "Add participant";
-        elements.saveButton.textContent = participant ? "Save changes" : "Save participant";
+        elements.dialogKicker.textContent = participant ? "Editar participante" : "Nuevo participante";
+        elements.dialogTitle.textContent = participant ? `Editar ${participant.name}` : "Agregar participante";
+        elements.saveButton.textContent = participant ? "Guardar cambios" : "Guardar participante";
         elements.name.value = participant ? participant.name : "";
         renderGroupOptions(participant ? participant.groupId : "");
 
@@ -957,7 +961,7 @@
             valid = false;
         }
         if (!gender) {
-            elements.genderError.textContent = "Selecciona Male o Female.";
+            elements.genderError.textContent = "Selecciona Mujer u Hombre.";
             valid = false;
         }
         if (categoryIds.length === 0) {
@@ -1033,7 +1037,7 @@
                 });
 
             elements.saveButton.disabled = true;
-            elements.saveButton.textContent = "Saving…";
+            elements.saveButton.textContent = "Guardando…";
 
             if (imageRecord) {
                 try {
@@ -1060,7 +1064,7 @@
                 imageCleanupSucceeded = await safelyDeleteImage(previousImageId);
             }
 
-            const message = current ? `${domainResult.participant.name} actualizado.` : `${domainResult.participant.name} añadido al roster.`;
+            const message = current ? `${domainResult.participant.name} actualizado.` : `${domainResult.participant.name} agregado.`;
             closeParticipantDialog();
             showToast(
                 imageCleanupSucceeded ? message : `${message} La imagen anterior queda pendiente de limpieza.`,
@@ -1070,7 +1074,7 @@
             handleParticipantError(error);
         } finally {
             elements.saveButton.disabled = false;
-            elements.saveButton.textContent = current ? "Save changes" : "Save participant";
+            elements.saveButton.textContent = current ? "Guardar cambios" : "Guardar participante";
         }
     }
 
@@ -1162,19 +1166,19 @@
         const participant = findParticipant(participantId);
         const deletion = participantService.canDeleteParticipant(state, participantId);
         deleteParticipantId = participantId;
-        elements.deleteDialogTitle.textContent = deletion.allowed ? `Delete ${participant.name}?` : `Archive ${participant.name}?`;
+        elements.deleteDialogTitle.textContent = deletion.allowed ? `¿Eliminar ${participant.name}?` : `¿Archivar ${participant.name}?`;
 
         if (deletion.allowed) {
             elements.deleteDialogMessage.textContent = `${participant.name} no tiene historial relacionado. Se eliminará permanentemente.`;
-            elements.confirmDelete.textContent = "Delete permanently";
+            elements.confirmDelete.textContent = "Eliminar permanentemente";
             elements.confirmDelete.dataset.mode = "delete";
         } else if (participant.archivedAt === null) {
             elements.deleteDialogMessage.textContent = `${participant.name} tiene relaciones históricas y no puede borrarse. Puedes archivarlo conservando todos sus datos.`;
-            elements.confirmDelete.textContent = "Archive participant";
+            elements.confirmDelete.textContent = "Archivar participante";
             elements.confirmDelete.dataset.mode = "archive";
         } else {
             elements.deleteDialogMessage.textContent = `${participant.name} tiene relaciones históricas, por eso debe permanecer archivado.`;
-            elements.confirmDelete.textContent = "Keep archived";
+            elements.confirmDelete.textContent = "Mantener archivado";
             elements.confirmDelete.dataset.mode = "close";
         }
 

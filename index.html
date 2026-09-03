@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Stats V2: administra participantes y registra votaciones semanales P1/P2 con datos locales.">
     <meta name="theme-color" content="#0B0B0F">
-    <title>Participants · Stats V2</title>
+    <title>Participantes · Stats V2</title>
     <link rel="stylesheet" href="css/global.css?v=2.7.0">
     <link rel="stylesheet" href="css/components.css?v=2.7.0">
     <link rel="stylesheet" href="css/app.css?v=2.7.0">
@@ -38,20 +38,20 @@
                 <span class="brand-mark" aria-hidden="true">S</span>
                 <span class="brand-copy">
                     <strong>STATS</strong>
-                    <small>Performance index</small>
+                    <small>Seguimiento personal</small>
                 </span>
             </a>
 
             <nav class="primary-nav" aria-label="Navegación principal">
-                <a id="nav-participants" href="#participants" aria-current="page">Participants</a>
-                <a id="nav-weekly" href="#weekly">Weekly</a>
-                <a id="nav-spotlight" href="#spotlight">Spotlight</a>
+                <a id="nav-participants" href="#participants" aria-current="page">Participantes</a>
+                <a id="nav-weekly" href="#weekly">Votación</a>
+                <a id="nav-spotlight" href="#spotlight">Destacados</a>
                 <a id="nav-rankings" href="#rankings">Rankings</a>
             </nav>
 
-            <div class="build-status" title="Fase actual del proyecto">
+            <div class="build-status" title="Estado de la app">
                 <span class="status-dot" aria-hidden="true"></span>
-                Phase 7A · Core Analytics
+                Datos locales
             </div>
         </header>
 
@@ -59,24 +59,24 @@
             <section class="participant-manager" id="participants" aria-labelledby="participants-title">
                 <header class="manager-header">
                     <div>
-                        <p class="eyebrow">Roster management · 2026 season</p>
+                        <p class="eyebrow">Temporada 2026</p>
                         <div class="title-row">
-                            <h1 id="participants-title">Participants</h1>
+                            <h1 id="participants-title">Participantes</h1>
                             <span id="participant-count" class="title-count" aria-label="0 participantes">0</span>
                         </div>
                         <p class="manager-intro">
-                            Una persona, múltiples disciplinas. Construye tu roster sin duplicar performers.
+                            Organiza tus participantes por disciplinas.
                         </p>
                     </div>
                     <button class="button button--primary" id="add-participant" type="button">
-                        <span aria-hidden="true">＋</span> Add participant
+                        <span aria-hidden="true">＋</span> Agregar participante
                     </button>
                 </header>
 
                 <div class="roster-stats" aria-label="Resumen del roster">
-                    <p><strong id="active-count">0</strong><span>Active</span></p>
-                    <p><strong id="archived-count">0</strong><span>Archived</span></p>
-                    <p><strong id="group-count">0</strong><span>Groups</span></p>
+                    <p><strong id="active-count">0</strong><span>Activos</span></p>
+                    <p><strong id="archived-count">0</strong><span>Archivados</span></p>
+                    <p><strong id="group-count">0</strong><span>Grupos</span></p>
                     <p id="storage-status" class="storage-status" role="status">Comprobando almacenamiento…</p>
                 </div>
 
@@ -84,80 +84,80 @@
                     <label class="search-control" for="participant-search">
                         <span aria-hidden="true">⌕</span>
                         <span class="sr-only">Buscar participantes</span>
-                        <input id="participant-search" type="search" placeholder="Search participants..." autocomplete="off">
+                        <input id="participant-search" type="search" placeholder="Buscar participantes..." autocomplete="off">
                     </label>
 
                     <label class="select-control" for="gender-filter">
-                        <span>Gender</span>
+                        <span>Género</span>
                         <select id="gender-filter">
-                            <option value="all">All</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
+                            <option value="all">Todos</option>
+                            <option value="male">Hombres</option>
+                            <option value="female">Mujeres</option>
                         </select>
                     </label>
 
                     <label class="select-control" for="status-filter">
-                        <span>Status</span>
+                        <span>Estado</span>
                         <select id="status-filter">
-                            <option value="active">Active</option>
-                            <option value="archived">Archived</option>
-                            <option value="all">All</option>
+                            <option value="active">Activos</option>
+                            <option value="archived">Archivados</option>
+                            <option value="all">Todos</option>
                         </select>
                     </label>
 
                     <label class="select-control" for="category-filter">
-                        <span>Category</span>
+                        <span>Categoría</span>
                         <select id="category-filter">
-                            <option value="all">All categories</option>
+                            <option value="all">Todas</option>
                             <option value="vocal">Vocal</option>
                             <option value="rap">Rap</option>
-                            <option value="dance">Dance</option>
-                            <option value="stage">Stage</option>
+                            <option value="dance">Baile</option>
+                            <option value="stage">Escenario</option>
                             <option value="visual">Visual</option>
-                            <option value="all-rounder">All-rounder</option>
+                            <option value="all-rounder">Integral</option>
                         </select>
                     </label>
 
                     <label class="select-control" for="tag-filter">
                         <span>Tag</span>
                         <select id="tag-filter">
-                            <option value="all">All tags</option>
+                        <option value="all">Todos</option>
                         </select>
                     </label>
 
                     <label class="select-control" for="sort-participants">
-                        <span>Sort</span>
+                        <span>Orden</span>
                         <select id="sort-participants">
                             <option value="a-z">A–Z</option>
-                            <option value="recent">Recently added</option>
+                            <option value="recent">Más recientes</option>
                         </select>
                     </label>
 
-                    <button class="button button--quiet toolbar-reset" id="reset-filters" type="button">Reset</button>
+                    <button class="button button--quiet toolbar-reset" id="reset-filters" type="button">Limpiar</button>
                 </section>
 
                 <div class="results-heading">
-                    <p id="result-summary">0 active performers</p>
-                    <p>Local-first · Saved on this device</p>
+                    <p id="result-summary">0 participantes activos</p>
+                    <p>Guardado en este dispositivo</p>
                 </div>
 
                 <div class="participant-grid" id="participant-grid" aria-live="polite"></div>
 
                 <div class="manager-empty" id="participant-empty">
                     <div class="empty-orbit" aria-hidden="true"><span>＋</span></div>
-                    <p class="eyebrow" id="empty-kicker">Your roster starts here</p>
-                    <h2 id="empty-title">No participants yet</h2>
-                    <p id="empty-copy">Add your first performer and assign every category where they stand out.</p>
-                    <button class="button button--secondary" id="empty-add-participant" type="button">Add first participant</button>
+                    <p class="eyebrow" id="empty-kicker">Tu lista empieza aquí</p>
+                    <h2 id="empty-title">Aún no hay participantes</h2>
+                    <p id="empty-copy">Agrega tu primer participante.</p>
+                    <button class="button button--secondary" id="empty-add-participant" type="button">Agregar participante</button>
                 </div>
             </section>
 
             <section class="profile-view" id="profile" aria-labelledby="profile-name" hidden>
                 <div class="profile-top-actions">
-                    <button class="button button--quiet" id="profile-back" type="button"><span aria-hidden="true">←</span> Back</button>
+                    <button class="button button--quiet" id="profile-back" type="button"><span aria-hidden="true">←</span> Volver</button>
                     <div>
-                        <button class="button button--quiet" id="profile-manage-tags" type="button">Manage Tags</button>
-                        <button class="button button--secondary" id="profile-edit" type="button">Edit Participant</button>
+                        <button class="button button--quiet" id="profile-manage-tags" type="button">Administrar tags</button>
+                        <button class="button button--secondary" id="profile-edit" type="button">Editar</button>
                     </div>
                 </div>
 
@@ -167,94 +167,89 @@
                         <span id="profile-photo-fallback" aria-hidden="true">ST</span>
                     </div>
                     <div class="profile-identity">
-                        <p class="eyebrow">Artist dossier · Performance record</p>
+                        <p class="eyebrow">Perfil e historial</p>
                         <div class="profile-name-row">
-                            <h1 id="profile-name">Participant</h1>
-                            <span class="profile-status" id="profile-status">Active</span>
+                            <h1 id="profile-name">Participante</h1>
+                            <span class="profile-status" id="profile-status">Activo</span>
                         </div>
-                        <p class="profile-group" id="profile-group">Soloist / No group</p>
+                        <p class="profile-group" id="profile-group">Solista / Sin grupo</p>
                         <div class="profile-identity-meta">
-                            <span id="profile-gender">Female</span>
+                            <span id="profile-gender">Mujer</span>
                             <div class="profile-category-chips" id="profile-category-chips"></div>
                         </div>
                     </div>
-                    <div class="profile-header-metrics" aria-label="Profile summary">
-                        <p><strong id="profile-wins">0</strong><span>Wins</span></p>
+                    <div class="profile-header-metrics" aria-label="Resumen del perfil">
+                        <p><strong id="profile-wins">0</strong><span>Victorias</span></p>
                         <p><strong id="profile-top-three">0</strong><span>Top 3</span></p>
-                        <p><strong id="profile-weeks">0</strong><span>Weeks</span></p>
-                        <p><strong id="profile-categories">0</strong><span>Categories</span></p>
+                        <p><strong id="profile-weeks">0</strong><span>Semanas</span></p>
+                        <p><strong id="profile-categories">0</strong><span>Categorías</span></p>
                     </div>
                 </header>
 
                 <section class="profile-section profile-summary" aria-labelledby="profile-summary-title">
                     <div class="section-heading section-heading--compact">
-                        <div><p class="micro-label">Career snapshot</p><h2 id="profile-summary-title">Summary</h2></div>
-                        <p>Derived from weekly voting history</p>
+                        <div><p class="micro-label">Historial general</p><h2 id="profile-summary-title">Resumen</h2></div>
                     </div>
                     <div class="profile-summary-grid">
-                        <article><span>Best Week</span><strong id="profile-best-week">Not evaluated</strong></article>
-                        <article><span>Most Praised</span><strong id="profile-most-praised">No weekly praise yet</strong></article>
-                        <article><span>Most Wins Category</span><strong id="profile-most-wins">No wins yet</strong></article>
+                        <article><span>Mejor semana</span><strong id="profile-best-week">Sin evaluar</strong></article>
+                        <article><span>Más elogiado</span><strong id="profile-most-praised">Aún sin elogios</strong></article>
+                        <article><span>Más victorias</span><strong id="profile-most-wins">Aún sin victorias</strong></article>
                     </div>
                 </section>
 
                 <section class="profile-section profile-tags" aria-labelledby="profile-tags-title">
                     <div class="section-heading section-heading--compact">
-                        <div><p class="micro-label">Permanent traits</p><h2 id="profile-tags-title">Profile Tags</h2></div>
-                        <p>Profile traits are separate from weekly praise</p>
+                        <div><p class="micro-label">Rasgos permanentes</p><h2 id="profile-tags-title">Tags del perfil</h2></div>
                     </div>
                     <div class="profile-tag-groups" id="profile-tag-groups"></div>
                 </section>
 
                 <section class="profile-section" aria-labelledby="profile-categories-title">
                     <div class="section-heading section-heading--compact">
-                        <div><p class="micro-label">Independent disciplines</p><h2 id="profile-categories-title">Category Records</h2></div>
-                        <p>No category scores are combined</p>
+                        <div><p class="micro-label">Por disciplina</p><h2 id="profile-categories-title">Resultados por categoría</h2></div>
                     </div>
                     <div class="profile-category-grid" id="profile-category-grid"></div>
                 </section>
 
                 <section class="profile-section profile-trend-section" aria-labelledby="profile-trend-title">
                     <div class="section-heading section-heading--compact">
-                        <div><p class="micro-label">Week by week</p><h2 id="profile-trend-title">Performance Trend</h2></div>
-                        <p>Not evaluated is shown as a gap, never as zero</p>
+                        <div><p class="micro-label">Semana a semana</p><h2 id="profile-trend-title">Evolución</h2></div>
+                        <p>Sin evaluar aparece como un espacio.</p>
                     </div>
-                    <div class="profile-category-tabs" id="profile-trend-tabs" role="tablist" aria-label="Trend category"></div>
-                    <div class="profile-trend-chart" id="profile-trend-chart" role="img" aria-label="Performance trend"></div>
+                    <div class="profile-category-tabs" id="profile-trend-tabs" role="tablist" aria-label="Categoría de la evolución"></div>
+                    <div class="profile-trend-chart" id="profile-trend-chart" role="img" aria-label="Evolución"></div>
                     <p class="sr-only" id="profile-trend-summary"></p>
                 </section>
 
                 <section class="profile-section profile-praise" aria-labelledby="profile-praise-title">
                     <div class="section-heading section-heading--compact">
-                        <div><p class="micro-label">Historical reasons</p><h2 id="profile-praise-title">Weekly Praise</h2></div>
-                        <p>Derived only from weekly reason tags</p>
+                        <div><p class="micro-label">Motivos históricos</p><h2 id="profile-praise-title">Elogios semanales</h2></div>
                     </div>
                     <div class="profile-praise-grid">
-                        <div><h3>Most Praised</h3><div id="profile-top-reasons"></div></div>
-                        <div><h3>Historical Badges</h3><div id="profile-badge-counts"></div></div>
+                        <div><h3>Más elogiado</h3><div id="profile-top-reasons"></div></div>
+                        <div><h3>Distinciones</h3><div id="profile-badge-counts"></div></div>
                     </div>
                 </section>
 
                 <section class="profile-section" aria-labelledby="profile-wins-title">
                     <div class="section-heading section-heading--compact">
-                        <div><p class="micro-label">First-place record</p><h2 id="profile-wins-title">Wins</h2></div>
-                        <p>Joint winners count as one full win</p>
+                        <div><p class="micro-label">Primeros lugares</p><h2 id="profile-wins-title">Victorias</h2></div>
+                        <p>Los empates también cuentan.</p>
                     </div>
                     <div class="profile-win-list" id="profile-win-list"></div>
                 </section>
 
                 <section class="profile-section" aria-labelledby="profile-history-title">
                     <div class="profile-history-heading">
-                        <div><p class="micro-label">Complete record</p><h2 id="profile-history-title">Weekly History</h2></div>
+                        <div><p class="micro-label">Registro completo</p><h2 id="profile-history-title">Historial semanal</h2></div>
                         <div class="profile-history-controls">
-                            <label class="select-control" for="profile-history-category"><span>Category</span><select id="profile-history-category"><option value="all">All Categories</option></select></label>
-                            <label class="select-control" for="profile-history-order"><span>Order</span><select id="profile-history-order"><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select></label>
+                            <label class="select-control" for="profile-history-category"><span>Categoría</span><select id="profile-history-category"><option value="all">Todas</option></select></label>
+                            <label class="select-control" for="profile-history-order"><span>Orden</span><select id="profile-history-order"><option value="newest">Más recientes</option><option value="oldest">Más antiguas</option></select></label>
                         </div>
                     </div>
                     <div class="profile-history-list" id="profile-history-list"></div>
                     <div class="profile-history-empty" id="profile-history-empty" role="status" hidden>
-                        <h3>No evaluations in this category</h3>
-                        <p>Not evaluated weeks are not converted into zero-point records.</p>
+                        <h3>Aún no hay votos en esta categoría</h3>
                     </div>
                 </section>
             </section>
@@ -262,109 +257,108 @@
             <section class="weekly-view" id="weekly" aria-labelledby="weekly-title" hidden>
                 <header class="weekly-header">
                     <div>
-                        <p class="eyebrow">Two-person review · America/Panama</p>
+                        <p class="eyebrow">Votos de P1 y P2</p>
                         <div class="weekly-title-row">
-                            <h1 id="weekly-title">Weekly Voting</h1>
-                            <span class="week-status" id="weekly-status">No week</span>
+                            <h1 id="weekly-title">Votación semanal</h1>
+                            <span class="week-status" id="weekly-status">Sin semana</span>
                         </div>
-                        <p class="manager-intro">Cada categoría tiene su propia evaluación. Normal es una evaluación; Not evaluated es ausencia de voto en esa categoría.</p>
+                        <p class="manager-intro">Cada categoría se evalúa por separado.</p>
                     </div>
                     <div class="week-actions">
                         <label class="select-control" for="weekly-week-select">
-                            <span>Week</span>
+                            <span>Semana</span>
                             <select id="weekly-week-select" aria-describedby="weekly-week-range">
-                                <option value="">No weeks yet</option>
+                                <option value="">Aún no hay semanas</option>
                             </select>
                         </label>
-                        <button class="button button--primary" id="open-current-week" type="button">Open current ISO week</button>
-                        <button class="button button--danger" id="close-current-week" type="button" hidden>Close Week</button>
-                        <button class="button button--secondary" id="reopen-current-week" type="button" hidden>Reopen Week</button>
+                        <button class="button button--primary" id="open-current-week" type="button">Abrir semana actual</button>
+                        <button class="button button--danger" id="close-current-week" type="button" hidden>Cerrar semana</button>
+                        <button class="button button--secondary" id="reopen-current-week" type="button" hidden>Reabrir semana</button>
                     </div>
                 </header>
 
                 <div class="weekly-empty" id="weekly-empty" role="status">
                     <span aria-hidden="true">W</span>
-                    <h2>No weekly voting session yet</h2>
-                    <p>Opening a week is always explicit. Existing roster, tags and photos stay unchanged.</p>
+                    <h2>Aún no hay una semana abierta</h2>
+                    <p>Abre la semana actual para comenzar.</p>
                 </div>
 
                 <div id="weekly-workspace" hidden>
                     <section class="week-overview" aria-labelledby="weekly-period-title">
                         <div>
-                            <p class="micro-label">Selected week</p>
-                            <h2 id="weekly-period-title">Week</h2>
+                            <p class="micro-label">Semana seleccionada</p>
+                            <h2 id="weekly-period-title">Semana</h2>
                             <p id="weekly-week-range"></p>
                         </div>
                         <div class="weekly-user-panel">
-                            <p class="micro-label">Voting as</p>
-                            <div class="user-switch" id="weekly-user-switch" role="group" aria-label="Current voter"></div>
+                            <p class="micro-label">Votando como</p>
+                            <div class="user-switch" id="weekly-user-switch" role="group" aria-label="Votante actual"></div>
                             <p id="weekly-voter-clarity" aria-live="polite"></p>
                         </div>
-                        <div class="weekly-progress" aria-label="Weekly voting progress">
-                            <p><strong id="weekly-evaluated-count">0</strong><span>Evaluated</span></p>
-                            <p class="standout-progress" id="weekly-standout-progress"><strong id="weekly-standout-count">0 / 5</strong><span>Standouts</span></p>
-                            <p><strong id="weekly-standout-remaining">5</strong><span>Remaining</span></p>
+                        <div class="weekly-progress" aria-label="Progreso de la votación">
+                            <p><strong id="weekly-evaluated-count">0</strong><span>Evaluados</span></p>
+                            <p class="standout-progress" id="weekly-standout-progress"><strong id="weekly-standout-count">0/5</strong><span>Destacados</span></p>
+                            <p><strong id="weekly-standout-remaining">5</strong><span>Restantes</span></p>
                         </div>
                     </section>
 
                     <div class="weekly-legacy-warning" id="weekly-legacy-warning" role="status" hidden>
-                        <strong>Uncategorized legacy votes need review.</strong>
+                        <strong>Hay votos antiguos por revisar.</strong>
                         <span id="weekly-legacy-warning-copy"></span>
                     </div>
 
-                    <section class="weekly-toolbar" aria-label="Search and filter weekly participants">
+                    <section class="weekly-toolbar" aria-label="Buscar y filtrar participantes">
                         <label class="search-control weekly-search" for="weekly-search">
                             <span aria-hidden="true">⌕</span>
                             <span class="sr-only">Buscar participante o grupo</span>
-                            <input id="weekly-search" type="search" placeholder="Search participant or group..." autocomplete="off">
+                            <input id="weekly-search" type="search" placeholder="Buscar participante o grupo..." autocomplete="off">
                         </label>
                         <label class="select-control" for="weekly-category-filter">
-                            <span>Category</span>
+                            <span>Categoría</span>
                             <select id="weekly-category-filter">
-                                <option value="all">All categories</option>
+                                <option value="all">Todas</option>
                                 <option value="vocal">Vocal</option>
                                 <option value="rap">Rap</option>
-                                <option value="dance">Dance</option>
-                                <option value="stage">Stage</option>
+                                <option value="dance">Baile</option>
+                                <option value="stage">Escenario</option>
                                 <option value="visual">Visual</option>
-                                <option value="all-rounder">All-rounder</option>
+                                <option value="all-rounder">Integral</option>
                             </select>
                         </label>
                         <label class="select-control" for="weekly-gender-filter">
-                            <span>Gender</span>
+                            <span>Género</span>
                             <select id="weekly-gender-filter">
-                                <option value="all">All</option>
-                                <option value="female">Female</option>
-                                <option value="male">Male</option>
+                                <option value="all">Todos</option>
+                                <option value="female">Mujeres</option>
+                                <option value="male">Hombres</option>
                             </select>
                         </label>
                         <label class="select-control" for="weekly-group-filter">
-                            <span>Group</span>
-                            <select id="weekly-group-filter"><option value="all">All groups</option></select>
+                            <span>Grupo</span>
+                            <select id="weekly-group-filter"><option value="all">Todos</option></select>
                         </label>
                         <label class="select-control" for="weekly-evaluation-filter">
-                            <span>Evaluation</span>
+                            <span>Evaluación</span>
                             <select id="weekly-evaluation-filter">
-                                <option value="all">All</option>
-                                <option value="evaluated">Evaluated</option>
-                                <option value="not-evaluated">Not evaluated</option>
-                                <option value="standout">Standout</option>
-                                <option value="impressed">Impressed</option>
-                                <option value="good">Good</option>
+                                <option value="all">Todas</option>
+                                <option value="evaluated">Evaluados</option>
+                                <option value="not-evaluated">Sin evaluar</option>
+                                <option value="standout">Destacado</option>
+                                <option value="impressed">Impresionó</option>
+                                <option value="good">Bien</option>
                                 <option value="normal">Normal</option>
                             </select>
                         </label>
-                        <button class="button button--quiet" id="reset-weekly-filters" type="button">Reset</button>
+                        <button class="button button--quiet" id="reset-weekly-filters" type="button">Limpiar</button>
                     </section>
 
                     <div class="weekly-results-heading">
-                        <p id="weekly-results-summary">0 active performers</p>
-                        <p id="weekly-readonly-copy">OPEN · Votes can be edited</p>
+                        <p id="weekly-results-summary">0 participantes</p>
+                        <p id="weekly-readonly-copy">ABIERTA · Puedes editar los votos</p>
                     </div>
                     <div class="weekly-grid" id="weekly-grid" aria-live="polite"></div>
                     <div class="weekly-no-results" id="weekly-no-results" role="status" hidden>
-                        <h2>No participants match these filters</h2>
-                        <p>Try another search or reset the weekly filters.</p>
+                        <h2>No hay participantes con estos filtros</h2>
                     </div>
                 </div>
             </section>
@@ -372,42 +366,42 @@
             <section class="spotlight-view" id="spotlight" aria-labelledby="spotlight-title" hidden>
                 <header class="spotlight-header">
                     <div>
-                        <p class="eyebrow">Weekly results · Derived, never stored</p>
+                        <p class="eyebrow">Resultados semanales</p>
                         <div class="spotlight-title-row">
-                            <h1 id="spotlight-title">Weekly Spotlight</h1>
-                            <span class="spotlight-mode spotlight-mode--empty" id="spotlight-mode">No week</span>
+                            <h1 id="spotlight-title">Destacados de la semana</h1>
+                            <span class="spotlight-mode spotlight-mode--empty" id="spotlight-mode">Sin semana</span>
                         </div>
-                        <p class="manager-intro" id="spotlight-intro">Cada disciplina tiene resultados Female y Male independientes.</p>
+                        <p class="manager-intro" id="spotlight-intro">Resultados separados para mujeres y hombres.</p>
                     </div>
                     <label class="select-control spotlight-week-control" for="spotlight-week-select">
-                        <span>Week</span>
-                        <select id="spotlight-week-select"><option value="">No weeks yet</option></select>
+                        <span>Semana</span>
+                        <select id="spotlight-week-select"><option value="">Aún no hay semanas</option></select>
                     </label>
                 </header>
 
                 <div class="spotlight-empty" id="spotlight-empty" role="status">
                     <span aria-hidden="true">◇</span>
-                    <h2>No weekly results yet</h2>
-                    <p>Open a week in Weekly Voting and record evaluations to build a live ranking.</p>
+                    <h2>Aún no hay resultados</h2>
+                    <p>Abre una semana y registra votos.</p>
                 </div>
 
                 <div id="spotlight-workspace" hidden>
-                    <section class="spotlight-selector" aria-label="Weekly Spotlight filters">
-                        <div class="spotlight-category-tabs" id="spotlight-category-tabs" role="tablist" aria-label="Result category"></div>
-                        <div class="spotlight-gender-switch" id="spotlight-gender-switch" role="group" aria-label="Result gender">
-                            <button type="button" data-spotlight-gender="female" aria-pressed="true">Female</button>
-                            <button type="button" data-spotlight-gender="male" aria-pressed="false">Male</button>
+                    <section class="spotlight-selector" aria-label="Filtros de resultados">
+                        <div class="spotlight-category-tabs" id="spotlight-category-tabs" role="tablist" aria-label="Categoría"></div>
+                        <div class="spotlight-gender-switch" id="spotlight-gender-switch" role="group" aria-label="Género">
+                            <button type="button" data-spotlight-gender="female" aria-pressed="true">Mujeres</button>
+                            <button type="button" data-spotlight-gender="male" aria-pressed="false">Hombres</button>
                         </div>
                     </section>
 
                     <section class="spotlight-hero" aria-labelledby="spotlight-result-title">
                         <div>
-                            <p class="micro-label" id="spotlight-result-kicker">Live ranking</p>
-                            <h2 id="spotlight-result-title">Female Vocal</h2>
+                            <p class="micro-label" id="spotlight-result-kicker">Resultados en vivo</p>
+                            <h2 id="spotlight-result-title">Vocal femenino</h2>
                             <p id="spotlight-week-range"></p>
                         </div>
                         <div class="spotlight-praised" id="spotlight-praised" hidden>
-                            <span>Most Praised Skill</span>
+                            <span>Habilidad más destacada</span>
                             <strong id="spotlight-praised-name"></strong>
                             <small id="spotlight-praised-count"></small>
                         </div>
@@ -416,10 +410,10 @@
                     <section class="spotlight-top-section" aria-labelledby="spotlight-top-title">
                         <div class="section-heading section-heading--compact">
                             <div>
-                                <p class="micro-label">Podium</p>
+                            <p class="micro-label">Podio</p>
                                 <h2 id="spotlight-top-title">Top 3</h2>
                             </div>
-                            <p id="spotlight-winner-copy">Provisional weekly leaders</p>
+                            <p id="spotlight-winner-copy">Resultados provisionales</p>
                         </div>
                         <div class="spotlight-podium" id="spotlight-podium" aria-live="polite"></div>
                     </section>
@@ -427,25 +421,24 @@
                     <section class="spotlight-ranking-section" aria-labelledby="spotlight-ranking-title">
                         <div class="section-heading section-heading--compact">
                             <div>
-                                <p class="micro-label">All evaluated</p>
-                                <h2 id="spotlight-ranking-title">Full Weekly Ranking</h2>
+                                <p class="micro-label">Todos los evaluados</p>
+                                <h2 id="spotlight-ranking-title">Ranking completo</h2>
                             </div>
                             <p id="spotlight-ranking-summary">0 evaluated</p>
                         </div>
                         <div class="spotlight-ranking-list" id="spotlight-ranking-list"></div>
                         <div class="spotlight-result-empty" id="spotlight-result-empty" role="status" hidden>
-                            <h3>No evaluated performers</h3>
-                            <p>Normal ratings appear here with 0 points. Not evaluated means no vote exists.</p>
+                            <h3>Aún no hay votos</h3>
                         </div>
                     </section>
 
                     <section class="spotlight-recap" aria-labelledby="spotlight-recap-title">
                         <div class="section-heading section-heading--compact">
                             <div>
-                                <p class="micro-label">All categories</p>
-                                <h2 id="spotlight-recap-title">Weekly Recap</h2>
+                                <p class="micro-label">Todas las categorías</p>
+                                <h2 id="spotlight-recap-title">Resumen semanal</h2>
                             </div>
-                            <p id="spotlight-recap-copy">Live overview</p>
+                            <p id="spotlight-recap-copy">Resultados en vivo</p>
                         </div>
                         <div class="spotlight-recap-grid" id="spotlight-recap-grid"></div>
                     </section>
@@ -455,28 +448,28 @@
             <section class="rankings-view" id="rankings" aria-labelledby="rankings-title" hidden>
                 <header class="rankings-header">
                     <div>
-                        <p class="eyebrow">Performance directory · Read-only</p>
+                        <p class="eyebrow">Participantes por categoría</p>
                         <div class="rankings-title-row">
                             <h1 id="rankings-title">Rankings</h1>
-                            <span class="unranked-badge">Unranked</span>
+                            <span class="unranked-badge">Sin ranking</span>
                         </div>
                         <p class="manager-intro">
-                            Explora el roster por disciplina. Las posiciones se activarán cuando exista un score real de Weekly Voting.
+                            Explora tus participantes por disciplina.
                         </p>
                     </div>
-                    <div class="rankings-readonly" aria-label="Vista de solo lectura">
+                    <div class="rankings-readonly" aria-label="Solo consulta">
                         <span aria-hidden="true">◇</span>
-                        Derived, not stored
+                        Solo consulta
                     </div>
                 </header>
 
                 <div class="ranking-tabs" role="tablist" aria-label="Categoría del ranking">
                     <button class="ranking-tab ranking-tab--vocal" id="ranking-tab-vocal" type="button" role="tab" aria-selected="true" aria-controls="ranking-panel" tabindex="0" data-ranking-category="vocal">Vocal</button>
                     <button class="ranking-tab ranking-tab--rap" id="ranking-tab-rap" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="rap">Rap</button>
-                    <button class="ranking-tab ranking-tab--dance" id="ranking-tab-dance" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="dance">Dance</button>
-                    <button class="ranking-tab ranking-tab--stage" id="ranking-tab-stage" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="stage">Stage</button>
+                    <button class="ranking-tab ranking-tab--dance" id="ranking-tab-dance" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="dance">Baile</button>
+                    <button class="ranking-tab ranking-tab--stage" id="ranking-tab-stage" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="stage">Escenario</button>
                     <button class="ranking-tab ranking-tab--visual" id="ranking-tab-visual" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="visual">Visual</button>
-                    <button class="ranking-tab ranking-tab--all-rounder" id="ranking-tab-all-rounder" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="all-rounder">All-rounder</button>
+                    <button class="ranking-tab ranking-tab--all-rounder" id="ranking-tab-all-rounder" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="all-rounder">Integral</button>
                 </div>
 
                 <div id="ranking-panel" role="tabpanel" aria-labelledby="ranking-tab-vocal">
@@ -484,53 +477,52 @@
                         <label class="search-control ranking-search" for="ranking-search">
                             <span aria-hidden="true">⌕</span>
                             <span class="sr-only">Buscar en rankings</span>
-                            <input id="ranking-search" type="search" placeholder="Search participants..." autocomplete="off">
+                            <input id="ranking-search" type="search" placeholder="Buscar participantes..." autocomplete="off">
                         </label>
 
                         <label class="select-control" for="ranking-gender-filter">
-                            <span>Gender</span>
+                            <span>Género</span>
                             <select id="ranking-gender-filter">
-                                <option value="all">All</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
+                                <option value="all">Todos</option>
+                                <option value="male">Hombres</option>
+                                <option value="female">Mujeres</option>
                             </select>
                         </label>
 
                         <label class="select-control" for="ranking-group-filter">
-                            <span>Group</span>
+                            <span>Grupo</span>
                             <select id="ranking-group-filter">
-                                <option value="all">All Groups</option>
+                                <option value="all">Todos</option>
                             </select>
                         </label>
 
                         <label class="select-control" for="ranking-tag-filter">
                             <span>Tag</span>
                             <select id="ranking-tag-filter">
-                                <option value="all">All Tags</option>
+                                <option value="all">Todos</option>
                             </select>
                         </label>
 
                         <label class="select-control" for="ranking-sort">
-                            <span>Sort</span>
+                            <span>Orden</span>
                             <select id="ranking-sort">
                                 <option value="a-z">A-Z</option>
-                                <option value="recent">Recently Added</option>
+                                <option value="recent">Más recientes</option>
                             </select>
                         </label>
 
                         <label class="archive-toggle" for="ranking-include-archived">
                             <input id="ranking-include-archived" type="checkbox">
-                            <span>Include archived</span>
+                            <span>Incluir archivados</span>
                         </label>
 
-                        <button class="button button--quiet ranking-reset" id="reset-ranking-filters" type="button">Reset</button>
+                        <button class="button button--quiet ranking-reset" id="reset-ranking-filters" type="button">Limpiar</button>
                     </section>
 
                     <section class="top-three-locked" aria-labelledby="top-three-title">
                         <div>
-                            <p class="micro-label">Top 3 · Locked</p>
-                            <h2 id="top-three-title">Waiting for a real score</h2>
-                            <p>Performance scoring will become available once weekly voting begins.</p>
+                            <p class="micro-label">Top 3</p>
+                            <h2 id="top-three-title">Aún no hay resultados</h2>
                         </div>
                         <div class="podium-placeholder" aria-hidden="true">
                             <span></span><span></span><span></span>
@@ -539,12 +531,12 @@
 
                     <div class="ranking-results-heading">
                         <div>
-                            <p class="micro-label">Category directory</p>
-                            <h2 id="ranking-directory-title">Vocal directory</h2>
+                            <p class="micro-label">Categoría</p>
+                            <h2 id="ranking-directory-title">Participantes de Vocal</h2>
                         </div>
                         <div>
-                            <strong id="ranking-result-count">0 performers</strong>
-                            <span>No performance score applied</span>
+                            <strong id="ranking-result-count">0 participantes</strong>
+                            <span>Sin ranking</span>
                         </div>
                     </div>
 
@@ -552,17 +544,17 @@
 
                     <div class="ranking-empty" id="ranking-empty" role="status" hidden>
                         <span aria-hidden="true">○</span>
-                        <h2 id="ranking-empty-title">No Vocal participants added yet.</h2>
-                        <p id="ranking-empty-copy">Add this category in Participant Manager to see performers here.</p>
-                        <button class="button button--secondary" id="ranking-empty-action" type="button">Open Participants</button>
+                        <h2 id="ranking-empty-title">Aún no hay participantes en Vocal</h2>
+                        <p id="ranking-empty-copy">Agrega esta categoría desde Participantes.</p>
+                        <button class="button button--secondary" id="ranking-empty-action" type="button">Abrir participantes</button>
                     </div>
                 </div>
             </section>
         </main>
 
         <footer class="site-footer">
-            <p><strong>STATS V2</strong> · Personal K-pop performance tracker</p>
-            <p id="schema-version">Schema v2</p>
+            <p><strong>STATS V2</strong> · Registro personal de K-pop</p>
+            <p id="schema-version">Datos locales</p>
         </footer>
     </div>
 
@@ -570,8 +562,8 @@
         <form id="participant-form" novalidate>
             <header class="dialog-header">
                 <div>
-                    <p class="eyebrow" id="participant-dialog-kicker">Roster entry</p>
-                    <h2 id="participant-dialog-title">Add participant</h2>
+                    <p class="eyebrow" id="participant-dialog-kicker">Participante</p>
+                    <h2 id="participant-dialog-title">Agregar participante</h2>
                 </div>
                 <button class="icon-button" id="close-participant-dialog" type="button" aria-label="Cerrar formulario">×</button>
             </header>
@@ -585,58 +577,58 @@
                         <img id="photo-preview-image" alt="Vista previa de la foto" hidden>
                         <span id="photo-preview-fallback" aria-hidden="true">ST</span>
                     </div>
-                    <label class="button button--secondary file-button" for="participant-photo">Choose image</label>
+                    <label class="button button--secondary file-button" for="participant-photo">Elegir imagen</label>
                     <input id="participant-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp">
-                    <button class="text-button" id="remove-photo" type="button" hidden>Remove photo</button>
-                    <p>JPEG, PNG or WebP · Max 5 MB</p>
+                    <button class="text-button" id="remove-photo" type="button" hidden>Quitar foto</button>
+                    <p>JPEG, PNG o WebP · Máx. 5 MB</p>
                     <p class="field-error" id="photo-error"></p>
                 </div>
 
                 <div class="form-fields">
                     <label class="field" for="participant-name">
-                        <span>Name <strong aria-hidden="true">*</strong></span>
+                        <span>Nombre <strong aria-hidden="true">*</strong></span>
                         <input id="participant-name" name="name" type="text" maxlength="80" autocomplete="off" required>
                         <small class="field-error" id="name-error"></small>
                     </label>
 
                     <div class="group-field">
                         <label class="field" for="participant-group">
-                            <span>Group</span>
+                            <span>Grupo</span>
                             <select id="participant-group" name="groupId">
-                                <option value="">Soloist / No group</option>
+                                <option value="">Solista / Sin grupo</option>
                             </select>
                         </label>
-                        <button class="button button--quiet" id="show-group-form" type="button">＋ Create group</button>
+                        <button class="button button--quiet" id="show-group-form" type="button">＋ Crear grupo</button>
                     </div>
 
                     <div class="inline-group-form" id="inline-group-form" hidden>
                         <label class="field" for="new-group-name">
-                            <span>New group name</span>
+                            <span>Nombre del grupo</span>
                             <input id="new-group-name" type="text" maxlength="80" autocomplete="off">
                             <small class="field-error" id="group-error"></small>
                         </label>
                         <div>
-                            <button class="button button--secondary" id="create-group" type="button">Save group</button>
-                            <button class="text-button" id="cancel-group" type="button">Cancel</button>
+                            <button class="button button--secondary" id="create-group" type="button">Guardar grupo</button>
+                            <button class="text-button" id="cancel-group" type="button">Cancelar</button>
                         </div>
                     </div>
 
                     <fieldset class="choice-fieldset gender-fieldset">
-                        <legend>Gender <strong aria-hidden="true">*</strong></legend>
-                        <label><input type="radio" name="gender" value="female" required><span>Female</span></label>
-                        <label><input type="radio" name="gender" value="male" required><span>Male</span></label>
+                        <legend>Género <strong aria-hidden="true">*</strong></legend>
+                        <label><input type="radio" name="gender" value="female" required><span>Mujer</span></label>
+                        <label><input type="radio" name="gender" value="male" required><span>Hombre</span></label>
                         <small class="field-error" id="gender-error"></small>
                     </fieldset>
 
                     <fieldset class="choice-fieldset category-fieldset">
-                        <legend>Categories <strong aria-hidden="true">*</strong></legend>
+                        <legend>Categorías <strong aria-hidden="true">*</strong></legend>
                         <div class="category-options">
                             <label class="category-option category-option--vocal"><input type="checkbox" name="categories" value="vocal"><span>Vocal</span></label>
                             <label class="category-option category-option--rap"><input type="checkbox" name="categories" value="rap"><span>Rap</span></label>
-                            <label class="category-option category-option--dance"><input type="checkbox" name="categories" value="dance"><span>Dance</span></label>
-                            <label class="category-option category-option--stage"><input type="checkbox" name="categories" value="stage"><span>Stage</span></label>
+                            <label class="category-option category-option--dance"><input type="checkbox" name="categories" value="dance"><span>Baile</span></label>
+                            <label class="category-option category-option--stage"><input type="checkbox" name="categories" value="stage"><span>Escenario</span></label>
                             <label class="category-option category-option--visual"><input type="checkbox" name="categories" value="visual"><span>Visual</span></label>
-                            <label class="category-option category-option--all-rounder"><input type="checkbox" name="categories" value="all-rounder"><span>All-rounder</span></label>
+                            <label class="category-option category-option--all-rounder"><input type="checkbox" name="categories" value="all-rounder"><span>Integral</span></label>
                         </div>
                         <small class="field-error" id="categories-error"></small>
                     </fieldset>
@@ -644,28 +636,28 @@
             </div>
 
             <footer class="dialog-actions">
-                <button class="button button--quiet" id="cancel-participant" type="button">Cancel</button>
-                <button class="button button--primary" id="save-participant" type="submit">Save participant</button>
+                <button class="button button--quiet" id="cancel-participant" type="button">Cancelar</button>
+                <button class="button button--primary" id="save-participant" type="submit">Guardar</button>
             </footer>
         </form>
     </dialog>
 
     <dialog class="app-dialog confirm-dialog" id="delete-dialog" aria-labelledby="delete-dialog-title">
         <div class="confirm-symbol" aria-hidden="true">!</div>
-        <p class="eyebrow">Permanent action</p>
-        <h2 id="delete-dialog-title">Delete participant?</h2>
-        <p id="delete-dialog-message">This action cannot be undone.</p>
+        <p class="eyebrow">Acción permanente</p>
+        <h2 id="delete-dialog-title">¿Eliminar participante?</h2>
+        <p id="delete-dialog-message">No podrás deshacerlo.</p>
         <div class="dialog-actions">
-            <button class="button button--quiet" id="cancel-delete" type="button">Cancel</button>
-            <button class="button button--danger" id="confirm-delete" type="button">Delete permanently</button>
+            <button class="button button--quiet" id="cancel-delete" type="button">Cancelar</button>
+            <button class="button button--danger" id="confirm-delete" type="button">Eliminar</button>
         </div>
     </dialog>
 
     <dialog class="app-dialog tag-dialog" id="tag-dialog" aria-labelledby="tag-dialog-title">
         <header class="dialog-header">
             <div>
-                <p class="eyebrow">Participant tags</p>
-                <h2 id="tag-dialog-title">Manage tags</h2>
+                <p class="eyebrow">Tags del participante</p>
+                <h2 id="tag-dialog-title">Administrar tags</h2>
                 <p class="tag-dialog-identity" id="tag-dialog-identity"></p>
             </div>
             <button class="icon-button" id="close-tag-dialog" type="button" aria-label="Cerrar gestor de tags">×</button>
@@ -675,114 +667,114 @@
             <section class="assigned-tag-panel" aria-labelledby="assigned-tags-title">
                 <div class="tag-section-heading">
                     <div>
-                        <p class="micro-label">Current description</p>
-                        <h3 id="assigned-tags-title">Assigned tags</h3>
+                        <p class="micro-label">Descripción actual</p>
+                        <h3 id="assigned-tags-title">Tags asignados</h3>
                     </div>
                     <span class="tag-count" id="assigned-tag-count">0</span>
                 </div>
                 <div class="assigned-tag-groups" id="assigned-tag-groups"></div>
-                <p class="tag-empty-copy" id="assigned-tags-empty">No tags assigned yet.</p>
+                <p class="tag-empty-copy" id="assigned-tags-empty">Aún no hay tags asignados.</p>
             </section>
 
             <section class="tag-catalog-panel" aria-labelledby="tag-catalog-title">
                 <div class="tag-section-heading">
                     <div>
-                        <p class="micro-label">Reusable catalog</p>
-                        <h3 id="tag-catalog-title">Add tags</h3>
+                        <p class="micro-label">Catálogo</p>
+                        <h3 id="tag-catalog-title">Agregar tags</h3>
                     </div>
-                    <button class="button button--secondary" id="show-custom-tag-form" type="button">＋ Custom tag</button>
+                    <button class="button button--secondary" id="show-custom-tag-form" type="button">＋ Tag personalizado</button>
                 </div>
 
                 <div class="tag-picker-controls">
                     <label class="search-control" for="tag-search">
                         <span aria-hidden="true">⌕</span>
                         <span class="sr-only">Buscar tags</span>
-                        <input id="tag-search" type="search" placeholder="Search tags..." autocomplete="off">
+                        <input id="tag-search" type="search" placeholder="Buscar tags..." autocomplete="off">
                     </label>
                     <label class="select-control" for="tag-category-filter">
-                        <span>Category</span>
+                        <span>Categoría</span>
                         <select id="tag-category-filter">
-                            <option value="all">All</option>
+                            <option value="all">Todas</option>
                             <option value="vocal">Vocal</option>
                             <option value="rap">Rap</option>
-                            <option value="dance">Dance</option>
-                            <option value="stage">Stage</option>
+                            <option value="dance">Baile</option>
+                            <option value="stage">Escenario</option>
                             <option value="general">General</option>
                         </select>
                     </label>
                     <label class="select-control" for="tag-type-filter">
-                        <span>Type</span>
+                        <span>Tipo</span>
                         <select id="tag-type-filter">
-                            <option value="all">All</option>
-                            <option value="strength">Strengths</option>
-                            <option value="weakness">Needs Work</option>
-                            <option value="neutral">Special</option>
+                            <option value="all">Todos</option>
+                            <option value="strength">Fortalezas</option>
+                            <option value="weakness">Por mejorar</option>
+                            <option value="neutral">Especial</option>
                         </select>
                     </label>
                 </div>
 
                 <p class="tag-warning" id="tag-category-warning" role="status" aria-live="polite" hidden></p>
                 <div class="tag-catalog-list" id="tag-catalog-list"></div>
-                <p class="tag-empty-copy" id="tag-catalog-empty" hidden>No tags match these filters.</p>
+                <p class="tag-empty-copy" id="tag-catalog-empty" hidden>No hay tags con estos filtros.</p>
 
                 <form class="custom-tag-form" id="custom-tag-form" novalidate hidden>
                     <input id="custom-tag-id" type="hidden">
                     <div class="tag-section-heading">
                         <div>
-                            <p class="micro-label">Catalog entry</p>
-                            <h3 id="custom-tag-form-title">Create custom tag</h3>
+                            <p class="micro-label">Catálogo</p>
+                            <h3 id="custom-tag-form-title">Crear tag personalizado</h3>
                         </div>
                     </div>
                     <div class="custom-tag-fields">
                         <label class="field" for="custom-tag-name">
-                            <span>Tag name <strong aria-hidden="true">*</strong></span>
+                            <span>Nombre del tag <strong aria-hidden="true">*</strong></span>
                             <input id="custom-tag-name" type="text" maxlength="60" autocomplete="off" required>
                         </label>
                         <label class="field" for="custom-tag-category">
-                            <span>Category <strong aria-hidden="true">*</strong></span>
+                            <span>Categoría <strong aria-hidden="true">*</strong></span>
                             <select id="custom-tag-category" required>
                                 <option value="vocal">Vocal</option>
                                 <option value="rap">Rap</option>
-                                <option value="dance">Dance</option>
-                                <option value="stage">Stage</option>
+                                <option value="dance">Baile</option>
+                                <option value="stage">Escenario</option>
                                 <option value="general">General</option>
                             </select>
                         </label>
                         <label class="field" for="custom-tag-type">
-                            <span>Type <strong aria-hidden="true">*</strong></span>
+                            <span>Tipo <strong aria-hidden="true">*</strong></span>
                             <select id="custom-tag-type" required>
-                                <option value="strength">Strength</option>
-                                <option value="weakness">Needs Work</option>
-                                <option value="neutral">Special</option>
+                                <option value="strength">Fortaleza</option>
+                                <option value="weakness">Por mejorar</option>
+                                <option value="neutral">Especial</option>
                             </select>
                         </label>
                     </div>
                     <label class="custom-tag-assign" id="custom-tag-assign-field" for="assign-custom-tag">
                         <input id="assign-custom-tag" type="checkbox" checked>
-                        <span>Assign to this participant now</span>
+                        <span>Asignar ahora</span>
                     </label>
                     <p class="field-error" id="custom-tag-error" role="alert"></p>
                     <div class="custom-tag-actions">
-                        <button class="button button--quiet" id="cancel-custom-tag" type="button">Cancel</button>
-                        <button class="button button--primary" id="save-custom-tag" type="submit">Create and assign</button>
+                        <button class="button button--quiet" id="cancel-custom-tag" type="button">Cancelar</button>
+                        <button class="button button--primary" id="save-custom-tag" type="submit">Crear y asignar</button>
                     </div>
                 </form>
             </section>
         </div>
 
         <footer class="dialog-actions">
-            <button class="button button--quiet" id="done-managing-tags" type="button">Done</button>
+            <button class="button button--quiet" id="done-managing-tags" type="button">Listo</button>
         </footer>
     </dialog>
 
     <dialog class="app-dialog confirm-dialog" id="tag-delete-dialog" aria-labelledby="tag-delete-dialog-title">
         <div class="confirm-symbol" aria-hidden="true">!</div>
-        <p class="eyebrow">Custom tag</p>
-        <h2 id="tag-delete-dialog-title">Delete custom tag?</h2>
-        <p id="tag-delete-dialog-message">This action cannot be undone.</p>
+        <p class="eyebrow">Tag personalizado</p>
+        <h2 id="tag-delete-dialog-title">¿Eliminar tag?</h2>
+        <p id="tag-delete-dialog-message">No podrás deshacerlo.</p>
         <div class="dialog-actions">
-            <button class="button button--quiet" id="cancel-tag-delete" type="button">Cancel</button>
-            <button class="button button--danger" id="confirm-tag-delete" type="button">Delete custom tag</button>
+            <button class="button button--quiet" id="cancel-tag-delete" type="button">Cancelar</button>
+            <button class="button button--danger" id="confirm-tag-delete" type="button">Eliminar tag</button>
         </div>
     </dialog>
 
@@ -790,82 +782,82 @@
         <form id="weekly-vote-form" novalidate>
             <header class="dialog-header">
                 <div>
-                    <p class="eyebrow" id="weekly-vote-kicker">Weekly evaluation</p>
-                    <h2 id="weekly-vote-title">Evaluate participant</h2>
+                    <p class="eyebrow" id="weekly-vote-kicker">Votación semanal</p>
+                    <h2 id="weekly-vote-title">Evaluar participante</h2>
                     <p id="weekly-vote-identity"></p>
                 </div>
-                <button class="icon-button" id="close-weekly-vote" type="button" aria-label="Close weekly vote editor">×</button>
+                <button class="icon-button" id="close-weekly-vote" type="button" aria-label="Cerrar evaluación">×</button>
             </header>
             <div class="weekly-vote-body">
                 <div class="form-errors" id="weekly-vote-error" role="alert" aria-live="assertive" hidden></div>
-                <div class="weekly-category-tabs" id="weekly-category-tabs" role="tablist" aria-label="Evaluation category"></div>
+                <div class="weekly-category-tabs" id="weekly-category-tabs" role="tablist" aria-label="Categoría"></div>
                 <div class="weekly-legacy-conversion" id="weekly-legacy-conversion" hidden>
                     <div>
-                        <strong>Legacy vote without category</strong>
+                        <strong>Voto antiguo sin categoría</strong>
                         <p id="weekly-legacy-conversion-copy"></p>
                     </div>
-                    <button class="button button--secondary" id="assign-legacy-category" type="button">Assign legacy vote here</button>
+                    <button class="button button--secondary" id="assign-legacy-category" type="button">Asignar a esta categoría</button>
                 </div>
                 <fieldset class="weekly-rating-fieldset">
-                    <legend><span id="weekly-rating-category">Category</span> rating <strong aria-hidden="true">*</strong></legend>
+                    <legend><span id="weekly-rating-category">Categoría</span> <strong aria-hidden="true">*</strong></legend>
                     <div class="weekly-rating-options" id="weekly-rating-options">
-                        <button class="weekly-rating weekly-rating--standout" type="button" data-weekly-rating="standout" aria-pressed="false"><strong>Standout</strong><span>3 pts</span></button>
-                        <button class="weekly-rating weekly-rating--impressed" type="button" data-weekly-rating="impressed" aria-pressed="false"><strong>Impressed</strong><span>2 pts</span></button>
-                        <button class="weekly-rating weekly-rating--good" type="button" data-weekly-rating="good" aria-pressed="false"><strong>Good</strong><span>1 pt</span></button>
-                        <button class="weekly-rating weekly-rating--normal" type="button" data-weekly-rating="normal" aria-pressed="false"><strong>Normal</strong><span>0 pts · evaluated</span></button>
+                        <button class="weekly-rating weekly-rating--standout" type="button" data-weekly-rating="standout" aria-pressed="false"><strong>Destacado</strong><span>3 pts</span></button>
+                        <button class="weekly-rating weekly-rating--impressed" type="button" data-weekly-rating="impressed" aria-pressed="false"><strong>Impresionó</strong><span>2 pts</span></button>
+                        <button class="weekly-rating weekly-rating--good" type="button" data-weekly-rating="good" aria-pressed="false"><strong>Bien</strong><span>1 pt</span></button>
+                        <button class="weekly-rating weekly-rating--normal" type="button" data-weekly-rating="normal" aria-pressed="false"><strong>Normal</strong><span>0 pts</span></button>
                     </div>
                 </fieldset>
                 <section class="weekly-reasons" aria-labelledby="weekly-reasons-title">
                     <div class="tag-section-heading">
                         <div>
-                            <p class="micro-label">Optional · Up to 3</p>
-                            <h3 id="weekly-reasons-title">Weekly reasons</h3>
+                            <p class="micro-label">Opcional · Máximo 3</p>
+                            <h3 id="weekly-reasons-title">Motivos de la semana</h3>
                         </div>
                         <span class="tag-count" id="weekly-reason-count">0 / 3</span>
                     </div>
-                    <p class="weekly-reason-note">These explain this week only and never change profile tags.</p>
+                    <p class="weekly-reason-note">Solo describen esta semana; no cambian los tags del perfil.</p>
                     <div class="weekly-selected-reasons" id="weekly-selected-reasons"></div>
                     <label class="search-control" for="weekly-reason-search">
                         <span aria-hidden="true">⌕</span>
-                        <span class="sr-only">Search weekly reason tags</span>
-                        <input id="weekly-reason-search" type="search" placeholder="Search reasons..." autocomplete="off">
+                        <span class="sr-only">Buscar motivos</span>
+                        <input id="weekly-reason-search" type="search" placeholder="Buscar motivos..." autocomplete="off">
                     </label>
                     <div class="weekly-reason-list" id="weekly-reason-list"></div>
                 </section>
                 <label class="field weekly-note" for="weekly-note">
-                    <span>Optional note</span>
-                    <textarea id="weekly-note" maxlength="500" rows="4" placeholder="What stood out this week?"></textarea>
+                    <span>Nota opcional</span>
+                    <textarea id="weekly-note" maxlength="500" rows="4" placeholder="¿Qué destacó esta semana?"></textarea>
                     <small><span id="weekly-note-count">0</span> / 500</small>
                 </label>
             </div>
             <footer class="dialog-actions weekly-vote-actions">
-                <button class="button button--danger" id="remove-weekly-vote" type="button" hidden>Remove evaluation</button>
+                <button class="button button--danger" id="remove-weekly-vote" type="button" hidden>Quitar evaluación</button>
                 <span></span>
-                <button class="button button--quiet" id="cancel-weekly-vote" type="button">Cancel</button>
-                <button class="button button--primary" id="save-weekly-vote" type="submit">Save evaluation</button>
+                <button class="button button--quiet" id="cancel-weekly-vote" type="button">Cancelar</button>
+                <button class="button button--primary" id="save-weekly-vote" type="submit">Guardar</button>
             </footer>
         </form>
     </dialog>
 
     <dialog class="app-dialog confirm-dialog" id="close-week-dialog" aria-labelledby="close-week-dialog-title">
         <div class="confirm-symbol" aria-hidden="true">!</div>
-        <p class="eyebrow">Freeze weekly results</p>
-        <h2 id="close-week-dialog-title">Close this week?</h2>
-        <p id="close-week-dialog-message">Votes will become read-only. The week can later be reopened explicitly.</p>
+        <p class="eyebrow">Resultados semanales</p>
+        <h2 id="close-week-dialog-title">¿Cerrar esta semana?</h2>
+        <p id="close-week-dialog-message">Los votos quedarán cerrados.</p>
         <div class="dialog-actions">
-            <button class="button button--quiet" id="cancel-close-week" type="button">Cancel</button>
-            <button class="button button--danger" id="confirm-close-week" type="button">Close Week</button>
+            <button class="button button--quiet" id="cancel-close-week" type="button">Cancelar</button>
+            <button class="button button--danger" id="confirm-close-week" type="button">Cerrar</button>
         </div>
     </dialog>
 
     <dialog class="app-dialog confirm-dialog" id="reopen-week-dialog" aria-labelledby="reopen-week-dialog-title">
         <div class="confirm-symbol" aria-hidden="true">↻</div>
-        <p class="eyebrow">Administrative action</p>
-        <h2 id="reopen-week-dialog-title">Reopen this week?</h2>
-        <p id="reopen-week-dialog-message">This will allow weekly votes to be edited again.</p>
+        <p class="eyebrow">Semana cerrada</p>
+        <h2 id="reopen-week-dialog-title">¿Reabrir esta semana?</h2>
+        <p id="reopen-week-dialog-message">Podrás volver a editar los votos.</p>
         <div class="dialog-actions">
-            <button class="button button--quiet" id="cancel-reopen-week" type="button">Cancel</button>
-            <button class="button button--primary" id="confirm-reopen-week" type="button">Reopen Week</button>
+            <button class="button button--quiet" id="cancel-reopen-week" type="button">Cancelar</button>
+            <button class="button button--primary" id="confirm-reopen-week" type="button">Reabrir</button>
         </div>
     </dialog>
 

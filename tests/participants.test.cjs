@@ -58,14 +58,14 @@ test("reuses groups case-insensitively instead of duplicating them", () => {
 test("rejects empty names, missing categories and unsupported gender", () => {
     const state = stateWithGroup();
 
-    assert.throws(() => addParticipant(state, { name: "   " }), /name is required/);
+    assert.throws(() => addParticipant(state, { name: "   " }), (error) => error.code === "EMPTY_NAME");
     assert.throws(() => addParticipant(state, { categoryIds: [] }), /at least one category/);
     assert.throws(() => addParticipant(state, { gender: "other" }), /unsupported value/);
 });
 
 test("rejects missing groups and exact active duplicates", () => {
     const state = stateWithGroup();
-    assert.throws(() => addParticipant(state, { groupId: "missing" }), /does not exist/);
+    assert.throws(() => addParticipant(state, { groupId: "missing" }), (error) => error.code === "MISSING_GROUP");
 
     const withParticipant = addParticipant(state).state;
     assert.throws(

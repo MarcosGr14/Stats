@@ -114,7 +114,7 @@ test("loads Analytics after ranking sources and before application code", () => 
     assert.ok(html.indexOf("js/spotlight.js") < html.indexOf("js/analytics.js"));
     assert.ok(html.indexOf("js/profile-history.js") < html.indexOf("js/analytics.js"));
     assert.ok(html.indexOf("js/analytics.js") < html.indexOf("js/app.js"));
-    assert.match(html, /Phase 7A · Core Analytics/);
+    assert.match(html, /Datos locales/);
 });
 
 test("defaults to CLOSED weeks and supports OPEN, ranges and last N weeks", () => {

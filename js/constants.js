@@ -24,31 +24,31 @@
         CATEGORIES: Object.freeze([
             Object.freeze({ id: "vocal", label: "VOCAL" }),
             Object.freeze({ id: "rap", label: "RAP" }),
-            Object.freeze({ id: "dance", label: "DANCE" }),
-            Object.freeze({ id: "stage", label: "STAGE" }),
+            Object.freeze({ id: "dance", label: "BAILE" }),
+            Object.freeze({ id: "stage", label: "ESCENARIO" }),
             Object.freeze({ id: "visual", label: "VISUAL" }),
-            Object.freeze({ id: "all-rounder", label: "ALL-ROUNDER" })
+            Object.freeze({ id: "all-rounder", label: "INTEGRAL" })
         ]),
         GENDERS: Object.freeze(["male", "female"]),
         TAG_TYPES: Object.freeze(["strength", "weakness", "neutral"]),
         TAG_CATEGORIES: Object.freeze([
             Object.freeze({ id: "vocal", label: "Vocal" }),
             Object.freeze({ id: "rap", label: "Rap" }),
-            Object.freeze({ id: "dance", label: "Dance" }),
-            Object.freeze({ id: "stage", label: "Stage" }),
+            Object.freeze({ id: "dance", label: "Baile" }),
+            Object.freeze({ id: "stage", label: "Escenario" }),
             Object.freeze({ id: "general", label: "General" })
         ]),
         TAG_TYPE_LABELS: Object.freeze({
-            strength: "Strengths",
-            weakness: "Needs Work",
-            neutral: "Special"
+            strength: "Fortalezas",
+            weakness: "Por mejorar",
+            neutral: "Especial"
         }),
         WEEK_STATUSES: Object.freeze(["OPEN", "CLOSED"]),
         VOTER_IDS: Object.freeze(["p1", "p2"]),
         RATING_OPTIONS: Object.freeze([
-            Object.freeze({ id: "standout", score: 3, label: "Standout" }),
-            Object.freeze({ id: "impressed", score: 2, label: "Impressed" }),
-            Object.freeze({ id: "good", score: 1, label: "Good" }),
+            Object.freeze({ id: "standout", score: 3, label: "Destacado" }),
+            Object.freeze({ id: "impressed", score: 2, label: "Impresionó" }),
+            Object.freeze({ id: "good", score: 1, label: "Bien" }),
             Object.freeze({ id: "normal", score: 0, label: "Normal" })
         ])
     };

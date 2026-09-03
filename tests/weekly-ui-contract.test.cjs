@@ -11,28 +11,28 @@ const app = fs.readFileSync(path.join(projectRoot, "js", "app.js"), "utf8");
 
 test("exposes Weekly navigation and explicit week creation without automatic opening", () => {
     assert.match(html, /id="nav-weekly" href="#weekly"/);
-    assert.match(html, /id="open-current-week"[^>]*>Open current ISO week/);
+    assert.match(html, /id="open-current-week"[^>]*>Abrir semana actual/);
     assert.doesNotMatch(app, /openCurrentIsoWeek\(/);
     assert.match(view, /elements\.openWeek\.addEventListener\("click", openCurrentWeek\)/);
 });
 
 test("weekly voting controls communicate category, user, rating, removal and reopen accessibly", () => {
-    assert.match(html, /id="weekly-user-switch" role="group" aria-label="Current voter"/);
+    assert.match(html, /id="weekly-user-switch" role="group" aria-label="Votante actual"/);
     assert.equal((html.match(/data-weekly-rating=/g) || []).length, 4);
     assert.equal((html.match(/aria-pressed="false"/g) || []).length >= 4, true);
-    assert.match(html, /Remove evaluation/);
+    assert.match(html, /Quitar evaluación/);
     assert.match(html, /role="alert" aria-live="assertive"/);
     assert.match(view, /week\.status !== "OPEN"/);
     assert.match(html, /id="weekly-category-tabs" role="tablist"/);
-    assert.match(html, /id="reopen-current-week"[^>]*>Reopen Week/);
+    assert.match(html, /id="reopen-current-week"[^>]*>Reabrir semana/);
     assert.match(html, /id="reopen-week-dialog"/);
     assert.match(view, /weekly\.reopenWeek/);
     assert.match(view, /data\.weeklyCategoryId|weeklyCategoryId/);
 });
 
 test("weekly reasons and notes have the approved UI limits", () => {
-    assert.match(html, /Optional · Up to 3/);
-    assert.match(html, /never change profile tags/);
+    assert.match(html, /Opcional · Máximo 3/);
+    assert.match(html, /no cambian los tags del perfil/);
     assert.match(html, /id="weekly-note" maxlength="500"/);
     assert.match(view, /MAX_WEEKLY_REASON_TAGS/);
     assert.match(view, /reasonPriority/);
@@ -50,7 +50,7 @@ test("weekly assets load before the app while Rankings remains explicitly Unrank
     assert.ok(html.indexOf("js/weekly-migration.js") < html.indexOf("js/app.js"));
     assert.ok(html.indexOf("js/weekly.js") < html.indexOf("js/app.js"));
     assert.ok(html.indexOf("js/weekly-view.js") < html.indexOf("js/app.js"));
-    assert.match(html, /<span class="unranked-badge">Unranked<\/span>/);
+    assert.match(html, /<span class="unranked-badge">Sin ranking<\/span>/);
     assert.match(app, /scoreProvider: null/);
 });
 

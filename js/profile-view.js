@@ -103,10 +103,10 @@
         function renderIdentity(profile) {
             const { participant, group, summary } = profile;
             elements.name.textContent = participant.name;
-            elements.status.textContent = participant.archivedAt === null ? "Active" : "Archived";
+            elements.status.textContent = participant.archivedAt === null ? "Activo" : "Archivado";
             elements.status.dataset.archived = String(participant.archivedAt !== null);
-            elements.group.textContent = group?.name || "Soloist / No group";
-            elements.gender.textContent = participant.gender === "female" ? "Female" : "Male";
+            elements.group.textContent = group?.name || "Solista / Sin grupo";
+            elements.gender.textContent = participant.gender === "female" ? "Mujer" : "Hombre";
             const chips = document.createDocumentFragment();
             profile.categoryIds.forEach((categoryId) => chips.append(categoryChip(categoryId)));
             elements.categoryChips.replaceChildren(chips);
@@ -121,20 +121,20 @@
             const summary = profile.summary;
             elements.bestWeek.textContent = summary.bestRecords.length > 0
                 ? summary.bestRecords.map((record) => `${record.week.label} · ${categoryLabel(record.categoryId)}`).join(" / ")
-                : "Not evaluated";
+                : "Sin evaluar";
             elements.mostPraised.textContent = summary.mostPraised
-                ? `${summary.mostPraised.tag.name} · ${summary.mostPraised.count} mention${summary.mostPraised.count === 1 ? "" : "s"}`
-                : "No weekly praise yet";
+                ? `${summary.mostPraised.tag.name} · ${summary.mostPraised.count} mención${summary.mostPraised.count === 1 ? "" : "es"}`
+                : "Aún no hay elogios semanales";
             elements.mostWins.textContent = summary.mostWinsCategories.length > 0
-                ? summary.mostWinsCategories.map((stats) => `${categoryLabel(stats.categoryId)} · ${stats.wins} win${stats.wins === 1 ? "" : "s"}`).join(" / ")
-                : "No wins yet";
+                ? summary.mostWinsCategories.map((stats) => `${categoryLabel(stats.categoryId)} · ${stats.wins} victoria${stats.wins === 1 ? "" : "s"}`).join(" / ")
+                : "Aún no hay victorias";
         }
 
         function renderProfileTags(profile) {
             const definitions = [
-                ["strength", "Strengths"],
-                ["weakness", "Needs Work"],
-                ["neutral", "Special"]
+                ["strength", "Fortalezas"],
+                ["weakness", "Por mejorar"],
+                ["neutral", "Especial"]
             ];
             const fragment = document.createDocumentFragment();
             definitions.forEach(([type, label]) => {
@@ -142,7 +142,7 @@
                 group.append(element("h3", "", label));
                 const list = element("div", "profile-tag-list");
                 const tags = profile.profileTags[type];
-                if (tags.length === 0) list.append(element("p", "profile-tag-empty", "No profile tags"));
+                if (tags.length === 0) list.append(element("p", "profile-tag-empty", "Sin tags del perfil"));
                 else tags.forEach((tag) => list.append(element("span", `profile-tag-pill profile-tag-pill--${type}`, tag.name)));
                 group.append(list);
                 fragment.append(group);
@@ -164,16 +164,16 @@
                 card.append(element("h3", "", categoryLabel(stats.categoryId)));
                 const grid = element("div", "profile-record-grid");
                 grid.append(
-                    metric("Wins", stats.wins),
+                    metric("Victorias", stats.wins),
                     metric("Top 3", stats.topThreeAppearances),
-                    metric("Best Score", stats.bestScore === null ? "—" : `${stats.bestScore} pts`),
-                    metric("Weeks", stats.weeksEvaluated)
+                    metric("Mejor puntaje", stats.bestScore === null ? "—" : `${stats.bestScore} pts`),
+                    metric("Semanas", stats.weeksEvaluated)
                 );
                 card.append(grid);
                 const praise = element("p", "profile-record-praise");
-                praise.append(element("span", "", "Most Praised"), document.createTextNode(stats.mostPraised?.tag.name || "No weekly praise"));
+                praise.append(element("span", "", "Más elogiado"), document.createTextNode(stats.mostPraised?.tag.name || "Sin elogios semanales"));
                 card.append(praise);
-                const button = element("button", "button button--quiet", `View ${categoryLabel(stats.categoryId)} History`);
+                const button = element("button", "button button--quiet", `Ver historial de ${categoryLabel(stats.categoryId)}`);
                 button.type = "button";
                 button.dataset.profileCategory = stats.categoryId;
                 card.append(button);
@@ -217,7 +217,7 @@
         function renderTrend(profile) {
             const stats = profile.categoryStats.find((item) => item.categoryId === trendCategoryId) || profile.categoryStats[0];
             if (!stats) {
-                elements.trendChart.replaceChildren(element("p", "profile-section-empty", "No categories available."));
+                elements.trendChart.replaceChildren(element("p", "profile-section-empty", "No hay categorías disponibles."));
                 return;
             }
             trendCategoryId = stats.categoryId;
@@ -227,7 +227,7 @@
             stats.trend.forEach((point) => {
                 const item = element("div", "profile-trend-point");
                 item.dataset.evaluated = String(point.evaluated);
-                item.append(element("span", "profile-trend-score", point.evaluated ? `${point.weeklyPoints} pts` : "Gap"));
+                item.append(element("span", "profile-trend-score", point.evaluated ? `${point.weeklyPoints} pts` : "Sin dato"));
                 const track = element("div", "profile-trend-track");
                 if (point.evaluated) {
                     const bar = element("span", "profile-trend-bar");
@@ -239,8 +239,8 @@
                 item.append(track, element("span", "profile-trend-label", point.label));
                 fragment.append(item);
             });
-            const summary = `${categoryLabel(stats.categoryId)} trend: ${stats.trend.map((point) => (
-                `${point.label} ${point.evaluated ? `${point.weeklyPoints} points` : "not evaluated"}`
+            const summary = `Evolución de ${categoryLabel(stats.categoryId)}: ${stats.trend.map((point) => (
+                `${point.label} ${point.evaluated ? `${point.weeklyPoints} puntos` : "sin evaluar"}`
             )).join(", ")}.`;
             elements.trendChart.setAttribute("aria-label", summary);
             elements.trendSummary.textContent = summary;
@@ -249,7 +249,7 @@
 
         function renderPraise(profile) {
             const reasons = element("div", "profile-reason-list");
-            if (profile.topReasons.length === 0) reasons.append(element("p", "profile-section-empty", "No weekly praise yet."));
+            if (profile.topReasons.length === 0) reasons.append(element("p", "profile-section-empty", "Aún no hay elogios semanales."));
             profile.topReasons.slice(0, 8).forEach((reason) => {
                 const pill = element("span", "profile-reason-pill", reason.tag.name);
                 pill.append(element("strong", "", `×${reason.count}`));
@@ -258,7 +258,7 @@
             elements.topReasons.replaceChildren(reasons);
 
             const badges = element("div", "profile-badge-list");
-            if (profile.badgeCounts.length === 0) badges.append(element("p", "profile-section-empty", "No historical badges yet."));
+            if (profile.badgeCounts.length === 0) badges.append(element("p", "profile-section-empty", "Aún no hay distinciones."));
             profile.badgeCounts.forEach((entry) => {
                 const pill = element("span", "profile-badge-pill", entry.badge.label);
                 pill.append(element("strong", "", `×${entry.count}`));
@@ -269,13 +269,13 @@
 
         function renderWins(profile) {
             const fragment = document.createDocumentFragment();
-            if (profile.winHistory.length === 0) fragment.append(element("p", "profile-section-empty", "No weekly wins yet."));
+            if (profile.winHistory.length === 0) fragment.append(element("p", "profile-section-empty", "Aún no hay victorias semanales."));
             profile.winHistory.forEach((record) => {
                 const item = element("article", "profile-win-item");
                 item.append(
                     element("strong", "", record.week.label),
-                    element("p", "", `${categoryLabel(record.categoryId)} · ${record.jointWinner ? "Joint Winner" : "Winner"}`),
-                    element("p", "", `${record.metrics.weeklyPoints} pts · ${record.metrics.votersCount}/2 voters · ${record.metrics.standoutCount} Standout${record.metrics.standoutCount === 1 ? "" : "s"}`)
+                    element("p", "", `${categoryLabel(record.categoryId)} · ${record.jointWinner ? "Victoria compartida" : "Victoria"}`),
+                    element("p", "", `${record.metrics.weeklyPoints} pts · ${record.metrics.votersCount}/2 votos · ${record.metrics.standoutCount} destacado${record.metrics.standoutCount === 1 ? "" : "s"}`)
                 );
                 fragment.append(item);
             });
@@ -286,7 +286,7 @@
             const selected = profile.categoryIds.includes(elements.historyCategory.value)
                 ? elements.historyCategory.value : "all";
             const fragment = document.createDocumentFragment();
-            const all = element("option", "", "All Categories");
+            const all = element("option", "", "Todas las categorías");
             all.value = "all";
             fragment.append(all);
             profile.categoryIds.forEach((categoryId) => {
@@ -314,15 +314,15 @@
                 const identity = element("div", "profile-history-identity");
                 identity.append(
                     element("h3", "", `${record.week.label} · ${categoryLabel(record.categoryId)}`),
-                    element("p", "", `${record.mode === "OFFICIAL" ? "Official" : "Live · Provisional"} · ${record.week.startDate} to ${record.week.endDate}`)
+                    element("p", "", `${record.mode === "OFFICIAL" ? "Oficial" : "En vivo · Provisional"} · ${record.week.startDate} a ${record.week.endDate}`)
                 );
                 const meta = element("div", "profile-history-meta");
                 meta.append(
                     element("strong", "", `${record.metrics.weeklyPoints} pts`),
-                    element("span", "", `${record.metrics.votersCount}/2 voters`),
-                    element("span", "", `${record.metrics.standoutCount} Standout${record.metrics.standoutCount === 1 ? "" : "s"}`)
+                    element("span", "", `${record.metrics.votersCount}/2 votos`),
+                    element("span", "", `${record.metrics.standoutCount} destacado${record.metrics.standoutCount === 1 ? "" : "s"}`)
                 );
-                if (record.winner) meta.append(historyLabel(record.jointWinner ? "Joint Winner" : "Winner", "winner"));
+                if (record.winner) meta.append(historyLabel(record.jointWinner ? "Victoria compartida" : "Victoria", "winner"));
                 if (record.badge) meta.append(historyLabel(record.badge.label));
                 const reasons = element("div", "profile-history-reasons");
                 record.topReasonTags.forEach((reason) => reasons.append(element("span", "profile-reason-pill", `${reason.tag.name}${reason.count > 1 ? ` ×${reason.count}` : ""}`)));

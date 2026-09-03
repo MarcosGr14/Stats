@@ -29,7 +29,11 @@
     }
 
     function genderLabel(gender) {
-        return gender === "female" ? "Female" : "Male";
+        return gender === "female" ? "Mujeres" : "Hombres";
+    }
+
+    function genderAdjective(gender) {
+        return gender === "female" ? "femenino" : "masculino";
     }
 
     function createController(options) {
@@ -98,17 +102,17 @@
             const meta = element("div", "spotlight-result-meta");
             meta.append(
                 element("strong", "spotlight-points", `${item.metrics.weeklyPoints} pts`),
-                element("span", "spotlight-metric", `${item.metrics.votersCount} voter${item.metrics.votersCount === 1 ? "" : "s"}`),
-                element("span", "spotlight-metric", `${item.metrics.standoutCount} standout${item.metrics.standoutCount === 1 ? "" : "s"}`)
+                element("span", "spotlight-metric", `${item.metrics.votersCount} voto${item.metrics.votersCount === 1 ? "" : "s"}`),
+                element("span", "spotlight-metric", `${item.metrics.standoutCount} destacado${item.metrics.standoutCount === 1 ? "" : "s"}`)
             );
             if (item.badge) meta.append(element("span", `spotlight-badge spotlight-badge--${item.badge.id}`, item.badge.label));
-            if (item.tied) meta.append(element("span", "spotlight-badge", "Tie"));
+            if (item.tied) meta.append(element("span", "spotlight-badge", "Empate"));
             container.append(meta);
         }
 
         function appendReasons(container, item) {
             const reasons = element("div", "spotlight-reasons");
-            reasons.setAttribute("aria-label", "Top weekly reasons");
+            reasons.setAttribute("aria-label", "Motivos semanales principales");
             item.topReasonTags.forEach((reason) => {
                 reasons.append(element("span", "spotlight-reason", `${reason.tag.name}${reason.count > 1 ? ` ×${reason.count}` : ""}`));
             });
@@ -116,7 +120,7 @@
         }
 
         function participantButton(participantId) {
-            const button = element("button", "button button--quiet spotlight-view-button", "View participant");
+            const button = element("button", "button button--quiet spotlight-view-button", "Ver perfil");
             button.type = "button";
             button.dataset.spotlightParticipantId = participantId;
             return button;
@@ -128,7 +132,7 @@
             card.append(element("span", "spotlight-rank", String(item.rank)), createPhoto(item.participant));
             card.append(
                 element("h3", "", item.participant.name),
-                element("p", "spotlight-group", item.group?.name || "Soloist / No group")
+                element("p", "spotlight-group", item.group?.name || "Solista / Sin grupo")
             );
             appendMetrics(card, item);
             appendReasons(card, item);
@@ -142,7 +146,7 @@
             const identity = element("div", "spotlight-row-identity");
             identity.append(
                 element("h3", "", item.participant.name),
-                element("p", "spotlight-group", item.group?.name || "Soloist / No group")
+                element("p", "spotlight-group", item.group?.name || "Solista / Sin grupo")
             );
             const details = element("div", "spotlight-row-details");
             appendMetrics(details, item);
@@ -160,12 +164,12 @@
             }
             const fragment = document.createDocumentFragment();
             if (weeks.length === 0) {
-                const empty = element("option", "", "No weeks yet");
+                const empty = element("option", "", "Aún no hay semanas");
                 empty.value = "";
                 fragment.append(empty);
             } else {
                 weeks.forEach((week) => {
-                    const option = element("option", "", `${week.label} · ${week.status}`);
+                    const option = element("option", "", `${week.label} · ${week.status === "OPEN" ? "ABIERTA" : "CERRADA"}`);
                     option.value = week.id;
                     fragment.append(option);
                 });
@@ -203,7 +207,7 @@
 
         function renderRecap(state, result) {
             const overview = spotlight.deriveWeeklyOverview(state, selectedWeekId);
-            elements.recapCopy.textContent = overview.mode === "OFFICIAL" ? "Official weekly recap" : "Live overview · provisional";
+            elements.recapCopy.textContent = overview.mode === "OFFICIAL" ? "Resumen semanal oficial" : "Resumen en vivo · provisional";
             const fragment = document.createDocumentFragment();
             overview.categories.forEach(({ category, results }) => {
                 const card = element("article", "spotlight-recap-card");
@@ -225,7 +229,7 @@
                         });
                         line.append(winnerList);
                     } else {
-                        line.append(element("strong", "", evaluatedCount > 0 ? "No winner" : "No results"));
+                        line.append(element("strong", "", evaluatedCount > 0 ? "Sin ganador" : "Sin resultados"));
                     }
                     card.append(line);
                 });
@@ -241,22 +245,24 @@
                 weekId: selectedWeekId, categoryId: selectedCategoryId, gender: selectedGender
             });
             const isOfficial = result.mode === "OFFICIAL";
-            elements.mode.textContent = isOfficial ? "Official Results" : "Live Preview";
+            elements.mode.textContent = isOfficial ? "Resultados oficiales" : "Resultados en vivo";
             elements.mode.className = `spotlight-mode spotlight-mode--${isOfficial ? "official" : "live"}`;
             elements.intro.textContent = isOfficial
                 ? "Resultados cerrados e inmutables, derivados del registro semanal."
                 : "Vista provisional: cambia inmediatamente cuando se editan votos de la semana abierta.";
-            elements.resultKicker.textContent = isOfficial ? "Official weekly ranking" : "Live ranking · Provisional";
-            elements.resultTitle.textContent = `${genderLabel(selectedGender)} ${categoryLabel(selectedCategoryId)}`;
+            elements.resultKicker.textContent = isOfficial ? "Ranking semanal oficial" : "Ranking en vivo · Provisional";
+            elements.resultTitle.textContent = `${categoryLabel(selectedCategoryId)} ${genderAdjective(selectedGender)}`;
             elements.weekRange.textContent = `${result.week.label} · ${weekly.formatWeekRange(result.week)} · America/Panama`;
             elements.winnerCopy.textContent = result.winners.length === 0
-                ? "No weekly leader yet"
-                : `${isOfficial ? "Winner" : "Leader"}${result.winners.length > 1 ? "s" : ""}: ${result.winners.map((item) => item.participant.name).join(" · ")}`;
+                ? "Aún no hay ganador"
+                : result.winners.length > 1
+                    ? `Empate en primer lugar: ${result.winners.map((item) => item.participant.name).join(" · ")}`
+                    : `${selectedGender === "female" ? "Ganadora" : "Ganador"}: ${result.winners[0].participant.name}`;
 
             elements.praised.hidden = !result.mostPraisedSkill;
             if (result.mostPraisedSkill) {
                 elements.praisedName.textContent = result.mostPraisedSkill.tag.name;
-                elements.praisedCount.textContent = `${result.mostPraisedSkill.count} weekly mention${result.mostPraisedSkill.count === 1 ? "" : "s"}`;
+                elements.praisedCount.textContent = `${result.mostPraisedSkill.count} mención${result.mostPraisedSkill.count === 1 ? "" : "es"} semanal${result.mostPraisedSkill.count === 1 ? "" : "es"}`;
             }
 
             const podium = document.createDocumentFragment();
@@ -266,7 +272,7 @@
             result.items.forEach((item) => list.append(createRankingRow(item)));
             elements.rankingList.replaceChildren(list);
             elements.resultEmpty.hidden = result.items.length > 0;
-            elements.rankingSummary.textContent = `${result.items.length} evaluated · ${result.notEvaluatedCount} not evaluated`;
+            elements.rankingSummary.textContent = `${result.items.length} evaluado${result.items.length === 1 ? "" : "s"} · ${result.notEvaluatedCount} sin evaluar`;
             renderRecap(state, result);
         }
 
@@ -282,7 +288,7 @@
             elements.workspace.hidden = !hasWeek;
             if (!hasWeek) {
                 revokeImages();
-                elements.mode.textContent = "No week";
+                elements.mode.textContent = "Sin semana";
                 elements.mode.className = "spotlight-mode spotlight-mode--empty";
                 return;
             }

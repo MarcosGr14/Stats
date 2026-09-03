@@ -110,7 +110,7 @@
 
     function assertType(type) {
         if (!constants.TAG_TYPES.includes(type)) {
-            throw new TagError("INVALID_TYPE", "Selecciona Strength, Needs Work o Special.");
+            throw new TagError("INVALID_TYPE", "Selecciona Fortalezas, Por mejorar o Especial.");
         }
         return type;
     }

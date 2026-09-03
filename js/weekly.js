@@ -27,7 +27,7 @@
     }
     function datePartsInPanama(value) {
         const date = value instanceof Date ? value : new Date(value);
-        if (Number.isNaN(date.getTime())) throw new WeeklyError("INVALID_DATE", "A valid date is required.");
+        if (Number.isNaN(date.getTime())) throw new WeeklyError("INVALID_DATE", "La fecha no es válida.");
         const parts = new Intl.DateTimeFormat("en-US", {
             timeZone: PANAMA_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit"
         }).formatToParts(date);
@@ -55,7 +55,7 @@
             startDate: dateKey(monday), endDate: dateKey(sunday), timeZone: PANAMA_TIME_ZONE
         };
     }
-    function formatWeekRange(week, locale = "en-US") {
+    function formatWeekRange(week, locale = "es-PA") {
         const format = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone: "UTC" });
         const start = new Date(`${week.startDate}T12:00:00.000Z`);
         const end = new Date(`${week.endDate}T12:00:00.000Z`);
@@ -63,23 +63,23 @@
     }
     function findWeek(state, weekId) {
         const week = state.weeks.find((item) => item.id === weekId);
-        if (!week) throw new WeeklyError("WEEK_NOT_FOUND", "The selected week does not exist.");
+        if (!week) throw new WeeklyError("WEEK_NOT_FOUND", "La semana seleccionada no existe.");
         return week;
     }
     function findParticipant(state, participantId) {
         const participant = state.participants.find((item) => item.id === participantId);
-        if (!participant) throw new WeeklyError("PARTICIPANT_NOT_FOUND", "The participant does not exist.");
+        if (!participant) throw new WeeklyError("PARTICIPANT_NOT_FOUND", "El participante no existe.");
         return participant;
     }
     function assertVoter(state, userId) {
         if (!constants.VOTER_IDS.includes(userId) || !state.settings.voters.some((voter) => voter.id === userId)) {
-            throw new WeeklyError("INVALID_VOTER", "The voter must be p1 or p2.");
+            throw new WeeklyError("INVALID_VOTER", "El votante debe ser P1 o P2.");
         }
     }
     function assertParticipantCategory(participant, categoryId) {
-        if (!categoryIds.has(categoryId)) throw new WeeklyError("INVALID_CATEGORY", "Select a valid voting category.");
+        if (!categoryIds.has(categoryId)) throw new WeeklyError("INVALID_CATEGORY", "Selecciona una categoría válida.");
         if (!participant.categoryIds.includes(categoryId)) {
-            throw new WeeklyError("CATEGORY_NOT_ASSIGNED", "This category is not assigned to the participant.");
+            throw new WeeklyError("CATEGORY_NOT_ASSIGNED", "El participante no está asignado a esta categoría.");
         }
     }
 
@@ -89,7 +89,7 @@
         const existing = state.weeks.find((week) => week.id === descriptor.id);
         if (existing) {
             if (existing.status === "CLOSED") {
-                throw new WeeklyError("WEEK_CLOSED", `${descriptor.label} is closed. Use Reopen Week explicitly.`);
+                throw new WeeklyError("WEEK_CLOSED", `${descriptor.label} está cerrada. Reábrela para editar.`);
             }
             const nextState = cloneState(state);
             nextState.settings.activeWeekId = existing.id;
@@ -97,7 +97,7 @@
             return { state: nextState, week: nextState.weeks.find((week) => week.id === existing.id), created: false };
         }
         const openWeek = state.weeks.find((week) => week.status === "OPEN");
-        if (openWeek) throw new WeeklyError("OPEN_WEEK_EXISTS", `Close ${openWeek.label} before opening ${descriptor.label}.`);
+        if (openWeek) throw new WeeklyError("OPEN_WEEK_EXISTS", `Cierra ${openWeek.label} antes de abrir ${descriptor.label}.`);
         const nextState = cloneState(state);
         const week = data.createWeek({ ...descriptor, id: descriptor.id, status: "OPEN" }, timestamp);
         nextState.weeks.push(week);
@@ -108,7 +108,7 @@
     function closeWeek(state, weekId, timestamp = new Date().toISOString()) {
         assertState(state);
         const current = findWeek(state, weekId);
-        if (current.status === "CLOSED") throw new WeeklyError("WEEK_CLOSED", "This week is already closed.");
+        if (current.status === "CLOSED") throw new WeeklyError("WEEK_CLOSED", "La semana ya está cerrada.");
         const nextState = cloneState(state);
         const week = nextState.weeks.find((item) => item.id === weekId);
         week.status = "CLOSED";
@@ -122,10 +122,10 @@
     function reopenWeek(state, weekId, timestamp = new Date().toISOString()) {
         assertState(state);
         const current = findWeek(state, weekId);
-        if (current.status !== "CLOSED") throw new WeeklyError("WEEK_OPEN", "Only a closed week can be reopened.");
+        if (current.status !== "CLOSED") throw new WeeklyError("WEEK_OPEN", "Solo puedes reabrir una semana cerrada.");
         const otherOpenWeek = state.weeks.find((week) => week.status === "OPEN" && week.id !== weekId);
         if (otherOpenWeek) {
-            throw new WeeklyError("OPEN_WEEK_EXISTS", "Close the currently open week before reopening another week.");
+            throw new WeeklyError("OPEN_WEEK_EXISTS", "Cierra la semana abierta antes de reabrir otra.");
         }
         const nextState = cloneState(state);
         const week = nextState.weeks.find((item) => item.id === weekId);
@@ -151,28 +151,28 @@
     }
     function normalizeVoteInput(state, input) {
         const week = findWeek(state, input.weekId);
-        if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "Closed weeks are read-only.");
+        if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "La semana está cerrada.");
         const participant = findParticipant(state, input.participantId);
         if (participant.archivedAt !== null) {
-            throw new WeeklyError("PARTICIPANT_ARCHIVED", "Archived participants cannot receive new weekly votes.");
+            throw new WeeklyError("PARTICIPANT_ARCHIVED", "Los participantes archivados no reciben votos nuevos.");
         }
         assertParticipantCategory(participant, input.categoryId);
         assertVoter(state, input.userId);
-        if (!ratingById.has(input.rating)) throw new WeeklyError("INVALID_RATING", "Select a valid weekly rating.");
+        if (!ratingById.has(input.rating)) throw new WeeklyError("INVALID_RATING", "Selecciona una valoración válida.");
         const reasonTagIds = Array.isArray(input.reasonTagIds) ? [...new Set(input.reasonTagIds)] : [];
         if (reasonTagIds.some((tagId) => typeof tagId !== "string")) {
-            throw new WeeklyError("INVALID_REASONS", "Reason tags must use valid tag IDs.");
+            throw new WeeklyError("INVALID_REASONS", "Los motivos deben usar tags válidos.");
         }
         if (reasonTagIds.length > constants.MAX_WEEKLY_REASON_TAGS) {
-            throw new WeeklyError("REASON_LIMIT", `Choose up to ${constants.MAX_WEEKLY_REASON_TAGS} reason tags.`);
+            throw new WeeklyError("REASON_LIMIT", `Elige hasta ${constants.MAX_WEEKLY_REASON_TAGS} motivos.`);
         }
         const tagIds = new Set(state.tags.map((tag) => tag.id));
         if (reasonTagIds.some((tagId) => !tagIds.has(tagId))) {
-            throw new WeeklyError("TAG_NOT_FOUND", "One or more reason tags no longer exist.");
+            throw new WeeklyError("TAG_NOT_FOUND", "Uno o más tags de motivo ya no existen.");
         }
         const note = typeof input.note === "string" ? input.note.trim() : "";
         if (note.length > constants.MAX_WEEKLY_NOTE_LENGTH) {
-            throw new WeeklyError("NOTE_TOO_LONG", `Notes must be ${constants.MAX_WEEKLY_NOTE_LENGTH} characters or fewer.`);
+            throw new WeeklyError("NOTE_TOO_LONG", `La nota admite hasta ${constants.MAX_WEEKLY_NOTE_LENGTH} caracteres.`);
         }
         return { reasonTagIds, note };
     }
@@ -187,7 +187,7 @@
         if (input.rating === "standout"
             && standoutCountForUser(state, input.weekId, input.userId, existing && existing.id) >= constants.MAX_WEEKLY_STANDOUTS) {
             throw new WeeklyError("STANDOUT_LIMIT",
-                `You have used all ${constants.MAX_WEEKLY_STANDOUTS} Standouts for this week. Lower or remove another Standout first.`);
+                `Ya usaste los ${constants.MAX_WEEKLY_STANDOUTS} destacados de esta semana. Cambia o elimina otro primero.`);
         }
         const nextState = cloneState(state);
         let vote;
@@ -214,7 +214,7 @@
     function removeVote(state, weekId, participantId, categoryId, userId) {
         assertState(state);
         const week = findWeek(state, weekId);
-        if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "Closed weeks are read-only.");
+        if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "La semana está cerrada.");
         const participant = findParticipant(state, participantId);
         assertParticipantCategory(participant, categoryId);
         assertVoter(state, userId);
@@ -229,14 +229,14 @@
         assertState(state);
         const existing = state.weeklyVotes.find((vote) => vote.id === voteId);
         if (!existing || existing.legacyUncategorized !== true) {
-            throw new WeeklyError("LEGACY_VOTE_NOT_FOUND", "The uncategorized legacy vote no longer exists.");
+            throw new WeeklyError("LEGACY_VOTE_NOT_FOUND", "El voto anterior sin categoría ya no existe.");
         }
         const week = findWeek(state, existing.weekId);
-        if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "Reopen the week before categorizing this legacy vote.");
+        if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "Reabre la semana antes de categorizar este voto anterior.");
         const participant = findParticipant(state, existing.participantId);
         assertParticipantCategory(participant, categoryId);
         if (findVote(state, existing.weekId, existing.participantId, categoryId, existing.userId)) {
-            throw new WeeklyError("CATEGORY_VOTE_EXISTS", "This category already has a vote for the same user and week.");
+            throw new WeeklyError("CATEGORY_VOTE_EXISTS", "Esta categoría ya tiene un voto del mismo usuario en la semana.");
         }
         const nextState = cloneState(state);
         const vote = nextState.weeklyVotes.find((item) => item.id === voteId);
@@ -278,7 +278,7 @@
     }
     function deriveWeeklyRanking(state, weekId, categoryId) {
         findWeek(state, weekId);
-        if (!categoryIds.has(categoryId)) throw new WeeklyError("INVALID_CATEGORY", "Select a valid ranking category.");
+        if (!categoryIds.has(categoryId)) throw new WeeklyError("INVALID_CATEGORY", "Selecciona una categoría válida para el ranking.");
         const participantsById = new Map(state.participants.map((participant) => [participant.id, participant]));
         const votedParticipantIds = [...new Set(state.weeklyVotes
             .filter((vote) => vote.weekId === weekId && vote.categoryId === categoryId && vote.legacyUncategorized !== true)

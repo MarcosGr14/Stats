@@ -210,6 +210,7 @@ test("ranking UI exposes six accessible tabs and loads derivation before the app
     const categories = [...html.matchAll(/data-ranking-category="([^"]+)"/g)].map((match) => match[1]);
     assert.deepEqual(categories, ["vocal", "rap", "dance", "stage", "visual", "all-rounder"]);
     assert.match(html, /role="tablist"/);
-    assert.match(html, /Top 3 · Locked/);
+    assert.match(html, /<p class="micro-label">Top 3<\/p>/);
+    assert.match(html, /Aún no hay resultados/);
     assert.ok(html.indexOf("js/rankings.js") < html.indexOf("js/app.js"));
 });

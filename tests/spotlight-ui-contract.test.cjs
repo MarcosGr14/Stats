@@ -18,9 +18,9 @@ test("loads Weekly Spotlight derivation and view before the application", () => 
     assert.match(app, /spotlightController = spotlightViewService\.createController/);
 });
 
-test("exposes week, six categories and separate Female and Male controls accessibly", () => {
+test("exposes week, six categories and separate Mujeres and Hombres controls accessibly", () => {
     assert.match(html, /id="spotlight-week-select"/);
-    assert.match(html, /id="spotlight-category-tabs" role="tablist" aria-label="Result category"/);
+    assert.match(html, /id="spotlight-category-tabs" role="tablist" aria-label="Categoría"/);
     assert.match(html, /data-spotlight-gender="female" aria-pressed="true"/);
     assert.match(html, /data-spotlight-gender="male" aria-pressed="false"/);
     assert.match(view, /constants\.CATEGORIES\.forEach/);
@@ -34,10 +34,10 @@ test("renders LIVE or OFFICIAL Top 3, full ranking, reason skill and weekly reca
     assert.match(html, /id="spotlight-ranking-list"/);
     assert.match(html, /id="spotlight-praised"/);
     assert.match(html, /id="spotlight-recap-grid"/);
-    assert.match(view, /Official Results/);
-    assert.match(view, /Live Preview/);
-    assert.match(view, /not evaluated/);
-    assert.match(view, /View participant/);
+    assert.match(view, /Resultados oficiales/);
+    assert.match(view, /Resultados en vivo/);
+    assert.match(view, /sin evaluar/);
+    assert.match(view, /Ver perfil/);
 });
 
 test("keeps Spotlight derived and read-only with no persistent collections", () => {
