@@ -15,6 +15,7 @@
     const spotlightViewService = namespace && namespace.spotlightView;
     const profileHistoryService = namespace && namespace.profileHistory;
     const profileViewService = namespace && namespace.profileView;
+    const analyticsViewService = namespace && namespace.analyticsView;
     const imageStorage = namespace && namespace.imageStorage;
 
     let state = null;
@@ -34,6 +35,7 @@
     let weeklyController = null;
     let spotlightController = null;
     let profileController = null;
+    let analyticsController = null;
     let currentProfileId = null;
     let profileHasInternalReturn = false;
     let elements = {};
@@ -463,6 +465,7 @@
         if (root.location.hash === "#weekly") return "weekly";
         if (root.location.hash === "#spotlight") return "spotlight";
         if (root.location.hash === "#rankings") return "rankings";
+        if (root.location.hash === "#analytics") return "analytics";
         if (root.location.hash.startsWith("#profile?")) return "profile";
         return "participants";
     }
@@ -474,24 +477,27 @@
     }
 
     function activateView(view, shouldRender = true) {
-        activeView = ["participants", "profile", "weekly", "spotlight", "rankings"].includes(view) ? view : "participants";
+        activeView = ["participants", "profile", "weekly", "spotlight", "rankings", "analytics"].includes(view) ? view : "participants";
         elements.participantManager.hidden = activeView !== "participants";
         elements.profileView.hidden = activeView !== "profile";
         elements.weeklyView.hidden = activeView !== "weekly";
         elements.spotlightView.hidden = activeView !== "spotlight";
         elements.rankingsView.hidden = activeView !== "rankings";
-        [elements.navParticipants, elements.navWeekly, elements.navSpotlight, elements.navRankings]
+        elements.analyticsView.hidden = activeView !== "analytics";
+        [elements.navParticipants, elements.navWeekly, elements.navSpotlight, elements.navRankings, elements.navAnalytics]
             .forEach((link) => link.removeAttribute("aria-current"));
         if (activeView === "participants") elements.navParticipants.setAttribute("aria-current", "page");
         if (activeView === "profile") elements.navParticipants.setAttribute("aria-current", "page");
         if (activeView === "weekly") elements.navWeekly.setAttribute("aria-current", "page");
         if (activeView === "spotlight") elements.navSpotlight.setAttribute("aria-current", "page");
         if (activeView === "rankings") elements.navRankings.setAttribute("aria-current", "page");
-        const titles = { participants: "Participantes", profile: "Perfil", weekly: "Votación semanal", spotlight: "Destacados de la semana", rankings: "Rankings" };
+        if (activeView === "analytics") elements.navAnalytics.setAttribute("aria-current", "page");
+        const titles = { participants: "Participantes", profile: "Perfil", weekly: "Votación semanal", spotlight: "Destacados de la semana", rankings: "Rankings", analytics: "Estadísticas" };
         const profileParticipant = activeView === "profile" ? findParticipant(profileIdFromLocation() || currentProfileId) : null;
         document.title = `${profileParticipant?.name || titles[activeView]} · Stats V2`;
         if (shouldRender) {
             if (activeView === "rankings") renderRankings();
+            else if (activeView === "analytics") analyticsController?.activate();
             else if (activeView === "weekly") weeklyController?.activate();
             else if (activeView === "spotlight") spotlightController?.activate();
             else if (activeView === "profile") {
@@ -1232,10 +1238,12 @@
             weeklyView: byId("weekly"),
             spotlightView: byId("spotlight"),
             rankingsView: byId("rankings"),
+            analyticsView: byId("analytics"),
             navParticipants: byId("nav-participants"),
             navWeekly: byId("nav-weekly"),
             navSpotlight: byId("nav-spotlight"),
             navRankings: byId("nav-rankings"),
+            navAnalytics: byId("nav-analytics"),
             participantCount: byId("participant-count"),
             storageStatus: byId("storage-status"),
             search: byId("participant-search"),
@@ -1347,6 +1355,10 @@
         elements.navRankings.addEventListener("click", (event) => {
             event.preventDefault();
             navigateToView("rankings");
+        });
+        elements.navAnalytics.addEventListener("click", (event) => {
+            event.preventDefault();
+            navigateToView("analytics");
         });
         root.addEventListener("hashchange", () => activateView(activeViewFromLocation()));
 
@@ -1470,8 +1482,8 @@
     function initialize() {
         if (!constants || !data || !storage || !participantService || !tagService || !rankingsService
             || !weeklyService || !weeklyMigration || !weeklyViewService || !spotlightService
-            || !spotlightViewService || !profileHistoryService || !profileViewService || !imageStorage) {
-            throw new Error("Stats V2 participant, tag, weekly, Spotlight, profile and ranking modules did not load correctly.");
+            || !spotlightViewService || !profileHistoryService || !profileViewService || !analyticsViewService || !imageStorage) {
+            throw new Error("Stats V2 participant, tag, weekly, Spotlight, profile, ranking and Analytics modules did not load correctly.");
         }
 
         cacheElements();
@@ -1528,6 +1540,10 @@
             goBack: backFromProfile,
             editParticipant: openParticipantDialog,
             manageTags: openTagDialog
+        });
+        analyticsController = analyticsViewService.createController({
+            getState: () => state,
+            viewParticipant: openParticipantProfile
         });
         activeView = activeViewFromLocation();
         showStorageStatus(result);

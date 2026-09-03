@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/weekly.css?v=2.7.0">
     <link rel="stylesheet" href="css/spotlight.css?v=2.7.0">
     <link rel="stylesheet" href="css/profile.css?v=2.7.0">
+    <link rel="stylesheet" href="css/analytics.css?v=2.7.0">
     <script src="js/constants.js?v=2.7.0" defer></script>
     <script src="js/data.js?v=2.7.0" defer></script>
     <script src="js/storage.js?v=2.7.0" defer></script>
@@ -27,6 +28,7 @@
     <script src="js/weekly-view.js?v=2.7.0" defer></script>
     <script src="js/spotlight-view.js?v=2.7.0" defer></script>
     <script src="js/profile-view.js?v=2.7.0" defer></script>
+    <script src="js/analytics-view.js?v=2.7.0" defer></script>
     <script src="js/app.js?v=2.7.0" defer></script>
 </head>
 <body>
@@ -47,6 +49,7 @@
                 <a id="nav-weekly" href="#weekly">Votación</a>
                 <a id="nav-spotlight" href="#spotlight">Destacados</a>
                 <a id="nav-rankings" href="#rankings">Rankings</a>
+                <a id="nav-analytics" href="#analytics">Estadísticas</a>
             </nav>
 
             <div class="build-status" title="Estado de la app">
@@ -443,6 +446,157 @@
                         <div class="spotlight-recap-grid" id="spotlight-recap-grid"></div>
                     </section>
                 </div>
+            </section>
+
+            <section class="analytics-view" id="analytics" aria-labelledby="analytics-title" hidden>
+                <header class="analytics-hero">
+                    <div>
+                        <p class="eyebrow">Patrones de rendimiento</p>
+                        <h1 id="analytics-title">Estadísticas</h1>
+                        <p class="analytics-intro">Explora resultados, tendencias y hábitos de votación sin mezclar categorías ni géneros.</p>
+                    </div>
+                    <div class="analytics-scope-card" aria-live="polite">
+                        <p>Vista actual</p>
+                        <strong id="analytics-scope">Vocal · Mujeres · 0 semanas</strong>
+                        <span class="analytics-live-status" id="analytics-live-status" hidden>Incluye resultados en vivo</span>
+                    </div>
+                </header>
+
+                <section class="analytics-filters" aria-label="Filtros de estadísticas">
+                    <label class="select-control" for="analytics-range">
+                        <span>Rango</span>
+                        <select id="analytics-range">
+                            <option value="all">Todo el historial</option>
+                            <option value="4">Últimas 4 semanas</option>
+                            <option value="8">Últimas 8 semanas</option>
+                            <option value="12">Últimas 12 semanas</option>
+                        </select>
+                    </label>
+                    <label class="select-control" for="analytics-category">
+                        <span>Categoría</span>
+                        <select id="analytics-category">
+                            <option value="all">Todas</option>
+                            <option value="vocal" selected>Vocal</option>
+                            <option value="rap">Rap</option>
+                            <option value="dance">Baile</option>
+                            <option value="stage">Escenario</option>
+                            <option value="visual">Visual</option>
+                            <option value="all-rounder">Integral</option>
+                        </select>
+                    </label>
+                    <label class="select-control" for="analytics-gender">
+                        <span>Género</span>
+                        <select id="analytics-gender">
+                            <option value="all">Todos</option>
+                            <option value="male">Hombres</option>
+                            <option value="female" selected>Mujeres</option>
+                        </select>
+                    </label>
+                    <label class="select-control" for="analytics-group">
+                        <span>Grupo</span>
+                        <select id="analytics-group"><option value="all">Todos los grupos</option></select>
+                    </label>
+                    <label class="analytics-live-toggle" for="analytics-include-open">
+                        <input id="analytics-include-open" type="checkbox">
+                        <span>Incluir resultados en vivo</span>
+                    </label>
+                </section>
+
+                <div class="analytics-tabs" role="tablist" aria-label="Secciones de estadísticas">
+                    <button id="analytics-tab-summary" type="button" role="tab" aria-selected="true" aria-controls="analytics-panel-summary" tabindex="0" data-analytics-tab="summary">Resumen</button>
+                    <button id="analytics-tab-performance" type="button" role="tab" aria-selected="false" aria-controls="analytics-panel-performance" tabindex="-1" data-analytics-tab="performance">Rendimiento</button>
+                    <button id="analytics-tab-users" type="button" role="tab" aria-selected="false" aria-controls="analytics-panel-users" tabindex="-1" data-analytics-tab="users">P1 vs P2</button>
+                    <button id="analytics-tab-skills" type="button" role="tab" aria-selected="false" aria-controls="analytics-panel-skills" tabindex="-1" data-analytics-tab="skills">Habilidades</button>
+                    <button id="analytics-tab-activity" type="button" role="tab" aria-selected="false" aria-controls="analytics-panel-activity" tabindex="-1" data-analytics-tab="activity">Actividad</button>
+                </div>
+
+                <section class="analytics-panel" id="analytics-panel-summary" role="tabpanel" aria-labelledby="analytics-tab-summary" data-analytics-panel="summary">
+                    <header class="analytics-panel-header">
+                        <div><p class="micro-label">Lectura rápida</p><h2>Resumen</h2></div>
+                        <p>Seis señales principales del periodo seleccionado.</p>
+                    </header>
+                    <div class="analytics-summary-grid" id="analytics-summary-grid" aria-live="polite"></div>
+                </section>
+
+                <section class="analytics-panel" id="analytics-panel-performance" role="tabpanel" aria-labelledby="analytics-tab-performance" data-analytics-panel="performance" hidden>
+                    <header class="analytics-panel-header">
+                        <div><p class="micro-label">Comparación directa</p><h2>Rendimiento</h2></div>
+                        <p>Cada columna describe una métrica independiente; no existe un puntaje general.</p>
+                    </header>
+                    <div class="analytics-table-toolbar">
+                        <label class="select-control" for="analytics-performance-sort">
+                            <span>Ordenar por</span>
+                            <select id="analytics-performance-sort">
+                                <option value="wins">Victorias</option>
+                                <option value="topThree">Top 3</option>
+                                <option value="average">Promedio</option>
+                                <option value="standouts">Destacados</option>
+                                <option value="consistency">Consistencia</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="analytics-table-wrap">
+                        <table class="analytics-table">
+                            <thead><tr><th>Participante</th><th>Victorias</th><th>Top 3</th><th>Destacados</th><th>Promedio</th><th>Variación</th><th>Semanas</th></tr></thead>
+                            <tbody id="analytics-performance-body"></tbody>
+                        </table>
+                        <p class="analytics-section-empty" id="analytics-performance-empty" hidden>No hay datos con estos filtros.</p>
+                    </div>
+                </section>
+
+                <section class="analytics-panel" id="analytics-panel-users" role="tabpanel" aria-labelledby="analytics-tab-users" data-analytics-panel="users" hidden>
+                    <header class="analytics-panel-header">
+                        <div><p class="micro-label">Dos perspectivas</p><h2>P1 vs P2</h2></div>
+                        <p>Acuerdos, diferencias y distribución de valoraciones.</p>
+                    </header>
+                    <div class="analytics-comparison-grid" id="analytics-p1p2-cards"></div>
+                    <div class="analytics-event-grid" id="analytics-event-lists"></div>
+                    <div class="analytics-rating-grid" id="analytics-rating-distribution" aria-label="Distribución de valoraciones P1 y P2"></div>
+                </section>
+
+                <section class="analytics-panel" id="analytics-panel-skills" role="tabpanel" aria-labelledby="analytics-tab-skills" data-analytics-panel="skills" hidden>
+                    <header class="analytics-panel-header">
+                        <div><p class="micro-label">Motivos y rasgos</p><h2>Habilidades</h2></div>
+                        <p>Los elogios semanales y los tags del perfil se muestran por separado.</p>
+                    </header>
+                    <div class="analytics-skill-layout">
+                        <article class="analytics-skill-card">
+                            <p class="micro-label">Solo reason tags</p>
+                            <h3>Habilidades más destacadas</h3>
+                            <div id="analytics-praised-skills"></div>
+                        </article>
+                        <div class="analytics-tag-grid" id="analytics-profile-tags"></div>
+                    </div>
+                </section>
+
+                <section class="analytics-panel" id="analytics-panel-activity" role="tabpanel" aria-labelledby="analytics-tab-activity" data-analytics-panel="activity" hidden>
+                    <header class="analytics-panel-header">
+                        <div><p class="micro-label">Ritmo semanal</p><h2>Actividad</h2></div>
+                        <p>Volumen de uso por semana; no representa rendimiento.</p>
+                    </header>
+                    <div class="analytics-activity-layout">
+                        <article class="analytics-chart-card">
+                            <div class="analytics-chart-heading">
+                                <h3>Actividad semanal</h3>
+                                <label class="select-control" for="analytics-activity-metric">
+                                    <span>Métrica</span>
+                                    <select id="analytics-activity-metric">
+                                        <option value="votes">Votos</option>
+                                        <option value="participants">Participantes</option>
+                                        <option value="standouts">Destacados</option>
+                                        <option value="reasons">Motivos</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="analytics-activity-chart" id="analytics-activity-chart" role="img" aria-label="Actividad semanal"></div>
+                            <p class="analytics-activity-text" id="analytics-activity-text"></p>
+                        </article>
+                        <article class="analytics-active-week" id="analytics-active-week"></article>
+                    </div>
+                    <div class="analytics-category-grid" id="analytics-category-stats"></div>
+                </section>
+
+                <p class="analytics-render-time" id="analytics-render-time"></p>
             </section>
 
             <section class="rankings-view" id="rankings" aria-labelledby="rankings-title" hidden>
