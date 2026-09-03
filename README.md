@@ -4,7 +4,7 @@ Aplicación local-first para organizar y, en fases posteriores, evaluar performe
 
 ## Estado actual
 
-Está implementada **Fase 7A - Core Analytics** sobre Participant Manager, Tag System, Category-specific Voting, Weekly Spotlight y Profiles & History:
+Está implementada **Fase 7B - Analytics UI** sobre Participant Manager, Tag System, Category-specific Voting, Weekly Spotlight, Profiles & History y Core Analytics:
 
 - alta y edición de participantes;
 - grupos reutilizables, con creación rápida desde el formulario;
@@ -45,11 +45,16 @@ Está implementada **Fase 7A - Core Analytics** sobre Participant Manager, Tag S
 - consistencia, mejora, promedios de score/posición, acuerdo y controversia con muestras mínimas explícitas;
 - Weekly Praise, profile tags, P1/P2, distribución de ratings, actividad semanal y agregados descriptivos;
 - alcance oficial `CLOSED` por defecto, con `includeOpen` explícito para análisis live y filtros temporales;
+- vista Estadísticas con filtros globales por periodo, categoría, género y grupo;
+- secciones Resumen, Rendimiento, P1 vs P2, Habilidades y Actividad;
+- tabla ordenable por métricas individuales, sin score compuesto ni desempate alfabético competitivo;
+- gráficos CSS de actividad con equivalente textual accesible y estados explícitos de datos insuficientes;
+- reason tags semanales y tags permanentes del perfil presentados en bloques independientes;
 - archivado y restauración;
 - borrado permanente solo cuando no existe historial relacionado;
 - UI responsive y accesible con formularios y diálogos navegables por teclado.
 
-No se han implementado Overall Score, Season Score, standings de temporada, Male/Female Leader, Grand Winners, Best Group, Most Competitive Week ni el dashboard visual de Analytics. Esas funciones pertenecen a Fase 7B o fases posteriores y requieren definición o autorización propia.
+No se han implementado Overall Score, Season Score, standings de temporada, Male/Female Leader, Grand Winners, Best Group ni Most Competitive Week. Esas funciones pertenecen a fases posteriores y requieren definición o autorización propia.
 
 ## Ejecución
 
@@ -70,7 +75,8 @@ Stats/
 │   ├── app.css
 │   ├── weekly.css
 │   ├── spotlight.css
-│   └── profile.css
+│   ├── profile.css
+│   └── analytics.css
 ├── js/
 │   ├── constants.js
 │   ├── data.js
@@ -83,6 +89,7 @@ Stats/
 │   ├── profile-history.js
 │   ├── profile-view.js
 │   ├── analytics.js
+│   ├── analytics-view.js
 │   ├── participants.js
 │   ├── tags.js
 │   ├── rankings.js
@@ -104,6 +111,8 @@ Stats/
 │   ├── profile-history.test.cjs
 │   ├── profile-ui-contract.test.cjs
 │   ├── analytics.test.cjs
+│   ├── analytics-view.test.cjs
+│   ├── analytics-ui-contract.test.cjs
 │   └── image-storage.test.cjs
 └── README.md
 ```
@@ -232,7 +241,17 @@ Métricas disponibles y fórmulas:
 
 Todas las respuestas incluyen scope, valor, tamaño de muestra y metadata explicativa cuando corresponde. Las métricas estadísticas devuelven `insufficientData: true` si no alcanzan su umbral. Se soportan filtros lógicos `categoryId`, `gender`, `groupId`, `participantId`, `userId` donde aplica, `fromWeekId`, `toWeekId` y `lastNWeeks`. Por defecto solo entran semanas `CLOSED`; `includeOpen: true` incorpora explícitamente `OPEN + CLOSED` para análisis live.
 
-Quedan deliberadamente sin fórmula `Most Competitive Week`, Overall/Season Score, standings, líderes Male/Female, Grand Winners y Best Group. Fase 7A tampoco añade dashboard, charts ni filtros visuales; `index.html` solo carga el módulo para que Fase 7B pueda consumirlo.
+Quedan deliberadamente sin fórmula `Most Competitive Week`, Overall/Season Score, standings, líderes Male/Female, Grand Winners y Best Group. `analytics-view.js` consume esta API sin duplicar ni alterar sus fórmulas.
+
+## Analytics UI
+
+La vista `#analytics` aplica un único alcance global por periodo, categoría, género y grupo. Mantiene resultados oficiales `CLOSED` por defecto; el control “Incluir resultados en vivo” incorpora `OPEN` de forma explícita y visible. Las opciones temporales son todo el historial o las últimas 4, 8 y 12 semanas del alcance oficial/live elegido.
+
+Resumen muestra victorias, Top 3, Standouts, mejora, consistencia y habilidad más elogiada. Rendimiento conserva una fila independiente por participante, categoría y género, y permite ordenar por una métrica a la vez. P1 vs P2 muestra acuerdos, desacuerdos, Duo Standouts, Solo Picks, Split Decisions y distribuciones de rating. Habilidades separa estrictamente `reasonTagIds` de las asignaciones activas del perfil. Actividad presenta votos, participantes, Standouts y motivos por semana, la semana más activa y agregados descriptivos por categoría; nunca asigna Best Group.
+
+Los gráficos se construyen con CSS, conservan valores visibles y exponen un resumen textual mediante `aria-label` y texto en pantalla. Las pestañas admiten flechas, Home y End. Cuando el filtro no define una comparación válida o una muestra no alcanza el mínimo estadístico, la UI explica “Elige categoría y género” o “Datos insuficientes” en vez de inventar un ganador.
+
+La vista no persiste resultados ni crea una caché. Cada cambio de alcance vuelve a derivar los datos desde el estado autoritativo y muestra el costo medido de esa derivación. Cambiar únicamente la métrica del gráfico recalcula solo la actividad semanal.
 
 ## Persistencia
 
@@ -259,6 +278,8 @@ Abrir, filtrar u ordenar un perfil también es de solo lectura. Fase 6 no requie
 
 Ejecutar Core Analytics tampoco escribe estado. Fase 7A no requiere migración, backup ni cambio de esquema porque deriva exclusivamente desde participantes, grupos, tags, asignaciones, semanas y votos existentes; no abre IndexedDB.
 
+Abrir, filtrar u ordenar Analytics también es de solo lectura. Fase 7B no requiere migración, backup ni cambio de esquema: consume las derivaciones de Fase 7A, no guarda métricas y no abre IndexedDB ni carga imágenes.
+
 ## Archivado y borrado
 
 - Archivar conserva identidad, categorías, foto y referencias históricas.
@@ -282,13 +303,15 @@ Requiere Node.js 20 o superior y no instala paquetes:
 node --test tests/*.test.cjs
 ```
 
-Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, ambas migraciones y backups exactos, semanas ISO, cierre/reapertura, unicidad categorizada, conversión legacy, P1/P2, límite global de Standouts, reason tags, notas, métricas por categoría, desempates, UI contractual, Rankings Unranked, Weekly Spotlight, perfiles, historial categorizado, tendencias, Core Analytics y errores de imágenes.
+Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, ambas migraciones y backups exactos, semanas ISO, cierre/reapertura, unicidad categorizada, conversión legacy, P1/P2, límite global de Standouts, reason tags, notas, métricas por categoría, desempates, UI contractual, Rankings Unranked, Weekly Spotlight, perfiles, historial categorizado, tendencias, Core Analytics, Analytics UI y errores de imágenes.
 
 También se realizó un smoke test en un origen local aislado con roster ficticio: Female Vocal A=6, B=5, C=4, D=0 y E sin voto. El Top 3 mostró A/B/C, el ranking completo incluyó D y excluyó E. El cierre cambió Spotlight a OFFICIAL; la reapertura volvió a LIVE y una edición de C a 5 produjo `1, 2, 2, 4`. También se comprobaron Male, otra categoría, recap, motivos, badges y acceso al participante. El layout fue revisado en 320, 375, 768 y 1440 px sin overflow horizontal ni errores de consola.
 
 Para Fase 6 se ejecutó además un smoke aislado con un participante archivado y cinco resultados en Vocal/Stage. Se verificaron tres semanas únicas, tres victorias, cinco Top 3, mejores semanas empatadas, motivos y tags independientes, el hueco `Not evaluated`, orden histórico, navegación/Back, URL directa y los diálogos existentes. El perfil se revisó en 320, 375, 768 y 1440 px sin overflow horizontal ni errores de consola.
 
 El smoke aislado de Fase 7A usa seis participantes ficticios, ambos géneros, Vocal/Stage, cinco semanas cerradas y una abierta. Verifica joint winners, gaps, Normals, Duo Standouts, Solo Picks, Split Decisions, razones, consistencia, mejora, promedios, acuerdo/controversia, P1/P2, filtros temporales, archivado y `CLOSED` frente a `includeOpen`, sin acceder al almacenamiento real.
+
+Para Fase 7B se ejecutó además un smoke en un origen local desechable con seis participantes ficticios, seis semanas cerradas y una abierta. Se recorrieron las cinco secciones, filtros combinados, últimas 4 semanas, grupo, modo live, orden de la tabla, cambio de métrica del gráfico, estado sin mezcla y acceso al perfil. La UI se inspeccionó en 320, 375, 768 y 1440 px sin overflow de página; las pestañas usan scroll interno en móvil. No hubo errores ni warnings en consola.
 
 ## Riesgos y decisiones pendientes
 
@@ -298,7 +321,7 @@ El smoke aislado de Fase 7A usa seis participantes ficticios, ambos géneros, Vo
 - La reapertura es una acción administrativa local sin autenticación; queda auditada con contador y último timestamp, no con identidad ni motivo.
 - El directorio histórico `Rankings` permanece deliberadamente `Unranked`; Fase 5 clasifica semanas concretas y no define todavía una política acumulada de temporada.
 - Los perfiles derivan nuevamente el ranking de cada semana/categoría consultada; con historiales muy grandes puede convenir una caché derivada e invalidable, nunca una duplicación autoritativa.
-- Core Analytics recalcula rankings para mantener una única fuente de verdad; un historial muy grande puede requerir memoización derivada e invalidable en Fase 7B.
+- Analytics recalcula desde la fuente autoritativa y muestra su costo real; un historial muy grande puede requerir en una fase futura una memoización derivada, invalidable y nunca persistida.
 - Una muestra mínima de 3 reduce resultados estadísticos engañosos, pero seguirá siendo una muestra pequeña y debe mostrarse junto a cada resultado.
 - La limpieza de blobs huérfanos se hace de forma oportunista; una herramienta integral de mantenimiento/backup pertenece a la Fase 9.
 - Navegadores sin IndexedDB mantienen el participant manager, pero usan el fallback visual y no pueden guardar fotos.
@@ -306,4 +329,4 @@ El smoke aislado de Fase 7A usa seis participantes ficticios, ambos géneros, Vo
 
 ## Límite de fase
 
-La Fase 7A termina en una API derivada y testeada de Core Analytics. No se implementan dashboard ni charts de Fase 7B, Overall/Season Score, standings, líderes Male/Female, Grand Winners, Best Group, Most Competitive Week ni Fase 8; el proyecto queda detenido antes de Fase 7B.
+La Fase 7B termina en una interfaz visual, responsive, accesible y de solo lectura sobre Core Analytics. No se implementan Overall/Season Score, standings, líderes Male/Female, Grand Winners, Best Group, Most Competitive Week ni Fase 8; el proyecto queda detenido al cierre de Fase 7B.
