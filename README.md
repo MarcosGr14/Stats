@@ -4,7 +4,7 @@ Aplicación local-first para organizar y, en fases posteriores, evaluar performe
 
 ## Estado actual
 
-Está implementada **Fase 7B - Analytics UI** sobre Participant Manager, Tag System, Category-specific Voting, Weekly Spotlight, Profiles & History y Core Analytics:
+Está implementada **Fase 8 - Season Standings + Grand Winners** sobre Participant Manager, Tag System, Category-specific Voting, Weekly Spotlight, Profiles & History y Analytics:
 
 - alta y edición de participantes;
 - grupos reutilizables, con creación rápida desde el formulario;
@@ -50,11 +50,17 @@ Está implementada **Fase 7B - Analytics UI** sobre Participant Manager, Tag Sys
 - tabla ordenable por métricas individuales, sin score compuesto ni desempate alfabético competitivo;
 - gráficos CSS de actividad con equivalente textual accesible y estados explícitos de datos insuficientes;
 - reason tags semanales y tags permanentes del perfil presentados en bloques independientes;
+- 12 clasificaciones de temporada independientes: seis categorías por dos géneros;
+- Season Score explicable `40/25/20/15`, con cinco semanas evaluadas como mínimo y provisionales separados;
+- ganadores por categoría, incluyendo empates conjuntos exactos, sin desempates ocultos;
+- Grand Winners Female y Male mediante el 95% de la mejor categoría y el 5% de la segunda elegible;
+- vista oficial basada en semanas `CLOSED` y preview `LIVE / PROVISIONAL` opcional para incluir `OPEN`;
+- resumen de ganadores, podios, tablas completas y desglose accesible de cada puntuación;
 - archivado y restauración;
 - borrado permanente solo cuando no existe historial relacionado;
 - UI responsive y accesible con formularios y diálogos navegables por teclado.
 
-No se han implementado Overall Score, Season Score, standings de temporada, Male/Female Leader, Grand Winners, Best Group ni Most Competitive Week. Esas funciones pertenecen a fases posteriores y requieren definición o autorización propia.
+No se han implementado `overallScore`, Best Group, Most Competitive Week ni administración de múltiples temporadas. Rankings conserva su directorio histórico `Unranked`; las clasificaciones acumuladas viven exclusivamente en Temporada.
 
 ## Ejecución
 
@@ -76,7 +82,8 @@ Stats/
 │   ├── weekly.css
 │   ├── spotlight.css
 │   ├── profile.css
-│   └── analytics.css
+│   ├── analytics.css
+│   └── season.css
 ├── js/
 │   ├── constants.js
 │   ├── data.js
@@ -90,6 +97,8 @@ Stats/
 │   ├── profile-view.js
 │   ├── analytics.js
 │   ├── analytics-view.js
+│   ├── season.js
+│   ├── season-view.js
 │   ├── participants.js
 │   ├── tags.js
 │   ├── rankings.js
@@ -113,6 +122,8 @@ Stats/
 │   ├── analytics.test.cjs
 │   ├── analytics-view.test.cjs
 │   ├── analytics-ui-contract.test.cjs
+│   ├── season.test.cjs
+│   ├── season-ui-contract.test.cjs
 │   └── image-storage.test.cjs
 └── README.md
 ```
@@ -241,7 +252,7 @@ Métricas disponibles y fórmulas:
 
 Todas las respuestas incluyen scope, valor, tamaño de muestra y metadata explicativa cuando corresponde. Las métricas estadísticas devuelven `insufficientData: true` si no alcanzan su umbral. Se soportan filtros lógicos `categoryId`, `gender`, `groupId`, `participantId`, `userId` donde aplica, `fromWeekId`, `toWeekId` y `lastNWeeks`. Por defecto solo entran semanas `CLOSED`; `includeOpen: true` incorpora explícitamente `OPEN + CLOSED` para análisis live.
 
-Quedan deliberadamente sin fórmula `Most Competitive Week`, Overall/Season Score, standings, líderes Male/Female, Grand Winners y Best Group. `analytics-view.js` consume esta API sin duplicar ni alterar sus fórmulas.
+Quedan deliberadamente fuera de Analytics `Most Competitive Week`, `overallScore` y Best Group. Season Score, standings y Grand Winners pertenecen a `season.js`; `analytics-view.js` no duplica ni altera sus fórmulas.
 
 ## Analytics UI
 
@@ -252,6 +263,21 @@ Resumen muestra victorias, Top 3, Standouts, mejora, consistencia y habilidad m�
 Los gráficos se construyen con CSS, conservan valores visibles y exponen un resumen textual mediante `aria-label` y texto en pantalla. Las pestañas admiten flechas, Home y End. Cuando el filtro no define una comparación válida o una muestra no alcanza el mínimo estadístico, la UI explica “Elige categoría y género” o “Datos insuficientes” en vez de inventar un ganador.
 
 La vista no persiste resultados ni crea una caché. Cada cambio de alcance vuelve a derivar los datos desde el estado autoritativo y muestra el costo medido de esa derivación. Cambiar únicamente la métrica del gráfico recalcula solo la actividad semanal.
+
+## Season Standings y Grand Winners
+
+`season.js` deriva las 12 clasificaciones posibles (`categoryId + gender`) desde el historial actual. Por defecto usa únicamente semanas `CLOSED`; el control explícito de preview incorpora `OPEN` y marca todo el resultado como `LIVE / PROVISIONAL`. Esta fase considera todo el historial cerrado como la temporada vigente y no crea todavía entidades ni controles para múltiples temporadas.
+
+El Season Score se calcula con precisión completa y se muestra con un decimal:
+
+- 40% rendimiento promedio: `(averageWeeklyPoints / 6) * 100`;
+- 25% tasa de victorias: `wins / weeksEvaluated * 100`;
+- 20% tasa de Top 3: `topThreeAppearances / weeksEvaluated * 100`;
+- 15% tasa de Standouts: `standoutVotes / (weeksEvaluated * 2) * 100`.
+
+`Normal` cuenta como semana evaluada con cero puntos y `Not evaluated` es ausencia de registro. Se requieren cinco semanas evaluadas dentro de la misma categoría; con cuatro o menos el resultado queda en Provisionales y no puede ganar. Las posiciones oficiales ordenan solo por Season Score exacto y usan ranking de competición (`1, 1, 3`). El nombre se usa después únicamente para estabilidad visual.
+
+El Grand Score se calcula por género con categorías ya elegibles: 95% de la mejor categoría y 5% de la segunda. Cuando solo existe una categoría elegible se usa su puntuación completa, sin penalización. Categorías adicionales no aportan ventaja y los empates exactos producen ganadores conjuntos. `season-view.js` presenta el resumen, los ganadores de las 12 clasificaciones, Grand Winners Female/Male, podios, standings elegibles, provisionales y desgloses auditables; las fórmulas no viven en `app.js`.
 
 ## Persistencia
 
@@ -280,6 +306,8 @@ Ejecutar Core Analytics tampoco escribe estado. Fase 7A no requiere migración, 
 
 Abrir, filtrar u ordenar Analytics también es de solo lectura. Fase 7B no requiere migración, backup ni cambio de esquema: consume las derivaciones de Fase 7A, no guarda métricas y no abre IndexedDB ni carga imágenes.
 
+Abrir o filtrar Temporada también es de solo lectura. Fase 8 no introduce esquema, migración ni backup porque calcula standings desde las colecciones existentes y no persiste resultados derivados. IndexedDB se consulta solo para mostrar fotos ya referenciadas; ninguna prueba usa los datos reales ni modifica imágenes.
+
 ## Archivado y borrado
 
 - Archivar conserva identidad, categorías, foto y referencias históricas.
@@ -303,7 +331,7 @@ Requiere Node.js 20 o superior y no instala paquetes:
 node --test tests/*.test.cjs
 ```
 
-Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, ambas migraciones y backups exactos, semanas ISO, cierre/reapertura, unicidad categorizada, conversión legacy, P1/P2, límite global de Standouts, reason tags, notas, métricas por categoría, desempates, UI contractual, Rankings Unranked, Weekly Spotlight, perfiles, historial categorizado, tendencias, Core Analytics, Analytics UI y errores de imágenes.
+Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, ambas migraciones y backups exactos, semanas ISO, cierre/reapertura, unicidad categorizada, conversión legacy, P1/P2, límite global de Standouts, reason tags, notas, métricas por categoría, desempates, UI contractual, Rankings Unranked, Weekly Spotlight, perfiles, historial categorizado, tendencias, Analytics, las fórmulas y umbrales de Season Score, los 12 standings, empates conjuntos, Grand Score, Grand Winners y errores de imágenes.
 
 También se realizó un smoke test en un origen local aislado con roster ficticio: Female Vocal A=6, B=5, C=4, D=0 y E sin voto. El Top 3 mostró A/B/C, el ranking completo incluyó D y excluyó E. El cierre cambió Spotlight a OFFICIAL; la reapertura volvió a LIVE y una edición de C a 5 produjo `1, 2, 2, 4`. También se comprobaron Male, otra categoría, recap, motivos, badges y acceso al participante. El layout fue revisado en 320, 375, 768 y 1440 px sin overflow horizontal ni errores de consola.
 
@@ -312,6 +340,8 @@ Para Fase 6 se ejecutó además un smoke aislado con un participante archivado y
 El smoke aislado de Fase 7A usa seis participantes ficticios, ambos géneros, Vocal/Stage, cinco semanas cerradas y una abierta. Verifica joint winners, gaps, Normals, Duo Standouts, Solo Picks, Split Decisions, razones, consistencia, mejora, promedios, acuerdo/controversia, P1/P2, filtros temporales, archivado y `CLOSED` frente a `includeOpen`, sin acceder al almacenamiento real.
 
 Para Fase 7B se ejecutó además un smoke en un origen local desechable con seis participantes ficticios, seis semanas cerradas y una abierta. Se recorrieron las cinco secciones, filtros combinados, últimas 4 semanas, grupo, modo live, orden de la tabla, cambio de métrica del gráfico, estado sin mezcla y acceso al perfil. La UI se inspeccionó en 320, 375, 768 y 1440 px sin overflow de página; las pestañas usan scroll interno en móvil. No hubo errores ni warnings en consola.
+
+Para Fase 8 se ejecutó un smoke en otro origen local desechable con nueve participantes ficticios, ambos géneros, seis semanas cerradas y una abierta, resultados `Normal`, provisionales, empates conjuntos y participantes elegibles en varias categorías. Se verificaron overview, los 12 ganadores potenciales, Grand Winners, podios, standings, provisionales, desgloses, navegación a perfil, teclado y preview live. La UI se inspeccionó en 320, 375, 768 y 1440 px sin overflow de página; tablas y diálogos se adaptaron a móvil y no hubo errores ni warnings de consola. El almacenamiento real permaneció fuera del origen de prueba.
 
 ## Riesgos y decisiones pendientes
 
@@ -322,11 +352,13 @@ Para Fase 7B se ejecutó además un smoke en un origen local desechable con seis
 - El directorio histórico `Rankings` permanece deliberadamente `Unranked`; Fase 5 clasifica semanas concretas y no define todavía una política acumulada de temporada.
 - Los perfiles derivan nuevamente el ranking de cada semana/categoría consultada; con historiales muy grandes puede convenir una caché derivada e invalidable, nunca una duplicación autoritativa.
 - Analytics recalcula desde la fuente autoritativa y muestra su costo real; un historial muy grande puede requerir en una fase futura una memoización derivada, invalidable y nunca persistida.
+- Temporada deriva sus 12 clasificaciones y Grand Scores desde todo el historial seleccionado; a gran escala podría requerir memoización invalidable en memoria, nunca una colección autoritativa duplicada.
+- En Fase 8 todo el historial `CLOSED` representa una única temporada vigente; separar temporadas históricas requiere una futura decisión explícita de modelo y migración.
 - Una muestra mínima de 3 reduce resultados estadísticos engañosos, pero seguirá siendo una muestra pequeña y debe mostrarse junto a cada resultado.
 - La limpieza de blobs huérfanos se hace de forma oportunista; una herramienta integral de mantenimiento/backup pertenece a la Fase 9.
 - Navegadores sin IndexedDB mantienen el participant manager, pero usan el fallback visual y no pueden guardar fotos.
-- La fórmula de `overallScore`, Male Performer of the Year y Female Performer of the Year requiere aprobación explícita antes de implementarse.
+- La fórmula de `overallScore` sigue sin definición y requiere aprobación explícita antes de implementarse.
 
 ## Límite de fase
 
-La Fase 7B termina en una interfaz visual, responsive, accesible y de solo lectura sobre Core Analytics. No se implementan Overall/Season Score, standings, líderes Male/Female, Grand Winners, Best Group, Most Competitive Week ni Fase 8; el proyecto queda detenido al cierre de Fase 7B.
+La Fase 8 termina en una interfaz visual, responsive, accesible y de solo lectura para Season Standings, ganadores por categoría y Grand Winners Female/Male. No se implementan `overallScore`, Best Group, Most Competitive Week, temporadas múltiples ni ninguna parte de Fase 9; el proyecto queda detenido al cierre de Fase 8.
