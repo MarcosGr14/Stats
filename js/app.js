@@ -16,6 +16,8 @@
     const profileHistoryService = namespace && namespace.profileHistory;
     const profileViewService = namespace && namespace.profileView;
     const analyticsViewService = namespace && namespace.analyticsView;
+    const seasonService = namespace && namespace.season;
+    const seasonViewService = namespace && namespace.seasonView;
     const imageStorage = namespace && namespace.imageStorage;
 
     let state = null;
@@ -36,6 +38,7 @@
     let spotlightController = null;
     let profileController = null;
     let analyticsController = null;
+    let seasonController = null;
     let currentProfileId = null;
     let profileHasInternalReturn = false;
     let elements = {};
@@ -466,6 +469,7 @@
         if (root.location.hash === "#spotlight") return "spotlight";
         if (root.location.hash === "#rankings") return "rankings";
         if (root.location.hash === "#analytics") return "analytics";
+        if (root.location.hash === "#season") return "season";
         if (root.location.hash.startsWith("#profile?")) return "profile";
         return "participants";
     }
@@ -477,14 +481,15 @@
     }
 
     function activateView(view, shouldRender = true) {
-        activeView = ["participants", "profile", "weekly", "spotlight", "rankings", "analytics"].includes(view) ? view : "participants";
+        activeView = ["participants", "profile", "weekly", "spotlight", "rankings", "analytics", "season"].includes(view) ? view : "participants";
         elements.participantManager.hidden = activeView !== "participants";
         elements.profileView.hidden = activeView !== "profile";
         elements.weeklyView.hidden = activeView !== "weekly";
         elements.spotlightView.hidden = activeView !== "spotlight";
         elements.rankingsView.hidden = activeView !== "rankings";
         elements.analyticsView.hidden = activeView !== "analytics";
-        [elements.navParticipants, elements.navWeekly, elements.navSpotlight, elements.navRankings, elements.navAnalytics]
+        elements.seasonView.hidden = activeView !== "season";
+        [elements.navParticipants, elements.navWeekly, elements.navSpotlight, elements.navRankings, elements.navAnalytics, elements.navSeason]
             .forEach((link) => link.removeAttribute("aria-current"));
         if (activeView === "participants") elements.navParticipants.setAttribute("aria-current", "page");
         if (activeView === "profile") elements.navParticipants.setAttribute("aria-current", "page");
@@ -492,12 +497,14 @@
         if (activeView === "spotlight") elements.navSpotlight.setAttribute("aria-current", "page");
         if (activeView === "rankings") elements.navRankings.setAttribute("aria-current", "page");
         if (activeView === "analytics") elements.navAnalytics.setAttribute("aria-current", "page");
-        const titles = { participants: "Participantes", profile: "Perfil", weekly: "Votación semanal", spotlight: "Destacados de la semana", rankings: "Rankings", analytics: "Estadísticas" };
+        if (activeView === "season") elements.navSeason.setAttribute("aria-current", "page");
+        const titles = { participants: "Participantes", profile: "Perfil", weekly: "Votación semanal", spotlight: "Destacados de la semana", rankings: "Rankings", analytics: "Estadísticas", season: "Temporada" };
         const profileParticipant = activeView === "profile" ? findParticipant(profileIdFromLocation() || currentProfileId) : null;
         document.title = `${profileParticipant?.name || titles[activeView]} · Stats V2`;
         if (shouldRender) {
             if (activeView === "rankings") renderRankings();
             else if (activeView === "analytics") analyticsController?.activate();
+            else if (activeView === "season") seasonController?.activate();
             else if (activeView === "weekly") weeklyController?.activate();
             else if (activeView === "spotlight") spotlightController?.activate();
             else if (activeView === "profile") {
@@ -1239,11 +1246,13 @@
             spotlightView: byId("spotlight"),
             rankingsView: byId("rankings"),
             analyticsView: byId("analytics"),
+            seasonView: byId("season"),
             navParticipants: byId("nav-participants"),
             navWeekly: byId("nav-weekly"),
             navSpotlight: byId("nav-spotlight"),
             navRankings: byId("nav-rankings"),
             navAnalytics: byId("nav-analytics"),
+            navSeason: byId("nav-season"),
             participantCount: byId("participant-count"),
             storageStatus: byId("storage-status"),
             search: byId("participant-search"),
@@ -1359,6 +1368,10 @@
         elements.navAnalytics.addEventListener("click", (event) => {
             event.preventDefault();
             navigateToView("analytics");
+        });
+        elements.navSeason.addEventListener("click", (event) => {
+            event.preventDefault();
+            navigateToView("season");
         });
         root.addEventListener("hashchange", () => activateView(activeViewFromLocation()));
 
@@ -1482,8 +1495,9 @@
     function initialize() {
         if (!constants || !data || !storage || !participantService || !tagService || !rankingsService
             || !weeklyService || !weeklyMigration || !weeklyViewService || !spotlightService
-            || !spotlightViewService || !profileHistoryService || !profileViewService || !analyticsViewService || !imageStorage) {
-            throw new Error("Stats V2 participant, tag, weekly, Spotlight, profile, ranking and Analytics modules did not load correctly.");
+            || !spotlightViewService || !profileHistoryService || !profileViewService || !analyticsViewService
+            || !seasonService || !seasonViewService || !imageStorage) {
+            throw new Error("Stats V2 participant, tag, weekly, Spotlight, profile, ranking, Analytics and Season modules did not load correctly.");
         }
 
         cacheElements();
@@ -1544,6 +1558,11 @@
         analyticsController = analyticsViewService.createController({
             getState: () => state,
             viewParticipant: openParticipantProfile
+        });
+        seasonController = seasonViewService.createController({
+            getState: () => state,
+            viewParticipant: openParticipantProfile,
+            getImage: imageStorage.getImage
         });
         activeView = activeViewFromLocation();
         showStorageStatus(result);
