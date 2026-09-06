@@ -6,31 +6,13 @@
     const weekly = namespace.weekly;
     const spotlight = namespace.spotlight;
     const imageStorage = namespace.imageStorage;
+    const ui = namespace.ui;
 
-    if (!constants || !weekly || !spotlight || !imageStorage) {
+    if (!constants || !weekly || !spotlight || !imageStorage || !ui) {
         throw new Error("Stats V2 Spotlight dependencies did not load correctly.");
     }
 
-    function element(tag, className, text) {
-        const node = document.createElement(tag);
-        if (className) node.className = className;
-        if (text !== undefined) node.textContent = String(text);
-        return node;
-    }
-
-    function initials(name) {
-        const words = String(name || "ST").trim().split(/\s+/).filter(Boolean);
-        if (words.length < 2) return (words[0] || "ST").slice(0, 2).toLocaleUpperCase("es");
-        return `${words[0][0]}${words[1][0]}`.toLocaleUpperCase("es");
-    }
-
-    function categoryLabel(categoryId) {
-        return constants.CATEGORIES.find((category) => category.id === categoryId)?.label || categoryId;
-    }
-
-    function genderLabel(gender) {
-        return gender === "female" ? "Mujeres" : "Hombres";
-    }
+    const { element, initials, categoryLabel, genderLabel } = ui;
 
     function genderAdjective(gender) {
         return gender === "female" ? "femenino" : "masculino";

@@ -46,12 +46,13 @@ test("legacy category conversion is explicit and preserves unresolved votes in t
     assert.match(view, /assignLegacyVoteCategory/);
 });
 
-test("weekly assets load before the app while Rankings remains explicitly Unranked", () => {
+test("weekly assets load before the app while Rankings uses accumulated Season standings", () => {
     assert.ok(html.indexOf("js/weekly-migration.js") < html.indexOf("js/app.js"));
     assert.ok(html.indexOf("js/weekly.js") < html.indexOf("js/app.js"));
     assert.ok(html.indexOf("js/weekly-view.js") < html.indexOf("js/app.js"));
-    assert.match(html, /<span class="unranked-badge">Sin ranking<\/span>/);
-    assert.match(app, /scoreProvider: null/);
+    assert.doesNotMatch(html, /js\/rankings\.js|Sin ranking/);
+    assert.match(html, /id="rankings-title">Clasificación de temporada<\/h1>/);
+    assert.match(app, /seasonController\?\.activate\("rankings"\)/);
 });
 
 test("weekly layout contains mobile, tablet and desktop safeguards", () => {

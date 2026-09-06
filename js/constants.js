@@ -4,7 +4,7 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.7.0-analytics-core",
+        APP_VERSION: "2.8.5-product-cleanup",
         SCHEMA_VERSION: 2,
         MAX_NAME_LENGTH: 80,
         MAX_TAG_NAME_LENGTH: 60,

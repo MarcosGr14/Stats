@@ -4,39 +4,13 @@
     const namespace = root.StatsV2 || {};
     const constants = namespace.constants;
     const season = namespace.season;
+    const ui = namespace.ui;
 
-    if (!constants || !season) {
-        throw new Error("Stats V2 constants and Season Standings must load before the Season view.");
+    if (!constants || !season || !ui) {
+        throw new Error("Stats V2 constants, UI helpers and Season Standings must load before the Season view.");
     }
 
-    function element(tag, className, text) {
-        const node = document.createElement(tag);
-        if (className) node.className = className;
-        if (text !== undefined) node.textContent = String(text);
-        return node;
-    }
-
-    function initials(name) {
-        const words = String(name || "ST").trim().split(/\s+/).filter(Boolean);
-        if (words.length === 0) return "ST";
-        if (words.length === 1) return words[0].slice(0, 2).toLocaleUpperCase("es");
-        return `${words[0][0]}${words[1][0]}`.toLocaleUpperCase("es");
-    }
-
-    function categoryLabel(categoryId) {
-        return constants.CATEGORIES.find((category) => category.id === categoryId)?.label || categoryId;
-    }
-
-    function genderLabel(gender) {
-        return gender === "female" ? "Mujeres" : "Hombres";
-    }
-
-    function decimal(value, digits = 1) {
-        return Number(value).toLocaleString("es-PA", {
-            minimumFractionDigits: digits,
-            maximumFractionDigits: digits
-        });
-    }
+    const { element, initials, categoryLabel, genderLabel, decimal } = ui;
 
     function createViewModel(state, options = {}) {
         const overview = season.deriveSeasonOverview(state, { includeOpen: options.includeOpen === true });
@@ -54,7 +28,8 @@
         const getState = options.getState;
         const viewParticipant = options.viewParticipant;
         const getImage = options.getImage || null;
-        let activeSection = "overview";
+        let activeView = "season";
+        let includeOpen = false;
         let categoryId = "vocal";
         let gender = "female";
         let currentModel = null;
@@ -63,13 +38,16 @@
         let imagePromises = new Map();
         const byId = (id) => document.getElementById(id);
         const elements = {
-            view: byId("season"),
-            mode: byId("season-mode"),
-            period: byId("season-period"),
-            liveStatus: byId("season-live-status"),
-            includeOpen: byId("season-include-open"),
-            sectionTabs: [...document.querySelectorAll("[data-season-section]")],
-            sectionPanels: [...document.querySelectorAll("[data-season-panel]")],
+            seasonView: byId("season"),
+            rankingsView: byId("rankings"),
+            seasonMode: byId("season-mode"),
+            seasonPeriod: byId("season-period"),
+            seasonLiveStatus: byId("season-live-status"),
+            seasonIncludeOpen: byId("season-include-open"),
+            rankingsMode: byId("rankings-mode"),
+            rankingsPeriod: byId("rankings-period"),
+            rankingsLiveStatus: byId("rankings-live-status"),
+            rankingsIncludeOpen: byId("rankings-include-open"),
             categoryTabs: [...document.querySelectorAll("[data-season-category]")],
             genderButtons: [...document.querySelectorAll("[data-season-gender]")],
             grandGrid: byId("season-grand-grid"),
@@ -80,7 +58,8 @@
             eligibleBody: byId("season-eligible-body"),
             eligibleEmpty: byId("season-eligible-empty"),
             provisionalList: byId("season-provisional-list"),
-            renderTime: byId("season-render-time"),
+            seasonRenderTime: byId("season-render-time"),
+            rankingsRenderTime: byId("rankings-render-time"),
             dialog: byId("season-breakdown-dialog"),
             breakdownContent: byId("season-breakdown-content")
         };
@@ -145,12 +124,12 @@
             return box;
         }
 
-        function renderMode(model) {
+        function renderMode(model, target) {
             const weekCount = model.overview.scope.weekIds.length;
             const live = model.overview.isLivePreview;
-            elements.mode.textContent = live ? "Vista previa de temporada" : "Resultados oficiales";
-            elements.period.textContent = `${weekCount} semana${weekCount === 1 ? "" : "s"} ${live ? "incluidas" : "cerradas"}`;
-            elements.liveStatus.hidden = !live;
+            target.mode.textContent = live ? "Vista previa de temporada" : "Resultados oficiales";
+            target.period.textContent = `${weekCount} semana${weekCount === 1 ? "" : "s"} ${live ? "incluidas" : "cerradas"}`;
+            target.liveStatus.hidden = !live;
         }
 
         function grandWinnerCard(grandStanding) {
@@ -278,7 +257,7 @@
                 tableCell("Victorias", entry.wins),
                 tableCell("Top 3", entry.topThreeAppearances),
                 tableCell("Promedio", `${decimal(entry.averageWeeklyPoints, 2)} pts`),
-                tableCell("Standout rate", `${decimal(entry.components.standoutRate)}%`),
+                tableCell("Tasa de destacados", `${decimal(entry.components.standoutRate)}%`),
                 tableCell("Detalle", breakdownButton(entry))
             );
             return row;
@@ -357,10 +336,10 @@
                 breakdownMetric("Rendimiento promedio", entry.components.averagePerformance, season.SEASON_SCORE_WEIGHTS.averagePerformance, entry.contributions.averagePerformance),
                 breakdownMetric("Tasa de victorias", entry.components.winRate, season.SEASON_SCORE_WEIGHTS.winRate, entry.contributions.winRate),
                 breakdownMetric("Tasa de Top 3", entry.components.topThreeRate, season.SEASON_SCORE_WEIGHTS.topThreeRate, entry.contributions.topThreeRate),
-                breakdownMetric("Tasa de Standouts", entry.components.standoutRate, season.SEASON_SCORE_WEIGHTS.standoutRate, entry.contributions.standoutRate)
+                breakdownMetric("Tasa de destacados", entry.components.standoutRate, season.SEASON_SCORE_WEIGHTS.standoutRate, entry.contributions.standoutRate)
             );
             content.append(metrics, element("p", "season-dialog-footnote",
-                `${entry.weeksEvaluated} semanas · ${entry.wins} victorias · ${entry.topThreeAppearances} Top 3 · ${entry.standoutVotes}/${entry.possibleStandoutVotes} votos Standout.`));
+                `${entry.weeksEvaluated} semanas · ${entry.wins} victorias · ${entry.topThreeAppearances} Top 3 · ${entry.standoutVotes}/${entry.possibleStandoutVotes} votos destacados.`));
             if (!entry.eligible) content.append(element("p", "season-dialog-warning", `Provisional: necesita ${season.MINIMUM_ELIGIBLE_WEEKS - entry.weeksEvaluated} semana${season.MINIMUM_ELIGIBLE_WEEKS - entry.weeksEvaluated === 1 ? "" : "s"} más para clasificar.`));
             elements.breakdownContent.replaceChildren(content);
             elements.dialog.showModal();
@@ -376,7 +355,7 @@
                 element("p", "season-dialog-subtitle", entry.group?.name || "Solista")
             );
             const score = element("div", "season-dialog-score season-dialog-score--grand");
-            score.append(element("span", "", "Grand Score"), element("strong", "", decimal(entry.grandScore)));
+            score.append(element("span", "", "Puntuación general"), element("strong", "", decimal(entry.grandScore)));
             content.append(score);
             const categories = element("div", "season-grand-breakdown");
             const best = element("article", "");
@@ -396,7 +375,7 @@
                 categories.append(second);
             }
             content.append(categories, element("p", "season-dialog-footnote", entry.secondBestCategory
-                ? "Grand Score = 95% de la mejor categoría + 5% de la segunda categoría elegible."
+                ? "Puntuación general = 95% de la mejor categoría + 5% de la segunda categoría elegible."
                 : "Basado en su única categoría elegible; no existe penalización por competir en una sola categoría."));
             elements.breakdownContent.replaceChildren(content);
             elements.dialog.showModal();
@@ -422,18 +401,6 @@
             if (entry) openSeasonBreakdown(entry);
         }
 
-        function selectSection(sectionId, focus = false) {
-            if (!elements.sectionTabs.some((tab) => tab.dataset.seasonSection === sectionId)) return;
-            activeSection = sectionId;
-            elements.sectionTabs.forEach((tab) => {
-                const selected = tab.dataset.seasonSection === sectionId;
-                tab.setAttribute("aria-selected", String(selected));
-                tab.tabIndex = selected ? 0 : -1;
-            });
-            elements.sectionPanels.forEach((panel) => { panel.hidden = panel.dataset.seasonPanel !== sectionId; });
-            if (focus) elements.sectionTabs.find((tab) => tab.dataset.seasonSection === sectionId)?.focus();
-        }
-
         function selectCategory(nextCategoryId, focus = false) {
             if (!constants.CATEGORIES.some((category) => category.id === nextCategoryId)) return;
             categoryId = nextCategoryId;
@@ -442,7 +409,7 @@
                 tab.setAttribute("aria-selected", String(selected));
                 tab.tabIndex = selected ? 0 : -1;
             });
-            currentModel = createViewModel(getState(), { includeOpen: elements.includeOpen.checked, categoryId, gender });
+            currentModel = createViewModel(getState(), { includeOpen, categoryId, gender });
             renderStanding(currentModel);
             if (focus) elements.categoryTabs.find((tab) => tab.dataset.seasonCategory === categoryId)?.focus();
         }
@@ -451,7 +418,7 @@
             if (!constants.GENDERS.includes(nextGender)) return;
             gender = nextGender;
             elements.genderButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.seasonGender === gender)));
-            currentModel = createViewModel(getState(), { includeOpen: elements.includeOpen.checked, categoryId, gender });
+            currentModel = createViewModel(getState(), { includeOpen, categoryId, gender });
             renderStanding(currentModel);
         }
 
@@ -459,29 +426,37 @@
             renderGeneration += 1;
             revokeImages();
             const startedAt = performance.now();
-            currentModel = createViewModel(getState(), { includeOpen: elements.includeOpen.checked, categoryId, gender });
-            renderMode(currentModel);
-            renderGrandWinners(currentModel);
-            renderCategoryWinners(currentModel);
-            renderStanding(currentModel);
+            currentModel = createViewModel(getState(), { includeOpen, categoryId, gender });
+            if (activeView === "rankings") {
+                renderMode(currentModel, {
+                    mode: elements.rankingsMode,
+                    period: elements.rankingsPeriod,
+                    liveStatus: elements.rankingsLiveStatus
+                });
+                renderStanding(currentModel);
+            } else {
+                renderMode(currentModel, {
+                    mode: elements.seasonMode,
+                    period: elements.seasonPeriod,
+                    liveStatus: elements.seasonLiveStatus
+                });
+                renderGrandWinners(currentModel);
+                renderCategoryWinners(currentModel);
+            }
             const duration = performance.now() - startedAt;
-            elements.renderTime.textContent = `Derivado en ${decimal(duration, 0)} ms · sin datos persistidos`;
+            const renderTime = activeView === "rankings" ? elements.rankingsRenderTime : elements.seasonRenderTime;
+            renderTime.textContent = `Derivado en ${decimal(duration, 0)} ms · sin datos persistidos`;
         }
 
-        elements.includeOpen.addEventListener("change", render);
-        elements.sectionTabs.forEach((tab, index) => {
-            tab.addEventListener("click", () => selectSection(tab.dataset.seasonSection));
-            tab.addEventListener("keydown", (event) => {
-                let target = null;
-                if (event.key === "ArrowRight") target = (index + 1) % elements.sectionTabs.length;
-                if (event.key === "ArrowLeft") target = (index - 1 + elements.sectionTabs.length) % elements.sectionTabs.length;
-                if (event.key === "Home") target = 0;
-                if (event.key === "End") target = elements.sectionTabs.length - 1;
-                if (target === null) return;
-                event.preventDefault();
-                selectSection(elements.sectionTabs[target].dataset.seasonSection, true);
-            });
-        });
+        function changeLivePreview(event) {
+            includeOpen = event.currentTarget.checked;
+            elements.seasonIncludeOpen.checked = includeOpen;
+            elements.rankingsIncludeOpen.checked = includeOpen;
+            render();
+        }
+
+        elements.seasonIncludeOpen.addEventListener("change", changeLivePreview);
+        elements.rankingsIncludeOpen.addEventListener("change", changeLivePreview);
         elements.categoryTabs.forEach((tab, index) => {
             tab.addEventListener("click", () => selectCategory(tab.dataset.seasonCategory));
             tab.addEventListener("keydown", (event) => {
@@ -498,7 +473,7 @@
         elements.genderButtons.forEach((button) => {
             button.addEventListener("click", () => selectGender(button.dataset.seasonGender));
         });
-        elements.view.addEventListener("click", (event) => {
+        function handleViewClick(event) {
             const participant = event.target.closest("button[data-season-participant-id]");
             if (participant) {
                 if (elements.dialog.open) elements.dialog.close();
@@ -507,11 +482,14 @@
             }
             const breakdown = event.target.closest("button[data-season-breakdown-kind]");
             if (breakdown) openBreakdown(breakdown);
-        });
+        }
+
+        elements.seasonView.addEventListener("click", handleViewClick);
+        elements.rankingsView.addEventListener("click", handleViewClick);
 
         return Object.freeze({
-            activate() {
-                selectSection(activeSection);
+            activate(viewId = "season") {
+                activeView = viewId === "rankings" ? "rankings" : "season";
                 render();
             }
         });

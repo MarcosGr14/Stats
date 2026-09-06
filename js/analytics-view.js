@@ -4,9 +4,10 @@
     const namespace = root.StatsV2 || {};
     const constants = namespace.constants;
     const analytics = namespace.analytics;
+    const ui = namespace.ui;
 
-    if (!constants || !analytics) {
-        throw new Error("Stats V2 constants and Analytics must load before the Analytics view.");
+    if (!constants || !analytics || !ui) {
+        throw new Error("Stats V2 constants, UI helpers and Analytics must load before the Analytics view.");
     }
 
     const RANGE_WEEKS = Object.freeze({ all: null, "4": 4, "8": 8, "12": 12 });
@@ -17,28 +18,7 @@
         reasons: { field: "reasonTagMentions", label: "Motivos" }
     });
 
-    function element(tag, className, text) {
-        const node = document.createElement(tag);
-        if (className) node.className = className;
-        if (text !== undefined) node.textContent = String(text);
-        return node;
-    }
-
-    function categoryLabel(categoryId) {
-        return constants.CATEGORIES.find((category) => category.id === categoryId)?.label || categoryId;
-    }
-
-    function genderLabel(gender) {
-        return gender === "female" ? "Mujeres" : "Hombres";
-    }
-
-    function ratingLabel(ratingId) {
-        return constants.RATING_OPTIONS.find((rating) => rating.id === ratingId)?.label || ratingId;
-    }
-
-    function decimal(value, digits = 1) {
-        return Number(value).toLocaleString("es-PA", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-    }
+    const { element, categoryLabel, genderLabel, ratingLabel, decimal } = ui;
 
     function createQuery(filters = {}) {
         const range = Object.prototype.hasOwnProperty.call(RANGE_WEEKS, filters.range) ? filters.range : "all";
@@ -53,27 +33,29 @@
 
     function createDashboardModel(state, filters = {}) {
         const query = createQuery(filters);
+        const participantMetrics = analytics.deriveParticipantCategoryMetrics(state, query);
+        const activity = analytics.deriveWeeklyActivity(state, query);
         return {
             query,
             scope: analytics.createScope(state, query),
-            participantMetrics: analytics.deriveParticipantCategoryMetrics(state, query),
-            wins: analytics.mostWeeklyWins(state, query),
-            topThree: analytics.mostTopThreeAppearances(state, query),
-            standouts: analytics.mostStandouts(state, query),
-            duoStandouts: analytics.mostDuoStandouts(state, query),
-            soloPicks: analytics.mostSoloPicks(state, query),
-            splitDecisions: analytics.mostSplitDecisions(state, query),
-            disagreement: analytics.mostControversial(state, query),
-            biggestDisagreement: analytics.biggestDisagreement(state, query),
-            agreement: analytics.highestAgreement(state, query),
-            consistency: analytics.mostConsistent(state, query),
-            improvement: analytics.mostImproved(state, query),
+            participantMetrics,
+            wins: analytics.mostWeeklyWins(state, query, participantMetrics),
+            topThree: analytics.mostTopThreeAppearances(state, query, participantMetrics),
+            standouts: analytics.mostStandouts(state, query, participantMetrics),
+            duoStandouts: analytics.mostDuoStandouts(state, query, participantMetrics),
+            soloPicks: analytics.mostSoloPicks(state, query, participantMetrics),
+            splitDecisions: analytics.mostSplitDecisions(state, query, participantMetrics),
+            disagreement: analytics.mostControversial(state, query, participantMetrics),
+            biggestDisagreement: analytics.biggestDisagreement(state, query, participantMetrics),
+            agreement: analytics.highestAgreement(state, query, participantMetrics),
+            consistency: analytics.mostConsistent(state, query, participantMetrics),
+            improvement: analytics.mostImproved(state, query, participantMetrics),
             praisedSkills: analytics.deriveMostPraisedSkills(state, query),
             profileTags: analytics.deriveProfileTagAnalytics(state, query),
             ratingDistribution: analytics.deriveRatingDistribution(state, query),
-            activity: analytics.deriveWeeklyActivity(state, query),
-            mostActiveWeek: analytics.mostActiveWeek(state, query),
-            categoryAnalytics: analytics.deriveCategoryAnalytics(state, query)
+            activity,
+            mostActiveWeek: analytics.mostActiveWeek(state, query, activity),
+            categoryAnalytics: analytics.deriveCategoryAnalytics(state, query, participantMetrics)
         };
     }
 

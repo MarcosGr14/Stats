@@ -170,6 +170,7 @@
         ));
         const genders = constants.GENDERS.filter((gender) => !context.normalized.gender || gender === context.normalized.gender);
         const records = [];
+        const spotlightContext = spotlight.createDerivationContext(state);
         context.weeks.forEach((week) => {
             categories.forEach((category) => {
                 genders.forEach((gender) => {
@@ -177,7 +178,7 @@
                         weekId: week.id,
                         categoryId: category.id,
                         gender
-                    });
+                    }, spotlightContext);
                     result.items.forEach((item) => {
                         if (!participantMatches(item.participant, context.normalized)) return;
                         records.push({
@@ -349,8 +350,8 @@
         };
     }
 
-    function countLeaderboard(state, options, metric, field, definition) {
-        const derived = deriveParticipantCategoryMetrics(state, options);
+    function countLeaderboard(state, options, metric, field, definition, preparedMetrics = null) {
+        const derived = preparedMetrics || deriveParticipantCategoryMetrics(state, options);
         const groups = groupedLeaderboard(derived.rows, {
             eligible: (row) => row[field] > 0,
             compare: (left, right) => right[field] - left[field],
@@ -368,32 +369,32 @@
         return resultWithGroups(metric, definition, derived.scope, groups, 1);
     }
 
-    function mostWeeklyWins(state, options = {}) {
-        return countLeaderboard(state, options, "mostWeeklyWins", "wins", METRIC_DEFINITIONS.weeklyWins);
+    function mostWeeklyWins(state, options = {}, preparedMetrics = null) {
+        return countLeaderboard(state, options, "mostWeeklyWins", "wins", METRIC_DEFINITIONS.weeklyWins, preparedMetrics);
     }
 
-    function mostTopThreeAppearances(state, options = {}) {
-        return countLeaderboard(state, options, "mostTopThreeAppearances", "topThreeAppearances", METRIC_DEFINITIONS.topThreeAppearances);
+    function mostTopThreeAppearances(state, options = {}, preparedMetrics = null) {
+        return countLeaderboard(state, options, "mostTopThreeAppearances", "topThreeAppearances", METRIC_DEFINITIONS.topThreeAppearances, preparedMetrics);
     }
 
-    function mostStandouts(state, options = {}) {
-        return countLeaderboard(state, options, "mostStandouts", "standoutVotes", METRIC_DEFINITIONS.standoutVotes);
+    function mostStandouts(state, options = {}, preparedMetrics = null) {
+        return countLeaderboard(state, options, "mostStandouts", "standoutVotes", METRIC_DEFINITIONS.standoutVotes, preparedMetrics);
     }
 
-    function mostDuoStandouts(state, options = {}) {
-        return countLeaderboard(state, options, "mostDuoStandouts", "duoStandoutEvents", METRIC_DEFINITIONS.duoStandoutEvents);
+    function mostDuoStandouts(state, options = {}, preparedMetrics = null) {
+        return countLeaderboard(state, options, "mostDuoStandouts", "duoStandoutEvents", METRIC_DEFINITIONS.duoStandoutEvents, preparedMetrics);
     }
 
-    function mostSoloPicks(state, options = {}) {
-        return countLeaderboard(state, options, "mostSoloPicks", "soloPickEvents", METRIC_DEFINITIONS.soloPickEvents);
+    function mostSoloPicks(state, options = {}, preparedMetrics = null) {
+        return countLeaderboard(state, options, "mostSoloPicks", "soloPickEvents", METRIC_DEFINITIONS.soloPickEvents, preparedMetrics);
     }
 
-    function mostSplitDecisions(state, options = {}) {
-        return countLeaderboard(state, options, "mostSplitDecisions", "splitDecisionEvents", METRIC_DEFINITIONS.splitDecisionEvents);
+    function mostSplitDecisions(state, options = {}, preparedMetrics = null) {
+        return countLeaderboard(state, options, "mostSplitDecisions", "splitDecisionEvents", METRIC_DEFINITIONS.splitDecisionEvents, preparedMetrics);
     }
 
-    function disagreementLeaderboard(state, options, mode) {
-        const derived = deriveParticipantCategoryMetrics(state, options);
+    function disagreementLeaderboard(state, options, mode, preparedMetrics = null) {
+        const derived = preparedMetrics || deriveParticipantCategoryMetrics(state, options);
         const minimum = derived.scope && normalizeOptions(state, options).minimumDualVoteWeeks;
         const descending = mode === "controversial";
         const groups = groupedLeaderboard(derived.rows, {
@@ -416,17 +417,20 @@
         return resultWithGroups(metric, definition, derived.scope, groups, minimum);
     }
 
-    function mostControversial(state, options = {}) {
-        return disagreementLeaderboard(state, options, "controversial");
+    function mostControversial(state, options = {}, preparedMetrics = null) {
+        return disagreementLeaderboard(state, options, "controversial", preparedMetrics);
     }
 
-    function highestAgreement(state, options = {}) {
-        return disagreementLeaderboard(state, options, "agreement");
+    function highestAgreement(state, options = {}, preparedMetrics = null) {
+        return disagreementLeaderboard(state, options, "agreement", preparedMetrics);
     }
 
-    function biggestDisagreement(state, options = {}) {
-        const context = scopedContext(state, options);
-        const records = scopedRankingRecords(state, context)
+    function biggestDisagreement(state, options = {}, preparedMetrics = null) {
+        const context = preparedMetrics ? null : scopedContext(state, options);
+        const sourceRecords = preparedMetrics
+            ? preparedMetrics.rows.flatMap((row) => row.records)
+            : scopedRankingRecords(state, context);
+        const records = sourceRecords
             .filter((record) => record.metrics.ratingDifference !== null)
             .map((record) => ({
                 participantId: record.participant.id,
@@ -453,12 +457,12 @@
                 .map((item) => ({ ...item, rank: 1, tied: items.filter((candidate) => candidate.value === highest).length > 1 }));
             return { categoryId, gender, entries, insufficientData: false };
         });
-        return resultWithGroups("biggestDisagreement", METRIC_DEFINITIONS.biggestDisagreement, context.scope, groups, 1);
+        return resultWithGroups("biggestDisagreement", METRIC_DEFINITIONS.biggestDisagreement, preparedMetrics?.scope || context.scope, groups, 1);
     }
 
-    function mostConsistent(state, options = {}) {
+    function mostConsistent(state, options = {}, preparedMetrics = null) {
         const normalized = normalizeOptions(state, options);
-        const derived = deriveParticipantCategoryMetrics(state, options);
+        const derived = preparedMetrics || deriveParticipantCategoryMetrics(state, options);
         const groups = groupedLeaderboard(derived.rows, {
             eligible: (row) => row.evaluatedWeeks >= normalized.minimumEvaluatedWeeks,
             compare: (left, right) => left.standardDeviation - right.standardDeviation
@@ -479,9 +483,9 @@
         return resultWithGroups("mostConsistent", METRIC_DEFINITIONS.consistency, derived.scope, groups, normalized.minimumEvaluatedWeeks);
     }
 
-    function mostImproved(state, options = {}) {
+    function mostImproved(state, options = {}, preparedMetrics = null) {
         const normalized = normalizeOptions(state, options);
-        const derived = deriveParticipantCategoryMetrics(state, options);
+        const derived = preparedMetrics || deriveParticipantCategoryMetrics(state, options);
         const groups = groupedLeaderboard(derived.rows, {
             eligible: (row) => row.evaluatedWeeks >= normalized.minimumEvaluatedWeeks && row.improvementSlope > 0,
             compare: (left, right) => right.improvementSlope - left.improvementSlope,
@@ -497,9 +501,9 @@
         return resultWithGroups("mostImproved", METRIC_DEFINITIONS.improvement, derived.scope, groups, normalized.minimumEvaluatedWeeks);
     }
 
-    function bestAverageWeeklyScore(state, options = {}) {
+    function bestAverageWeeklyScore(state, options = {}, preparedMetrics = null) {
         const normalized = normalizeOptions(state, options);
-        const derived = deriveParticipantCategoryMetrics(state, options);
+        const derived = preparedMetrics || deriveParticipantCategoryMetrics(state, options);
         const groups = groupedLeaderboard(derived.rows, {
             eligible: (row) => row.evaluatedWeeks >= normalized.minimumEvaluatedWeeks,
             compare: (left, right) => right.averageWeeklyPoints - left.averageWeeklyPoints,
@@ -511,9 +515,9 @@
         return resultWithGroups("bestAverageWeeklyScore", METRIC_DEFINITIONS.averageWeeklyScore, derived.scope, groups, normalized.minimumEvaluatedWeeks);
     }
 
-    function bestAveragePlacement(state, options = {}) {
+    function bestAveragePlacement(state, options = {}, preparedMetrics = null) {
         const normalized = normalizeOptions(state, options);
-        const derived = deriveParticipantCategoryMetrics(state, options);
+        const derived = preparedMetrics || deriveParticipantCategoryMetrics(state, options);
         const groups = groupedLeaderboard(derived.rows, {
             eligible: (row) => row.appearances >= normalized.minimumAppearances,
             compare: (left, right) => left.averagePlacement - right.averagePlacement,
@@ -687,8 +691,8 @@
         };
     }
 
-    function mostActiveWeek(state, options = {}) {
-        const activity = deriveWeeklyActivity(state, options);
+    function mostActiveWeek(state, options = {}, preparedActivity = null) {
+        const activity = preparedActivity || deriveWeeklyActivity(state, options);
         const highest = Math.max(0, ...activity.weeks.map((week) => week.totalVotes));
         const entries = highest > 0 ? activity.weeks.filter((week) => week.totalVotes === highest)
             .map((week) => ({ ...week, value: week.totalVotes, rank: 1, tied: activity.weeks.filter((item) => item.totalVotes === highest).length > 1 })) : [];
@@ -701,9 +705,9 @@
         };
     }
 
-    function deriveCategoryAnalytics(state, options = {}) {
+    function deriveCategoryAnalytics(state, options = {}, preparedMetrics = null) {
         const context = scopedContext(state, options);
-        const participantMetrics = deriveParticipantCategoryMetrics(state, options).rows;
+        const participantMetrics = (preparedMetrics || deriveParticipantCategoryMetrics(state, options)).rows;
         const votes = scopedVotes(state, context, false);
         const categories = constants.CATEGORIES.filter((category) => !context.normalized.categoryId || category.id === context.normalized.categoryId);
         const genders = constants.GENDERS.filter((gender) => !context.normalized.gender || gender === context.normalized.gender);

@@ -24,6 +24,38 @@
         return left.localeCompare(right, "es", { sensitivity: "base" });
     }
 
+    function selectionKey(weekId, categoryId, participantId) {
+        return `${weekId}\u0000${categoryId}\u0000${participantId}`;
+    }
+
+    function categoryGenderKey(categoryId, gender) {
+        return `${categoryId}\u0000${gender}`;
+    }
+
+    function createDerivationContext(state) {
+        const votesBySelection = new Map();
+        state.weeklyVotes.forEach((vote) => {
+            if (vote.legacyUncategorized === true || !vote.categoryId) return;
+            const key = selectionKey(vote.weekId, vote.categoryId, vote.participantId);
+            if (!votesBySelection.has(key)) votesBySelection.set(key, []);
+            votesBySelection.get(key).push(vote);
+        });
+        const candidatesByCategoryGender = new Map();
+        state.participants.forEach((participant) => {
+            participant.categoryIds.forEach((categoryId) => {
+                const key = categoryGenderKey(categoryId, participant.gender);
+                if (!candidatesByCategoryGender.has(key)) candidatesByCategoryGender.set(key, []);
+                candidatesByCategoryGender.get(key).push(participant);
+            });
+        });
+        return {
+            votesBySelection,
+            candidatesByCategoryGender,
+            groupsById: new Map(state.groups.map((group) => [group.id, group])),
+            tagsById: new Map(state.tags.map((tag) => [tag.id, tag]))
+        };
+    }
+
     function votesFor(state, weekId, participantId, categoryId) {
         return state.weeklyVotes.filter((vote) => vote.weekId === weekId
             && vote.participantId === participantId
@@ -48,8 +80,8 @@
         return null;
     }
 
-    function countReasonTags(state, votes, limit = 3) {
-        const tagsById = new Map(state.tags.map((tag) => [tag.id, tag]));
+    function countReasonTags(state, votes, limit = 3, preparedTagsById = null) {
+        const tagsById = preparedTagsById || new Map(state.tags.map((tag) => [tag.id, tag]));
         const counts = new Map();
         votes.forEach((vote) => {
             (vote.reasonTagIds || []).forEach((tagId) => {
@@ -66,35 +98,31 @@
         return countReasonTags(state, votesFor(state, weekId, participantId, categoryId), limit);
     }
 
-    function mostPraisedSkill(state, weekId, categoryId, gender) {
+    function mostPraisedSkill(state, weekId, categoryId, gender, preparedContext = null) {
         assertSelection(state, weekId, categoryId, gender);
-        const participantIds = new Set(state.participants
-            .filter((participant) => participant.gender === gender && participant.categoryIds.includes(categoryId))
-            .map((participant) => participant.id));
-        const votes = state.weeklyVotes.filter((vote) => vote.weekId === weekId
-            && vote.categoryId === categoryId
-            && vote.legacyUncategorized !== true
-            && participantIds.has(vote.participantId));
-        return countReasonTags(state, votes, 1)[0] || null;
+        const context = preparedContext || createDerivationContext(state);
+        const candidates = context.candidatesByCategoryGender.get(categoryGenderKey(categoryId, gender)) || [];
+        const votes = candidates.flatMap((participant) => (
+            context.votesBySelection.get(selectionKey(weekId, categoryId, participant.id)) || []
+        ));
+        return countReasonTags(state, votes, 1, context.tagsById)[0] || null;
     }
 
-    function deriveSpotlightRanking(state, options) {
+    function deriveSpotlightRanking(state, options, preparedContext = null) {
         const { weekId, categoryId, gender } = options || {};
         const week = assertSelection(state, weekId, categoryId, gender);
-        const groupsById = new Map(state.groups.map((group) => [group.id, group]));
-        const candidates = state.participants.filter((participant) => (
-            participant.gender === gender && participant.categoryIds.includes(categoryId)
-        ));
+        const context = preparedContext || createDerivationContext(state);
+        const candidates = context.candidatesByCategoryGender.get(categoryGenderKey(categoryId, gender)) || [];
         const items = candidates.map((participant) => {
-            const votes = votesFor(state, weekId, participant.id, categoryId);
+            const votes = context.votesBySelection.get(selectionKey(weekId, categoryId, participant.id)) || [];
             if (votes.length === 0) return null;
             return {
                 participant,
-                group: participant.groupId ? groupsById.get(participant.groupId) || null : null,
-                metrics: weekly.deriveCategoryWeeklyMetrics(state, weekId, participant.id, categoryId),
+                group: participant.groupId ? context.groupsById.get(participant.groupId) || null : null,
+                metrics: weekly.deriveMetricsFromVotes(votes, { weekId, participantId: participant.id, categoryId }),
                 votes,
                 badge: deriveResultBadge(votes),
-                topReasonTags: countReasonTags(state, votes, 3),
+                topReasonTags: countReasonTags(state, votes, 3, context.tagsById),
                 rank: null,
                 tied: false
             };
@@ -121,21 +149,22 @@
             topThree: items.filter((item) => item.rank <= 3),
             winners: items.filter((item) => item.rank === 1),
             notEvaluatedCount: candidates.filter((participant) => participant.archivedAt === null
-                && votesFor(state, weekId, participant.id, categoryId).length === 0).length,
-            mostPraisedSkill: mostPraisedSkill(state, weekId, categoryId, gender)
+                && !(context.votesBySelection.get(selectionKey(weekId, categoryId, participant.id)) || []).length).length,
+            mostPraisedSkill: countReasonTags(state, items.flatMap((item) => item.votes), 1, context.tagsById)[0] || null
         };
     }
 
     function deriveWeeklyOverview(state, weekId) {
         const week = state.weeks.find((item) => item.id === weekId);
         if (!week) throw new TypeError("Weekly Spotlight requires an existing week.");
+        const context = createDerivationContext(state);
         return {
             week,
             mode: week.status === "CLOSED" ? "OFFICIAL" : "LIVE",
             categories: constants.CATEGORIES.map((category) => ({
                 category,
                 results: constants.GENDERS.map((gender) => {
-                    const ranking = deriveSpotlightRanking(state, { weekId, categoryId: category.id, gender });
+                    const ranking = deriveSpotlightRanking(state, { weekId, categoryId: category.id, gender }, context);
                     return { gender, winners: ranking.winners, evaluatedCount: ranking.items.length };
                 })
             }))
@@ -145,12 +174,13 @@
     function deriveParticipantHistory(state, participantId) {
         const participant = state.participants.find((item) => item.id === participantId);
         if (!participant) throw new TypeError("Participant history requires an existing participant.");
+        const context = createDerivationContext(state);
         const entries = [];
         state.weeks.forEach((week) => {
             participant.categoryIds.forEach((categoryId) => {
                 const ranking = deriveSpotlightRanking(state, {
                     weekId: week.id, categoryId, gender: participant.gender
-                });
+                }, context);
                 const item = ranking.items.find((candidate) => candidate.participant.id === participantId);
                 if (item) entries.push({ week, categoryId, rank: item.rank, tied: item.tied, metrics: item.metrics });
             });
@@ -172,6 +202,7 @@
 
     namespace.spotlight = Object.freeze({
         votesFor,
+        createDerivationContext,
         deriveResultBadge,
         topReasonTagsForParticipant,
         mostPraisedSkill,

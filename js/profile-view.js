@@ -5,27 +5,13 @@
     const constants = namespace.constants;
     const profileHistory = namespace.profileHistory;
     const imageStorage = namespace.imageStorage;
+    const ui = namespace.ui;
 
-    if (!constants || !profileHistory || !imageStorage) {
-        throw new Error("Stats V2 profile history and image storage must load before participant profiles.");
+    if (!constants || !profileHistory || !imageStorage || !ui) {
+        throw new Error("Stats V2 profile history, UI helpers and image storage must load before participant profiles.");
     }
 
-    function element(tag, className, text) {
-        const node = document.createElement(tag);
-        if (className) node.className = className;
-        if (text !== undefined) node.textContent = String(text);
-        return node;
-    }
-
-    function initials(name) {
-        const words = String(name || "ST").trim().split(/\s+/).filter(Boolean);
-        if (words.length < 2) return (words[0] || "ST").slice(0, 2).toLocaleUpperCase("es");
-        return `${words[0][0]}${words[1][0]}`.toLocaleUpperCase("es");
-    }
-
-    function categoryLabel(categoryId) {
-        return constants.CATEGORIES.find((category) => category.id === categoryId)?.label || categoryId;
-    }
+    const { element, initials, categoryLabel } = ui;
 
     function createController(options) {
         const getState = options.getState;

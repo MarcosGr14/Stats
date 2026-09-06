@@ -13,11 +13,12 @@ const profileView = read("js", "profile-view.js");
 const constants = read("js", "constants.js");
 const tags = read("js", "tags.js");
 
-test("uses concise Spanish copy across the five visible views", () => {
+test("uses concise Spanish copy across the primary views", () => {
     assert.match(html, />Participantes<\/h1>/);
     assert.match(html, />Votación semanal<\/h1>/);
     assert.match(html, />Destacados de la semana<\/h1>/);
-    assert.match(html, />Rankings<\/h1>/);
+    assert.match(html, />Clasificación de temporada<\/h1>/);
+    assert.match(html, />Premios de temporada<\/h1>/);
     assert.match(app, /Administrar tags de/);
     assert.match(weeklyView, /Evaluar categorías/);
     assert.match(spotlightView, /Resultados oficiales/);

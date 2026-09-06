@@ -6,33 +6,33 @@
     <meta name="description" content="Stats V2: administra participantes y registra votaciones semanales P1/P2 con datos locales.">
     <meta name="theme-color" content="#0B0B0F">
     <title>Participantes · Stats V2</title>
-    <link rel="stylesheet" href="css/global.css?v=2.7.0">
-    <link rel="stylesheet" href="css/components.css?v=2.7.0">
-    <link rel="stylesheet" href="css/app.css?v=2.7.0">
-    <link rel="stylesheet" href="css/weekly.css?v=2.7.0">
-    <link rel="stylesheet" href="css/spotlight.css?v=2.7.0">
-    <link rel="stylesheet" href="css/profile.css?v=2.7.0">
-    <link rel="stylesheet" href="css/analytics.css?v=2.7.0">
-    <link rel="stylesheet" href="css/season.css?v=2.8.0">
-    <script src="js/constants.js?v=2.7.0" defer></script>
-    <script src="js/data.js?v=2.7.0" defer></script>
-    <script src="js/storage.js?v=2.7.0" defer></script>
-    <script src="js/weekly-migration.js?v=2.7.0" defer></script>
-    <script src="js/weekly.js?v=2.7.0" defer></script>
-    <script src="js/spotlight.js?v=2.7.0" defer></script>
-    <script src="js/profile-history.js?v=2.7.0" defer></script>
-    <script src="js/analytics.js?v=2.7.0" defer></script>
-    <script src="js/season.js?v=2.8.0" defer></script>
-    <script src="js/participants.js?v=2.7.0" defer></script>
-    <script src="js/tags.js?v=2.7.0" defer></script>
-    <script src="js/rankings.js?v=2.7.0" defer></script>
-    <script src="js/image-storage.js?v=2.7.0" defer></script>
-    <script src="js/weekly-view.js?v=2.7.0" defer></script>
-    <script src="js/spotlight-view.js?v=2.7.0" defer></script>
-    <script src="js/profile-view.js?v=2.7.0" defer></script>
-    <script src="js/analytics-view.js?v=2.7.0" defer></script>
-    <script src="js/season-view.js?v=2.8.0" defer></script>
-    <script src="js/app.js?v=2.8.0" defer></script>
+    <link rel="stylesheet" href="css/global.css?v=2.8.5">
+    <link rel="stylesheet" href="css/components.css?v=2.8.5">
+    <link rel="stylesheet" href="css/app.css?v=2.8.5">
+    <link rel="stylesheet" href="css/weekly.css?v=2.8.5">
+    <link rel="stylesheet" href="css/spotlight.css?v=2.8.5">
+    <link rel="stylesheet" href="css/profile.css?v=2.8.5">
+    <link rel="stylesheet" href="css/analytics.css?v=2.8.5">
+    <link rel="stylesheet" href="css/season.css?v=2.8.5">
+    <script src="js/constants.js?v=2.8.5" defer></script>
+    <script src="js/ui.js?v=2.8.5" defer></script>
+    <script src="js/data.js?v=2.8.5" defer></script>
+    <script src="js/storage.js?v=2.8.5" defer></script>
+    <script src="js/weekly-migration.js?v=2.8.5" defer></script>
+    <script src="js/weekly.js?v=2.8.5" defer></script>
+    <script src="js/spotlight.js?v=2.8.5" defer></script>
+    <script src="js/profile-history.js?v=2.8.5" defer></script>
+    <script src="js/analytics.js?v=2.8.5" defer></script>
+    <script src="js/season.js?v=2.8.5" defer></script>
+    <script src="js/participants.js?v=2.8.5" defer></script>
+    <script src="js/tags.js?v=2.8.5" defer></script>
+    <script src="js/image-storage.js?v=2.8.5" defer></script>
+    <script src="js/weekly-view.js?v=2.8.5" defer></script>
+    <script src="js/spotlight-view.js?v=2.8.5" defer></script>
+    <script src="js/profile-view.js?v=2.8.5" defer></script>
+    <script src="js/analytics-view.js?v=2.8.5" defer></script>
+    <script src="js/season-view.js?v=2.8.5" defer></script>
+    <script src="js/app.js?v=2.8.5" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -431,7 +431,7 @@
                                 <p class="micro-label">Todos los evaluados</p>
                                 <h2 id="spotlight-ranking-title">Ranking completo</h2>
                             </div>
-                            <p id="spotlight-ranking-summary">0 evaluated</p>
+                            <p id="spotlight-ranking-summary">0 evaluados</p>
                         </div>
                         <div class="spotlight-ranking-list" id="spotlight-ranking-list"></div>
                         <div class="spotlight-result-empty" id="spotlight-result-empty" role="status" hidden>
@@ -607,31 +607,27 @@
                 <header class="season-hero">
                     <div>
                         <p class="eyebrow">Temporada actual</p>
-                        <h1 id="season-title">Clasificación de temporada</h1>
-                        <p class="season-intro">Resultados independientes por categoría y género, calculados desde el historial semanal.</p>
+                        <h1 id="season-title">Premios de temporada</h1>
+                        <p class="season-intro">Ganadores generales y por categoría, derivados del historial semanal.</p>
                     </div>
                     <aside class="season-mode-card" aria-live="polite">
                         <p>Estado</p>
                         <strong id="season-mode">Resultados oficiales</strong>
                         <span id="season-period">0 semanas cerradas</span>
-                        <span class="season-live-status" id="season-live-status" hidden>Vista previa LIVE · Provisional</span>
+                        <span class="season-live-status" id="season-live-status" hidden>Vista previa en vivo · Provisional</span>
                     </aside>
                 </header>
 
-                <div class="season-command-bar">
-                    <div class="season-main-tabs" role="tablist" aria-label="Vistas de temporada">
-                        <button id="season-tab-overview" type="button" role="tab" aria-selected="true" aria-controls="season-panel-overview" tabindex="0" data-season-section="overview">Resumen</button>
-                        <button id="season-tab-standings" type="button" role="tab" aria-selected="false" aria-controls="season-panel-standings" tabindex="-1" data-season-section="standings">Clasificaciones</button>
-                    </div>
+                <div class="season-command-bar season-command-bar--single">
                     <label class="season-live-toggle" for="season-include-open">
                         <input id="season-include-open" type="checkbox">
-                        <span>Incluir resultados en vivo</span>
+                        <span>Incluir semana abierta</span>
                     </label>
                 </div>
 
-                <section class="season-panel" id="season-panel-overview" role="tabpanel" aria-labelledby="season-tab-overview" data-season-panel="overview">
+                <section class="season-panel" aria-labelledby="season-awards-title">
                     <header class="season-section-heading">
-                        <div><p class="micro-label">Premios principales</p><h2>Ganadores de la temporada</h2></div>
+                        <div><p class="micro-label">Premios principales</p><h2 id="season-awards-title">Ganadores de la temporada</h2></div>
                         <p>El premio general usa la mejor categoría elegible y solo un 5% de la segunda.</p>
                     </header>
                     <div class="season-grand-grid" id="season-grand-grid" aria-live="polite"></div>
@@ -643,9 +639,34 @@
                     <div class="season-winners-grid" id="season-category-winners"></div>
                 </section>
 
-                <section class="season-panel" id="season-panel-standings" role="tabpanel" aria-labelledby="season-tab-standings" data-season-panel="standings" hidden>
+                <p class="season-render-time" id="season-render-time"></p>
+            </section>
+
+            <section class="season-rankings-view" id="rankings" aria-labelledby="rankings-title" hidden>
+                <header class="season-hero">
+                    <div>
+                        <p class="eyebrow">Temporada actual</p>
+                        <h1 id="rankings-title">Clasificación de temporada</h1>
+                        <p class="season-intro">Consulta posiciones acumuladas por categoría y género.</p>
+                    </div>
+                    <aside class="season-mode-card" aria-live="polite">
+                        <p>Estado</p>
+                        <strong id="rankings-mode">Resultados oficiales</strong>
+                        <span id="rankings-period">0 semanas cerradas</span>
+                        <span class="season-live-status" id="rankings-live-status" hidden>Vista previa en vivo · Provisional</span>
+                    </aside>
+                </header>
+
+                <div class="season-command-bar season-command-bar--single">
+                    <label class="season-live-toggle" for="rankings-include-open">
+                        <input id="rankings-include-open" type="checkbox">
+                        <span>Incluir semana abierta</span>
+                    </label>
+                </div>
+
+                <section class="season-panel" aria-labelledby="rankings-standing-title">
                     <header class="season-section-heading">
-                        <div><p class="micro-label">Detalle oficial</p><h2>Clasificación por categoría</h2></div>
+                        <div><p class="micro-label">Detalle oficial</p><h2 id="rankings-standing-title">Clasificación por categoría</h2></div>
                         <p>Los provisionales aparecen aparte y no pueden ganar hasta completar cinco semanas.</p>
                     </header>
 
@@ -681,11 +702,11 @@
                         <div class="season-table-wrap">
                             <table class="season-table">
                                 <thead>
-                                    <tr><th>Puesto</th><th>Participante</th><th>Puntuación</th><th>Semanas</th><th>Victorias</th><th>Top 3</th><th>Promedio</th><th>Standout rate</th><th>Detalle</th></tr>
+                                    <tr><th>Puesto</th><th>Participante</th><th>Puntuación</th><th>Semanas</th><th>Victorias</th><th>Top 3</th><th>Promedio</th><th>Tasa de destacados</th><th>Detalle</th></tr>
                                 </thead>
                                 <tbody id="season-eligible-body"></tbody>
                             </table>
-                            <p class="season-empty" id="season-eligible-empty" hidden>Aún no hay participantes clasificados.</p>
+                            <p class="season-empty" id="season-eligible-empty" hidden>No hay participantes con cinco semanas evaluadas en esta categoría.</p>
                         </div>
                     </section>
 
@@ -700,128 +721,22 @@
                     <details class="season-method">
                         <summary>Cómo se calcula</summary>
                         <div>
-                            <p><strong>Puntuación de temporada:</strong> 40% rendimiento promedio, 25% tasa de victorias, 20% tasa de Top 3 y 15% tasa de Standouts.</p>
+                            <p><strong>Puntuación de temporada:</strong> 40% rendimiento promedio, 25% tasa de victorias, 20% tasa de Top 3 y 15% tasa de destacados.</p>
                             <p>Normal cuenta como evaluación con 0 puntos. Sin evaluar no cuenta. Se requieren cinco semanas en la categoría para clasificar.</p>
                             <p>Un empate exacto conserva ganadores conjuntos y puestos de competición como 1, 1, 3.</p>
                         </div>
                     </details>
                 </section>
 
-                <p class="season-render-time" id="season-render-time"></p>
-
-                <dialog class="season-breakdown-dialog" id="season-breakdown-dialog" aria-labelledby="season-breakdown-title">
-                    <form method="dialog" class="season-dialog-close-row">
-                        <button class="icon-button" type="submit" aria-label="Cerrar desglose">×</button>
-                    </form>
-                    <div id="season-breakdown-content"></div>
-                </dialog>
+                <p class="season-render-time" id="rankings-render-time"></p>
             </section>
 
-            <section class="rankings-view" id="rankings" aria-labelledby="rankings-title" hidden>
-                <header class="rankings-header">
-                    <div>
-                        <p class="eyebrow">Participantes por categoría</p>
-                        <div class="rankings-title-row">
-                            <h1 id="rankings-title">Rankings</h1>
-                            <span class="unranked-badge">Sin ranking</span>
-                        </div>
-                        <p class="manager-intro">
-                            Explora tus participantes por disciplina.
-                        </p>
-                    </div>
-                    <div class="rankings-readonly" aria-label="Solo consulta">
-                        <span aria-hidden="true">◇</span>
-                        Solo consulta
-                    </div>
-                </header>
-
-                <div class="ranking-tabs" role="tablist" aria-label="Categoría del ranking">
-                    <button class="ranking-tab ranking-tab--vocal" id="ranking-tab-vocal" type="button" role="tab" aria-selected="true" aria-controls="ranking-panel" tabindex="0" data-ranking-category="vocal">Vocal</button>
-                    <button class="ranking-tab ranking-tab--rap" id="ranking-tab-rap" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="rap">Rap</button>
-                    <button class="ranking-tab ranking-tab--dance" id="ranking-tab-dance" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="dance">Baile</button>
-                    <button class="ranking-tab ranking-tab--stage" id="ranking-tab-stage" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="stage">Escenario</button>
-                    <button class="ranking-tab ranking-tab--visual" id="ranking-tab-visual" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="visual">Visual</button>
-                    <button class="ranking-tab ranking-tab--all-rounder" id="ranking-tab-all-rounder" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-ranking-category="all-rounder">Integral</button>
-                </div>
-
-                <div id="ranking-panel" role="tabpanel" aria-labelledby="ranking-tab-vocal">
-                    <section class="ranking-toolbar" aria-label="Buscar y filtrar rankings">
-                        <label class="search-control ranking-search" for="ranking-search">
-                            <span aria-hidden="true">⌕</span>
-                            <span class="sr-only">Buscar en rankings</span>
-                            <input id="ranking-search" type="search" placeholder="Buscar participantes..." autocomplete="off">
-                        </label>
-
-                        <label class="select-control" for="ranking-gender-filter">
-                            <span>Género</span>
-                            <select id="ranking-gender-filter">
-                                <option value="all">Todos</option>
-                                <option value="male">Hombres</option>
-                                <option value="female">Mujeres</option>
-                            </select>
-                        </label>
-
-                        <label class="select-control" for="ranking-group-filter">
-                            <span>Grupo</span>
-                            <select id="ranking-group-filter">
-                                <option value="all">Todos</option>
-                            </select>
-                        </label>
-
-                        <label class="select-control" for="ranking-tag-filter">
-                            <span>Tag</span>
-                            <select id="ranking-tag-filter">
-                                <option value="all">Todos</option>
-                            </select>
-                        </label>
-
-                        <label class="select-control" for="ranking-sort">
-                            <span>Orden</span>
-                            <select id="ranking-sort">
-                                <option value="a-z">A-Z</option>
-                                <option value="recent">Más recientes</option>
-                            </select>
-                        </label>
-
-                        <label class="archive-toggle" for="ranking-include-archived">
-                            <input id="ranking-include-archived" type="checkbox">
-                            <span>Incluir archivados</span>
-                        </label>
-
-                        <button class="button button--quiet ranking-reset" id="reset-ranking-filters" type="button">Limpiar</button>
-                    </section>
-
-                    <section class="top-three-locked" aria-labelledby="top-three-title">
-                        <div>
-                            <p class="micro-label">Top 3</p>
-                            <h2 id="top-three-title">Aún no hay resultados</h2>
-                        </div>
-                        <div class="podium-placeholder" aria-hidden="true">
-                            <span></span><span></span><span></span>
-                        </div>
-                    </section>
-
-                    <div class="ranking-results-heading">
-                        <div>
-                            <p class="micro-label">Categoría</p>
-                            <h2 id="ranking-directory-title">Participantes de Vocal</h2>
-                        </div>
-                        <div>
-                            <strong id="ranking-result-count">0 participantes</strong>
-                            <span>Sin ranking</span>
-                        </div>
-                    </div>
-
-                    <div class="ranking-list" id="ranking-list" aria-live="polite" aria-labelledby="ranking-directory-title"></div>
-
-                    <div class="ranking-empty" id="ranking-empty" role="status" hidden>
-                        <span aria-hidden="true">○</span>
-                        <h2 id="ranking-empty-title">Aún no hay participantes en Vocal</h2>
-                        <p id="ranking-empty-copy">Agrega esta categoría desde Participantes.</p>
-                        <button class="button button--secondary" id="ranking-empty-action" type="button">Abrir participantes</button>
-                    </div>
-                </div>
-            </section>
+            <dialog class="season-breakdown-dialog" id="season-breakdown-dialog" aria-labelledby="season-breakdown-title">
+                <form method="dialog" class="season-dialog-close-row">
+                    <button class="icon-button" type="submit" aria-label="Cerrar desglose">×</button>
+                </form>
+                <div id="season-breakdown-content"></div>
+            </dialog>
         </main>
 
         <footer class="site-footer">

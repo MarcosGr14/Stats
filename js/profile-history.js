@@ -59,6 +59,7 @@
 
     function getParticipantHistory(state, participantId, options = {}) {
         const participant = findParticipant(state, participantId);
+        const spotlightContext = options.spotlightContext || spotlight.createDerivationContext(state);
         const categoryId = options.categoryId || "all";
         const categoryIds = historicalCategoryIds(state, participant)
             .filter((id) => categoryId === "all" || id === categoryId);
@@ -70,7 +71,7 @@
                     weekId: week.id,
                     categoryId: id,
                     gender: participant.gender
-                });
+                }, spotlightContext);
                 const ranked = result.items.find((item) => item.participant.id === participantId);
                 if (!ranked) return;
                 records.push({
@@ -101,12 +102,16 @@
         return ordered.filter((record) => sameRecordMetrics(record, ordered[0]));
     }
 
-    function getParticipantCategoryStats(state, participantId, categoryId) {
+    function getParticipantCategoryStats(state, participantId, categoryId, spotlightContext = null) {
         const participant = findParticipant(state, participantId);
         if (!historicalCategoryIds(state, participant).includes(categoryId)) {
             throw new TypeError("Participant profile category is unsupported.");
         }
-        const records = getParticipantHistory(state, participantId, { categoryId, order: "oldest" });
+        const records = getParticipantHistory(state, participantId, {
+            categoryId,
+            order: "oldest",
+            spotlightContext: spotlightContext || spotlight.createDerivationContext(state)
+        });
         const votes = state.weeklyVotes.filter((vote) => vote.participantId === participantId
             && vote.categoryId === categoryId && vote.legacyUncategorized !== true);
         const reasons = deriveReasonCounts(state, votes);
@@ -166,8 +171,11 @@
         const participant = findParticipant(state, participantId);
         const group = participant.groupId ? state.groups.find((item) => item.id === participant.groupId) || null : null;
         const categoryIds = historicalCategoryIds(state, participant);
-        const categoryStats = categoryIds.map((categoryId) => getParticipantCategoryStats(state, participantId, categoryId));
-        const history = getParticipantHistory(state, participantId);
+        const spotlightContext = spotlight.createDerivationContext(state);
+        const categoryStats = categoryIds.map((categoryId) => getParticipantCategoryStats(
+            state, participantId, categoryId, spotlightContext
+        ));
+        const history = getParticipantHistory(state, participantId, { spotlightContext });
         const votes = state.weeklyVotes.filter((vote) => vote.participantId === participantId
             && vote.categoryId && vote.legacyUncategorized !== true);
         const topReasons = deriveReasonCounts(state, votes);

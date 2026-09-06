@@ -248,16 +248,12 @@
     }
 
     function ratingScore(ratingId) { return ratingById.get(ratingId)?.score ?? null; }
-    function deriveCategoryWeeklyMetrics(state, weekId, participantId, categoryId) {
-        findWeek(state, weekId);
-        const participant = findParticipant(state, participantId);
-        assertParticipantCategory(participant, categoryId);
-        const votes = state.weeklyVotes.filter((vote) => vote.weekId === weekId
-            && vote.participantId === participantId && vote.categoryId === categoryId
-            && vote.legacyUncategorized !== true);
+    function deriveMetricsFromVotes(votes, identifiers = {}) {
         const scores = votes.map((vote) => ratingScore(vote.rating));
         return {
-            participantId, categoryId, weekId,
+            participantId: identifiers.participantId || votes[0]?.participantId || null,
+            categoryId: identifiers.categoryId || votes[0]?.categoryId || null,
+            weekId: identifiers.weekId || votes[0]?.weekId || null,
             weeklyPoints: scores.reduce((total, score) => total + score, 0),
             votesCount: votes.length,
             votersCount: new Set(votes.map((vote) => vote.userId)).size,
@@ -265,6 +261,15 @@
             ratingDifference: scores.length === constants.VOTER_IDS.length ? Math.max(...scores) - Math.min(...scores) : null,
             provisional: votes.length === 1
         };
+    }
+    function deriveCategoryWeeklyMetrics(state, weekId, participantId, categoryId) {
+        findWeek(state, weekId);
+        const participant = findParticipant(state, participantId);
+        assertParticipantCategory(participant, categoryId);
+        const votes = state.weeklyVotes.filter((vote) => vote.weekId === weekId
+            && vote.participantId === participantId && vote.categoryId === categoryId
+            && vote.legacyUncategorized !== true);
+        return deriveMetricsFromVotes(votes, { participantId, categoryId, weekId });
     }
     function compareWeeklyMetrics(left, right) {
         return right.weeklyPoints - left.weeklyPoints
@@ -280,14 +285,18 @@
         findWeek(state, weekId);
         if (!categoryIds.has(categoryId)) throw new WeeklyError("INVALID_CATEGORY", "Selecciona una categoría válida para el ranking.");
         const participantsById = new Map(state.participants.map((participant) => [participant.id, participant]));
-        const votedParticipantIds = [...new Set(state.weeklyVotes
+        const votesByParticipant = new Map();
+        state.weeklyVotes
             .filter((vote) => vote.weekId === weekId && vote.categoryId === categoryId && vote.legacyUncategorized !== true)
-            .map((vote) => vote.participantId))];
-        const items = votedParticipantIds.map((participantId) => ({
+            .forEach((vote) => {
+                if (!votesByParticipant.has(vote.participantId)) votesByParticipant.set(vote.participantId, []);
+                votesByParticipant.get(vote.participantId).push(vote);
+            });
+        const items = [...votesByParticipant].map(([participantId, votes]) => ({
             participant: participantsById.get(participantId),
-            metrics: deriveCategoryWeeklyMetrics(state, weekId, participantId, categoryId),
+            metrics: deriveMetricsFromVotes(votes, { participantId, categoryId, weekId }),
             rank: null, tied: false
-        }));
+        })).filter((item) => item.participant);
         items.sort((left, right) => compareWeeklyMetrics(left.metrics, right.metrics)
             || left.participant.name.localeCompare(right.participant.name, "es", { sensitivity: "base" }));
         items.forEach((item, index) => {
@@ -356,7 +365,7 @@
         WeeklyError, PANAMA_TIME_ZONE, isoWeekForDate, formatWeekRange,
         openCurrentIsoWeek, closeWeek, reopenWeek,
         findVote, findLegacyVote, upsertVote, removeVote, assignLegacyVoteCategory,
-        ratingScore, standoutCountForUser, deriveCategoryWeeklyMetrics,
+        ratingScore, standoutCountForUser, deriveMetricsFromVotes, deriveCategoryWeeklyMetrics,
         compareWeeklyMetrics, sameRankMetrics, deriveWeeklyRanking, createWeeklyPointsProvider,
         weeklyProgress, filterWeeklyParticipants
     });

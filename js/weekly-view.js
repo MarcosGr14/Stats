@@ -4,21 +4,11 @@
     const namespace = root.StatsV2 || {};
     const constants = namespace.constants;
     const weekly = namespace.weekly;
-    if (!constants || !weekly) throw new Error("Stats V2 constants and weekly voting must load before the weekly view.");
+    const ui = namespace.ui;
+    if (!constants || !weekly || !ui) throw new Error("Stats V2 constants, UI helpers and weekly voting must load before the weekly view.");
 
-    function byId(id) { return document.getElementById(id); }
-    function createElement(tagName, className = "", text = "") {
-        const element = document.createElement(tagName);
-        if (className) element.className = className;
-        if (text !== "") element.textContent = text;
-        return element;
-    }
-    function categoryLabel(categoryId) {
-        return constants.CATEGORIES.find((category) => category.id === categoryId)?.label || categoryId;
-    }
-    function ratingLabel(ratingId) {
-        return constants.RATING_OPTIONS.find((rating) => rating.id === ratingId)?.label || "Sin evaluar";
-    }
+    const { byId, categoryLabel, ratingLabel } = ui;
+    const createElement = ui.element;
 
     function createController(options) {
         const state = options.getState;
@@ -189,7 +179,7 @@
                 elements.weekSelect.disabled = true; elements.openWeek.disabled = true;
                 elements.closeWeek.hidden = true; elements.reopenWeek.hidden = true;
                 elements.empty.hidden = false; elements.workspace.hidden = true;
-                elements.status.textContent = "Unavailable"; elements.status.dataset.state = "none";
+                elements.status.textContent = "No disponible"; elements.status.dataset.state = "none";
                 return;
             }
             ensureSelection(); renderWeekSelect(); renderGroupOptions();

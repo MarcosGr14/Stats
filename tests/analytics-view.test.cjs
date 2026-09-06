@@ -4,6 +4,7 @@ const path = require("node:path");
 
 const projectRoot = path.resolve(__dirname, "..");
 require(path.join(projectRoot, "js", "constants.js"));
+require(path.join(projectRoot, "js", "ui.js"));
 require(path.join(projectRoot, "js", "data.js"));
 require(path.join(projectRoot, "js", "weekly.js"));
 require(path.join(projectRoot, "js", "spotlight.js"));

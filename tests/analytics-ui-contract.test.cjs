@@ -8,7 +8,7 @@ const html = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
 const view = fs.readFileSync(path.join(projectRoot, "js", "analytics-view.js"), "utf8");
 const app = fs.readFileSync(path.join(projectRoot, "js", "app.js"), "utf8");
 const css = fs.readFileSync(path.join(projectRoot, "css", "analytics.css"), "utf8");
-const analyticsSection = html.match(/<section class="analytics-view"[\s\S]*?<section class="rankings-view"/)?.[0] || "";
+const analyticsSection = html.match(/<section class="analytics-view"[\s\S]*?<section class="season-view"/)?.[0] || "";
 
 test("loads the Analytics UI after its core and before the application", () => {
     assert.ok(html.indexOf("js/analytics.js") < html.indexOf("js/analytics-view.js"));

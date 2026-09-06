@@ -10,6 +10,7 @@ const view = fs.readFileSync(path.join(projectRoot, "js", "profile-view.js"), "u
 const app = fs.readFileSync(path.join(projectRoot, "js", "app.js"), "utf8");
 const weeklyView = fs.readFileSync(path.join(projectRoot, "js", "weekly-view.js"), "utf8");
 const spotlightView = fs.readFileSync(path.join(projectRoot, "js", "spotlight-view.js"), "utf8");
+const seasonView = fs.readFileSync(path.join(projectRoot, "js", "season-view.js"), "utf8");
 const css = fs.readFileSync(path.join(projectRoot, "css", "profile.css"), "utf8");
 
 test("loads profile derivation after Spotlight and profile UI before the app", () => {
@@ -33,7 +34,7 @@ test("exposes a complete participant dossier with reusable edit and tag actions"
 
 test("routes Participant Manager, Rankings, Weekly and Spotlight records to the profile URL", () => {
     assert.match(app, /actionButton\("Ver perfil", "profile"/);
-    assert.match(app, /dataset\.rankingParticipantId/);
+    assert.match(seasonView, /dataset\.seasonParticipantId/);
     assert.match(weeklyView, /dataset\.weeklyProfileId/);
     assert.match(spotlightView, /dataset\.spotlightParticipantId/);
     assert.match(app, /#profile\?participant=/);
