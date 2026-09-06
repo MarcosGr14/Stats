@@ -4,7 +4,7 @@ Aplicación local-first para organizar y, en fases posteriores, evaluar performe
 
 ## Estado actual
 
-Está implementada **Fase 8 - Season Standings + Grand Winners** sobre Participant Manager, Tag System, Category-specific Voting, Weekly Spotlight, Profiles & History y Analytics:
+Está implementada **Fase 8.5 - Product Cleanup** sobre Participant Manager, Tag System, Category-specific Voting, Weekly Spotlight, Profiles & History, Analytics y Season Standings:
 
 - alta y edición de participantes;
 - grupos reutilizables, con creación rápida desde el formulario;
@@ -15,11 +15,11 @@ Está implementada **Fase 8 - Season Standings + Grand Winners** sobre Participa
 - tags personalizados globales con reutilización case-insensitive, edición y borrado protegidos;
 - asignación many-to-many entre participantes y tags, con remoción no destructiva;
 - búsqueda por nombre o grupo, filtros por género/estado/categoría/tag y orden A-Z/recientes;
-- vista Rankings para `vocal`, `rap`, `dance`, `stage`, `visual` y `all-rounder`;
-- directorios derivados con filtros por género, grupo/solista, tag, búsqueda y archivados opcionales;
-- modo `Unranked` explícito: no asigna posiciones ni activa el Top 3 sin un score legítimo;
-- arquitectura preparada para un futuro `scoreProvider(participant, category)`;
-- acceso desde cada fila del ranking al participante correspondiente;
+- Rankings concentra la clasificación acumulada por categoría y género, con Top 3, tabla completa y provisionales;
+- Temporada concentra exclusivamente premios generales y ganadores por categoría;
+- Participantes conserva toda la gestión, búsqueda, filtros y archivados, sin duplicar esas funciones en Rankings;
+- perfiles y tags continúan como flujos contextuales, fuera de la navegación principal;
+- seis destinos principales estables: Participantes, Votación, Destacados, Rankings, Estadísticas y Temporada;
 - creación explícita de la semana ISO actual, lunes-domingo en `America/Panama`;
 - una sola semana `OPEN`, cierre confirmado y reapertura administrativa explícita de semanas `CLOSED`;
 - votación semanal independiente por categoría para los usuarios permanentes `p1` y `p2`;
@@ -29,7 +29,7 @@ Está implementada **Fase 8 - Season Standings + Grand Winners** sobre Participa
 - Weekly Points, votes/voters count, standout count, provisional y diferencia de ratings derivados por categoría;
 - orden semanal por puntos, votos y Standouts con empates de competición `1, 1, 3`;
 - filtros semanales por categoría, género, grupo, búsqueda y estado de evaluación;
-- `createWeeklyPointsProvider()` preparado, sin conectarlo todavía a Rankings;
+- `createWeeklyPointsProvider()` se conserva como API de compatibilidad para resultados semanales;
 - Weekly Spotlight derivado por `weekId + categoryId + gender`, con resultados Female/Male separados;
 - Top 3 real, ganadores simples o conjuntos y ranking completo de competición `1, 1, 3`;
 - estados `LIVE PREVIEW` para semanas abiertas y `OFFICIAL RESULTS` para semanas cerradas;
@@ -60,7 +60,7 @@ Está implementada **Fase 8 - Season Standings + Grand Winners** sobre Participa
 - borrado permanente solo cuando no existe historial relacionado;
 - UI responsive y accesible con formularios y diálogos navegables por teclado.
 
-No se han implementado `overallScore`, Best Group, Most Competitive Week ni administración de múltiples temporadas. Rankings conserva su directorio histórico `Unranked`; las clasificaciones acumuladas viven exclusivamente en Temporada.
+No se han implementado `overallScore`, Best Group, Most Competitive Week, administración de múltiples temporadas ni ninguna función de Fase 9. La vista inicial sigue siendo Participantes.
 
 ## Ejecución
 
@@ -86,6 +86,7 @@ Stats/
 │   └── season.css
 ├── js/
 │   ├── constants.js
+│   ├── ui.js
 │   ├── data.js
 │   ├── storage.js
 │   ├── weekly-migration.js
@@ -101,7 +102,6 @@ Stats/
 │   ├── season-view.js
 │   ├── participants.js
 │   ├── tags.js
-│   ├── rankings.js
 │   ├── image-storage.js
 │   └── app.js
 ├── docs/
@@ -110,7 +110,8 @@ Stats/
 │   ├── foundation.test.cjs
 │   ├── participants.test.cjs
 │   ├── tags.test.cjs
-│   ├── rankings.test.cjs
+│   ├── ui.test.cjs
+│   ├── product-cleanup.test.cjs
 │   ├── weekly.test.cjs
 │   ├── weekly-migration.test.cjs
 │   ├── category-voting-migration.test.cjs
@@ -203,11 +204,11 @@ Mientras la semana está `OPEN`, cada voto categorizado puede crearse, editarse 
 
 Los agregados no se persisten. Para cada `weekId + participantId + categoryId` se derivan `weeklyPoints`, `votesCount`, `votersCount`, `standoutCount`, estado provisional y diferencia entre ratings. El orden semanal usa puntos DESC, voters count DESC y Standouts DESC; si todo coincide, conserva un empate real y asigna ranking de competición. El orden alfabético solo estabiliza la presentación del empate. No existe una suma Overall entre categorías.
 
-## Rankings y modo Unranked
+## Rankings acumulados
 
-Weekly Voting produce puntos semanales legítimos por categoría y expone `createWeeklyPointsProvider(state, weekId)`, cuyo proveedor recibe `(participant, categoryId)`. Fase 5 consume esos datos en Weekly Spotlight para una semana concreta, pero no los conecta al directorio histórico Rankings: la fórmula de temporada y la política entre semanas aún no están definidas. Por eso esa vista conserva explícitamente `Unranked` y su Top 3 bloqueado.
+Rankings muestra las clasificaciones de temporada ya definidas por `season.js`: seis categorías independientes, cada una separada entre mujeres y hombres. Incluye Top 3, clasificación completa, provisionales y desglose auditable. Por defecto utiliza solo semanas `CLOSED`; incluir la semana abierta es una vista previa explícita y provisional.
 
-`rankings.js` deriva una vista nueva a partir de `participants`, `groups`, `tags` y asignaciones activas. No agrega `rankPosition` al participante ni guarda una colección `rankings`. Sin `scoreProvider`, el resultado queda `ranked: false`, el Top 3 permanece bloqueado y el directorio usa únicamente A-Z o Recently Added. Un proveedor futuro con scores finitos puede activar posiciones sin reescribir la UI.
+La gestión de participantes permanece en Participantes. Se eliminó el antiguo directorio duplicado `Unranked`, su módulo específico y sus filtros redundantes. Rankings sigue siendo de solo lectura: no agrega posiciones a participantes, no crea una colección persistente y no reimplementa las fórmulas de temporada.
 
 ## Weekly Spotlight
 
@@ -225,7 +226,7 @@ El resumen general cuenta semanas evaluadas únicas, aunque una persona tenga vo
 
 El historial distingue `Normal` de `Not evaluated`: un voto Normal aparece con 0 puntos; la ausencia de voto queda fuera del historial y como hueco accesible en la tendencia. Los tags permanentes provienen únicamente de `participantTagAssignments`; los motivos semanales se leen de `weeklyVote.reasonTagIds` y nunca modifican el perfil. Los participantes archivados conservan identidad, imagen, tags e historial, pero siguen excluidos de votos nuevos.
 
-`profile-view.js` presenta Summary, Profile Tags, Category Records, Performance Trend, Weekly Praise, Wins y Weekly History. El historial se filtra por categoría y se ordena de más reciente a más antiguo o al revés. Manager, Rankings, Weekly, Spotlight y Recap enlazan al mismo perfil mediante `participant` en el hash; Back restaura la vista interna cuando existe y vuelve a Participants al entrar por URL directa. Edit Participant y Manage Tags reutilizan los diálogos existentes.
+`profile-view.js` presenta Summary, Profile Tags, Category Records, Performance Trend, Weekly Praise, Wins y Weekly History. El historial se filtra por categoría y se ordena de más reciente a más antiguo o al revés. Participantes, Rankings, Weekly, Spotlight y Recap enlazan al mismo perfil mediante `participant` en el hash; Back restaura la vista interna cuando existe y vuelve a Participantes al entrar por URL directa. Edit Participant y Manage Tags reutilizan los diálogos existentes.
 
 ## Core Analytics
 
@@ -277,7 +278,25 @@ El Season Score se calcula con precisión completa y se muestra con un decimal:
 
 `Normal` cuenta como semana evaluada con cero puntos y `Not evaluated` es ausencia de registro. Se requieren cinco semanas evaluadas dentro de la misma categoría; con cuatro o menos el resultado queda en Provisionales y no puede ganar. Las posiciones oficiales ordenan solo por Season Score exacto y usan ranking de competición (`1, 1, 3`). El nombre se usa después únicamente para estabilidad visual.
 
-El Grand Score se calcula por género con categorías ya elegibles: 95% de la mejor categoría y 5% de la segunda. Cuando solo existe una categoría elegible se usa su puntuación completa, sin penalización. Categorías adicionales no aportan ventaja y los empates exactos producen ganadores conjuntos. `season-view.js` presenta el resumen, los ganadores de las 12 clasificaciones, Grand Winners Female/Male, podios, standings elegibles, provisionales y desgloses auditables; las fórmulas no viven en `app.js`.
+El Grand Score se calcula por género con categorías ya elegibles: 95% de la mejor categoría y 5% de la segunda. Cuando solo existe una categoría elegible se usa su puntuación completa, sin penalización. Categorías adicionales no aportan ventaja y los empates exactos producen ganadores conjuntos. `season-view.js` comparte un único controlador: Rankings presenta podios, standings elegibles y provisionales; Temporada presenta los ganadores de las 12 clasificaciones y Grand Winners Female/Male. Ambos reutilizan el mismo desglose y las fórmulas no viven en `app.js`.
+
+## Auditoría y rendimiento de Fase 8.5
+
+La auditoría clasificó Participantes, Votación, Destacados, Perfiles y Analytics como capacidades a mantener; Rankings y las clasificaciones internas de Temporada como vistas a fusionar/reubicar; el directorio `Unranked`, sus handlers y CSS como elementos a eliminar; y los helpers DOM, labels, iniciales y formato numérico como utilidades a reutilizar. Perfiles y Tags permanecen contextuales. No se detectaron defectos P0 ni fue necesario cambiar reglas de negocio.
+
+Se eliminó el principal cuello de botella comprobado: cada pantalla recorría repetidamente todos los votos para reconstruir el mismo ranking. Ahora una derivación crea índices efímeros por selección y reutiliza métricas dentro de la misma operación. No existe caché persistente ni una segunda fuente de verdad.
+
+Benchmark sintético, mediana de cinco ejecuciones con 100 participantes, 52 semanas y 20,800 votos:
+
+| Derivación | Antes | Después |
+| --- | ---: | ---: |
+| Spotlight | 142.0 ms | 15.9 ms |
+| Perfil | 8276.9 ms | 191.6 ms |
+| Dashboard de Analytics | 21061.0 ms | 104.5 ms |
+| Clasificaciones de temporada | 8738.0 ms | 413.3 ms |
+| Ganadores generales | 8716.2 ms | 406.8 ms |
+
+El benchmark usa estado enteramente sintético en memoria y no accede al almacenamiento real del navegador.
 
 ## Persistencia
 
@@ -296,7 +315,7 @@ La migración Fase 3 -> Fase 4 clona el estado, conserva participantes, grupos, 
 
 La migración Fase 4 -> Fase 4.1 conserva el JSON exacto previo en `stats:v2:state:pre-category-voting-backup`, una sola vez. Un voto antiguo de un participante con exactamente una categoría recibe esa categoría de forma segura. Si el participante tiene varias, el voto mantiene ID, rating, razones, nota y timestamps, queda marcado `legacyUncategorized` y se muestra para conversión manual. Nunca se duplica ni se asigna arbitrariamente. IndexedDB no se abre ni se modifica.
 
-Abrir, filtrar u ordenar Rankings es una operación de solo lectura: no llama al helper de guardado, no modifica participantes y no toca IndexedDB.
+Abrir, filtrar o cambiar categoría/género en Rankings es una operación de solo lectura: no llama al helper de guardado, no modifica participantes y solo consulta IndexedDB cuando necesita mostrar una foto ya referenciada.
 
 Abrir o navegar Weekly Spotlight tampoco guarda estado. Fase 5 no requiere migración, backup adicional ni cambios de esquema porque consume exclusivamente `weeks`, `weeklyVotes`, participantes, grupos, tags e IDs ya existentes.
 
@@ -306,7 +325,7 @@ Ejecutar Core Analytics tampoco escribe estado. Fase 7A no requiere migración, 
 
 Abrir, filtrar u ordenar Analytics también es de solo lectura. Fase 7B no requiere migración, backup ni cambio de esquema: consume las derivaciones de Fase 7A, no guarda métricas y no abre IndexedDB ni carga imágenes.
 
-Abrir o filtrar Temporada también es de solo lectura. Fase 8 no introduce esquema, migración ni backup porque calcula standings desde las colecciones existentes y no persiste resultados derivados. IndexedDB se consulta solo para mostrar fotos ya referenciadas; ninguna prueba usa los datos reales ni modifica imágenes.
+Abrir Rankings o Temporada también es de solo lectura. Fase 8.5 no introduce esquema, migración ni backup porque reorganiza vistas y optimiza derivaciones desde las colecciones existentes; no persiste resultados ni índices. IndexedDB se consulta solo para mostrar fotos ya referenciadas; ninguna prueba usa los datos reales ni modifica imágenes.
 
 ## Archivado y borrado
 
@@ -331,7 +350,7 @@ Requiere Node.js 20 o superior y no instala paquetes:
 node --test tests/*.test.cjs
 ```
 
-Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, ambas migraciones y backups exactos, semanas ISO, cierre/reapertura, unicidad categorizada, conversión legacy, P1/P2, límite global de Standouts, reason tags, notas, métricas por categoría, desempates, UI contractual, Rankings Unranked, Weekly Spotlight, perfiles, historial categorizado, tendencias, Analytics, las fórmulas y umbrales de Season Score, los 12 standings, empates conjuntos, Grand Score, Grand Winners y errores de imágenes.
+Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, ambas migraciones y backups exactos, semanas ISO, cierre/reapertura, unicidad categorizada, conversión legacy, P1/P2, límite global de Standouts, reason tags, notas, métricas por categoría, desempates, UI contractual, Rankings acumulados, Weekly Spotlight, perfiles, historial categorizado, tendencias, Analytics, las fórmulas y umbrales de Season Score, los 12 standings, empates conjuntos, Grand Score, Grand Winners, helpers compartidos, limpieza de producto y errores de imágenes.
 
 También se realizó un smoke test en un origen local aislado con roster ficticio: Female Vocal A=6, B=5, C=4, D=0 y E sin voto. El Top 3 mostró A/B/C, el ranking completo incluyó D y excluyó E. El cierre cambió Spotlight a OFFICIAL; la reapertura volvió a LIVE y una edición de C a 5 produjo `1, 2, 2, 4`. También se comprobaron Male, otra categoría, recap, motivos, badges y acceso al participante. El layout fue revisado en 320, 375, 768 y 1440 px sin overflow horizontal ni errores de consola.
 
@@ -343,16 +362,15 @@ Para Fase 7B se ejecutó además un smoke en un origen local desechable con seis
 
 Para Fase 8 se ejecutó un smoke en otro origen local desechable con nueve participantes ficticios, ambos géneros, seis semanas cerradas y una abierta, resultados `Normal`, provisionales, empates conjuntos y participantes elegibles en varias categorías. Se verificaron overview, los 12 ganadores potenciales, Grand Winners, podios, standings, provisionales, desgloses, navegación a perfil, teclado y preview live. La UI se inspeccionó en 320, 375, 768 y 1440 px sin overflow de página; tablas y diálogos se adaptaron a móvil y no hubo errores ni warnings de consola. El almacenamiento real permaneció fuera del origen de prueba.
 
+Para Fase 8.5 se repitió una regresión en un origen aislado con datos sintéticos. Se recorrieron los seis destinos, Rankings acumulados, premios de Temporada, perfiles y los controles accesibles principales. Se comparó el JSON del estado antes y después de la navegación de solo lectura. La cobertura contractual valida las reglas responsive específicas para 320, 375, 768 y 1440 px. El origen y el servidor de prueba son desechables; no comparten `localStorage` ni IndexedDB con la app real.
+
 ## Riesgos y decisiones pendientes
 
 - P1/P2 son identidades locales con el mismo peso, no autenticación; un dispositivo compartido depende de que el usuario confirme el selector visible.
 - `localStorage` no ofrece transacciones entre pestañas; ediciones simultáneas pueden producir last-write-wins.
 - El crecimiento de votos y notas está sujeto a la cuota de `localStorage`; las fotos continúan separadas en IndexedDB.
 - La reapertura es una acción administrativa local sin autenticación; queda auditada con contador y último timestamp, no con identidad ni motivo.
-- El directorio histórico `Rankings` permanece deliberadamente `Unranked`; Fase 5 clasifica semanas concretas y no define todavía una política acumulada de temporada.
-- Los perfiles derivan nuevamente el ranking de cada semana/categoría consultada; con historiales muy grandes puede convenir una caché derivada e invalidable, nunca una duplicación autoritativa.
-- Analytics recalcula desde la fuente autoritativa y muestra su costo real; un historial muy grande puede requerir en una fase futura una memoización derivada, invalidable y nunca persistida.
-- Temporada deriva sus 12 clasificaciones y Grand Scores desde todo el historial seleccionado; a gran escala podría requerir memoización invalidable en memoria, nunca una colección autoritativa duplicada.
+- Rankings y Temporada recalculan desde la fuente autoritativa; los índices de cada derivación viven solo durante esa operación y un volumen muy superior al benchmark podría exigir nueva medición.
 - En Fase 8 todo el historial `CLOSED` representa una única temporada vigente; separar temporadas históricas requiere una futura decisión explícita de modelo y migración.
 - Una muestra mínima de 3 reduce resultados estadísticos engañosos, pero seguirá siendo una muestra pequeña y debe mostrarse junto a cada resultado.
 - La limpieza de blobs huérfanos se hace de forma oportunista; una herramienta integral de mantenimiento/backup pertenece a la Fase 9.
@@ -361,4 +379,4 @@ Para Fase 8 se ejecutó un smoke en otro origen local desechable con nueve parti
 
 ## Límite de fase
 
-La Fase 8 termina en una interfaz visual, responsive, accesible y de solo lectura para Season Standings, ganadores por categoría y Grand Winners Female/Male. No se implementan `overallScore`, Best Group, Most Competitive Week, temporadas múltiples ni ninguna parte de Fase 9; el proyecto queda detenido al cierre de Fase 8.
+La Fase 8.5 termina con seis destinos principales, Rankings dedicado a standings acumulados, Temporada dedicada a premios, helpers de UI compartidos y derivaciones optimizadas. No se implementan `overallScore`, Best Group, Most Competitive Week, temporadas múltiples ni ninguna parte de Fase 9; el proyecto queda detenido al cierre de Fase 8.5.
