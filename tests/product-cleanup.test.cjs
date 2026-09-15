@@ -11,10 +11,10 @@ const appCss = read("css", "app.css");
 const seasonView = read("js", "season-view.js");
 const weeklyView = read("js", "weekly-view.js");
 
-test("keeps a focused six-destination navigation and contextual profiles and tags", () => {
+test("keeps a focused seven-destination navigation and contextual profiles and tags", () => {
     const navigation = html.match(/<nav class="primary-nav"[\s\S]*?<\/nav>/)?.[0] || "";
-    assert.equal((navigation.match(/<a /g) || []).length, 6);
-    ["participants", "weekly", "spotlight", "rankings", "analytics", "season"].forEach((id) => {
+    assert.equal((navigation.match(/<a /g) || []).length, 7);
+    ["participants", "weekly", "spotlight", "rankings", "analytics", "season", "data-safety"].forEach((id) => {
         assert.match(navigation, new RegExp(`href="#${id}"`));
     });
     assert.doesNotMatch(navigation, /profile|tags/i);
@@ -57,9 +57,9 @@ test("removes obsolete visible English copy without renaming domain identifiers"
     assert.match(read("js", "weekly.js"), /standoutCount/);
 });
 
-test("does not introduce a schema, migration or persistent cache in Product Cleanup", () => {
+test("keeps the schema stable while advancing to the Data Safety release", () => {
     assert.doesNotMatch(read("js", "ui.js"), /localStorage|sessionStorage|indexedDB|storage/);
     assert.doesNotMatch(seasonView, /cache|memo/i);
-    assert.match(read("js", "constants.js"), /APP_VERSION: "2\.8\.5-product-cleanup"/);
-    assert.doesNotMatch(html, /Fase 9|phase 9/i);
+    assert.match(read("js", "constants.js"), /APP_VERSION: "2\.9\.0-data-safety"/);
+    assert.match(read("js", "constants.js"), /SCHEMA_VERSION: 2/);
 });

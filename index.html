@@ -6,33 +6,36 @@
     <meta name="description" content="Stats V2: administra participantes y registra votaciones semanales P1/P2 con datos locales.">
     <meta name="theme-color" content="#0B0B0F">
     <title>Participantes · Stats V2</title>
-    <link rel="stylesheet" href="css/global.css?v=2.8.5">
-    <link rel="stylesheet" href="css/components.css?v=2.8.5">
-    <link rel="stylesheet" href="css/app.css?v=2.8.5">
-    <link rel="stylesheet" href="css/weekly.css?v=2.8.5">
-    <link rel="stylesheet" href="css/spotlight.css?v=2.8.5">
-    <link rel="stylesheet" href="css/profile.css?v=2.8.5">
-    <link rel="stylesheet" href="css/analytics.css?v=2.8.5">
-    <link rel="stylesheet" href="css/season.css?v=2.8.5">
-    <script src="js/constants.js?v=2.8.5" defer></script>
-    <script src="js/ui.js?v=2.8.5" defer></script>
-    <script src="js/data.js?v=2.8.5" defer></script>
-    <script src="js/storage.js?v=2.8.5" defer></script>
-    <script src="js/weekly-migration.js?v=2.8.5" defer></script>
-    <script src="js/weekly.js?v=2.8.5" defer></script>
-    <script src="js/spotlight.js?v=2.8.5" defer></script>
-    <script src="js/profile-history.js?v=2.8.5" defer></script>
-    <script src="js/analytics.js?v=2.8.5" defer></script>
-    <script src="js/season.js?v=2.8.5" defer></script>
-    <script src="js/participants.js?v=2.8.5" defer></script>
-    <script src="js/tags.js?v=2.8.5" defer></script>
-    <script src="js/image-storage.js?v=2.8.5" defer></script>
-    <script src="js/weekly-view.js?v=2.8.5" defer></script>
-    <script src="js/spotlight-view.js?v=2.8.5" defer></script>
-    <script src="js/profile-view.js?v=2.8.5" defer></script>
-    <script src="js/analytics-view.js?v=2.8.5" defer></script>
-    <script src="js/season-view.js?v=2.8.5" defer></script>
-    <script src="js/app.js?v=2.8.5" defer></script>
+    <link rel="stylesheet" href="css/global.css?v=2.9.0">
+    <link rel="stylesheet" href="css/components.css?v=2.9.0">
+    <link rel="stylesheet" href="css/app.css?v=2.9.0">
+    <link rel="stylesheet" href="css/weekly.css?v=2.9.0">
+    <link rel="stylesheet" href="css/spotlight.css?v=2.9.0">
+    <link rel="stylesheet" href="css/profile.css?v=2.9.0">
+    <link rel="stylesheet" href="css/analytics.css?v=2.9.0">
+    <link rel="stylesheet" href="css/season.css?v=2.9.0">
+    <link rel="stylesheet" href="css/backup.css?v=2.9.0">
+    <script src="js/constants.js?v=2.9.0" defer></script>
+    <script src="js/ui.js?v=2.9.0" defer></script>
+    <script src="js/data.js?v=2.9.0" defer></script>
+    <script src="js/storage.js?v=2.9.0" defer></script>
+    <script src="js/weekly-migration.js?v=2.9.0" defer></script>
+    <script src="js/weekly.js?v=2.9.0" defer></script>
+    <script src="js/spotlight.js?v=2.9.0" defer></script>
+    <script src="js/profile-history.js?v=2.9.0" defer></script>
+    <script src="js/analytics.js?v=2.9.0" defer></script>
+    <script src="js/season.js?v=2.9.0" defer></script>
+    <script src="js/participants.js?v=2.9.0" defer></script>
+    <script src="js/tags.js?v=2.9.0" defer></script>
+    <script src="js/image-storage.js?v=2.9.0" defer></script>
+    <script src="js/backup.js?v=2.9.0" defer></script>
+    <script src="js/backup-view.js?v=2.9.0" defer></script>
+    <script src="js/weekly-view.js?v=2.9.0" defer></script>
+    <script src="js/spotlight-view.js?v=2.9.0" defer></script>
+    <script src="js/profile-view.js?v=2.9.0" defer></script>
+    <script src="js/analytics-view.js?v=2.9.0" defer></script>
+    <script src="js/season-view.js?v=2.9.0" defer></script>
+    <script src="js/app.js?v=2.9.0" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -54,6 +57,7 @@
                 <a id="nav-rankings" href="#rankings">Rankings</a>
                 <a id="nav-analytics" href="#analytics">Estadísticas</a>
                 <a id="nav-season" href="#season">Temporada</a>
+                <a id="nav-data-safety" href="#data-safety">Datos</a>
             </nav>
 
             <div class="build-status" title="Estado de la app">
@@ -731,6 +735,52 @@
                 <p class="season-render-time" id="rankings-render-time"></p>
             </section>
 
+            <section class="data-safety-view" id="data-safety" aria-labelledby="data-safety-title" hidden>
+                <header class="data-safety-header">
+                    <div>
+                        <p class="eyebrow">Todo permanece en este dispositivo</p>
+                        <h1 id="data-safety-title">Datos y seguridad</h1>
+                        <p class="manager-intro">Guarda una copia completa o restaura Stats con validación previa.</p>
+                    </div>
+                    <span class="data-safety-badge">Backup local</span>
+                </header>
+
+                <div class="data-summary" aria-label="Contenido actual">
+                    <p><strong id="data-summary-participants">0</strong><span>Participantes</span></p>
+                    <p><strong id="data-summary-weeks">0</strong><span>Semanas</span></p>
+                    <p><strong id="data-summary-votes">0</strong><span>Votos</span></p>
+                    <p><strong id="data-summary-images">0</strong><span>Imágenes</span></p>
+                </div>
+
+                <div class="data-safety-grid">
+                    <article class="data-card">
+                        <p class="micro-label">Copia completa</p>
+                        <h2>Exportar backup</h2>
+                        <p>Incluye participantes, grupos, tags, semanas, votos, configuración e imágenes.</p>
+                        <p class="data-card-note" id="last-export-status">Aún no hay una exportación registrada.</p>
+                        <button class="button button--primary" id="export-backup" type="button">Exportar backup</button>
+                    </article>
+
+                    <article class="data-card">
+                        <p class="micro-label">Reemplazo completo</p>
+                        <h2>Importar backup</h2>
+                        <p>El archivo se revisa antes de escribir. No se mezclará con los datos actuales.</p>
+                        <label class="button button--secondary file-button" for="import-backup-file">Seleccionar archivo</label>
+                        <input id="import-backup-file" type="file" accept="application/json,.json">
+                        <p class="field-error" id="import-backup-error" role="alert" aria-live="assertive"></p>
+                    </article>
+                </div>
+
+                <section class="danger-zone" aria-labelledby="danger-zone-title">
+                    <div>
+                        <p class="micro-label">Zona de peligro</p>
+                        <h2 id="danger-zone-title">Borrar todos los datos de Stats</h2>
+                        <p>Elimina únicamente el estado de Stats V2 y sus imágenes locales. Otros datos del navegador no se tocan.</p>
+                    </div>
+                    <button class="button button--danger" id="open-reset-data" type="button">Borrar datos</button>
+                </section>
+            </section>
+
             <dialog class="season-breakdown-dialog" id="season-breakdown-dialog" aria-labelledby="season-breakdown-title">
                 <form method="dialog" class="season-dialog-close-row">
                     <button class="icon-button" type="submit" aria-label="Cerrar desglose">×</button>
@@ -744,6 +794,23 @@
             <p id="schema-version">Datos locales</p>
         </footer>
     </div>
+
+    <section class="recovery-mode" id="recovery-mode" aria-labelledby="recovery-title" hidden>
+        <div class="recovery-card">
+            <span class="recovery-symbol" aria-hidden="true">!</span>
+            <p class="eyebrow">Modo de recuperación</p>
+            <h1 id="recovery-title">Stats encontró datos que no puede abrir</h1>
+            <p>No se modificó ni reemplazó el contenido actual. Puedes guardar el estado original o restaurar un backup válido.</p>
+            <p class="recovery-detail" id="recovery-detail" role="status"></p>
+            <div class="recovery-actions">
+                <label class="button button--primary file-button" for="recovery-import-file">Importar backup</label>
+                <input id="recovery-import-file" type="file" accept="application/json,.json">
+                <button class="button button--secondary" id="download-raw-state" type="button">Descargar estado original</button>
+                <button class="button button--quiet" id="restart-stats" type="button">Reiniciar Stats</button>
+            </div>
+            <p class="field-error" id="recovery-error" role="alert" aria-live="assertive"></p>
+        </div>
+    </section>
 
     <dialog class="app-dialog participant-dialog" id="participant-dialog" aria-labelledby="participant-dialog-title">
         <form id="participant-form" novalidate>
@@ -1046,6 +1113,48 @@
             <button class="button button--quiet" id="cancel-reopen-week" type="button">Cancelar</button>
             <button class="button button--primary" id="confirm-reopen-week" type="button">Reabrir</button>
         </div>
+    </dialog>
+
+    <dialog class="app-dialog backup-preview-dialog" id="backup-preview-dialog" aria-labelledby="backup-preview-title">
+        <header class="dialog-header">
+            <div>
+                <p class="eyebrow">Archivo validado</p>
+                <h2 id="backup-preview-title">Revisar restauración</h2>
+            </div>
+            <button class="icon-button" id="close-backup-preview" type="button" aria-label="Cerrar vista previa">×</button>
+        </header>
+        <p>La restauración reemplazará por completo los datos actuales. Antes se descargará una copia de seguridad automática.</p>
+        <dl class="backup-preview-summary">
+            <div><dt>Participantes</dt><dd id="preview-participants">0</dd></div>
+            <div><dt>Grupos</dt><dd id="preview-groups">0</dd></div>
+            <div><dt>Tags</dt><dd id="preview-tags">0</dd></div>
+            <div><dt>Semanas</dt><dd id="preview-weeks">0</dd></div>
+            <div><dt>Votos</dt><dd id="preview-votes">0</dd></div>
+            <div><dt>Imágenes</dt><dd id="preview-images">0</dd></div>
+        </dl>
+        <p class="backup-size" id="preview-size"></p>
+        <p class="field-error" id="restore-backup-error" role="alert" aria-live="assertive"></p>
+        <footer class="dialog-actions">
+            <button class="button button--quiet" id="cancel-backup-preview" type="button">Cancelar</button>
+            <button class="button button--primary" id="confirm-restore-backup" type="button">Restaurar backup</button>
+        </footer>
+    </dialog>
+
+    <dialog class="app-dialog reset-data-dialog" id="reset-data-dialog" aria-labelledby="reset-data-title">
+        <div class="confirm-symbol" aria-hidden="true">!</div>
+        <p class="eyebrow">Acción permanente</p>
+        <h2 id="reset-data-title">¿Borrar todos los datos de Stats?</h2>
+        <p>Exporta primero si quieres conservar una copia. Para continuar, escribe <strong>BORRAR</strong>.</p>
+        <button class="button button--secondary" id="export-before-reset" type="button">Exportar antes</button>
+        <label class="field" for="reset-confirmation">
+            <span>Confirmación</span>
+            <input id="reset-confirmation" type="text" autocomplete="off" spellcheck="false">
+        </label>
+        <p class="field-error" id="reset-data-error" role="alert" aria-live="assertive"></p>
+        <footer class="dialog-actions">
+            <button class="button button--quiet" id="cancel-reset-data" type="button">Cancelar</button>
+            <button class="button button--danger" id="confirm-reset-data" type="button" disabled>Borrar definitivamente</button>
+        </footer>
     </dialog>
 
     <div class="app-toast" id="app-toast" role="status" aria-live="polite" hidden></div>

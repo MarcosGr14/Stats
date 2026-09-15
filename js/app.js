@@ -19,6 +19,8 @@
     const seasonService = namespace && namespace.season;
     const seasonViewService = namespace && namespace.seasonView;
     const imageStorage = namespace && namespace.imageStorage;
+    const backupService = namespace && namespace.backup;
+    const backupViewService = namespace && namespace.backupView;
 
     let state = null;
     let writable = false;
@@ -38,6 +40,7 @@
     let profileController = null;
     let analyticsController = null;
     let seasonController = null;
+    let backupController = null;
     let currentProfileId = null;
     let profileHasInternalReturn = false;
     let elements = {};
@@ -320,6 +323,7 @@
         if (root.location.hash === "#rankings") return "rankings";
         if (root.location.hash === "#analytics") return "analytics";
         if (root.location.hash === "#season") return "season";
+        if (root.location.hash === "#data-safety") return "data-safety";
         if (root.location.hash.startsWith("#profile?")) return "profile";
         return "participants";
     }
@@ -331,7 +335,7 @@
     }
 
     function activateView(view, shouldRender = true) {
-        activeView = ["participants", "profile", "weekly", "spotlight", "rankings", "analytics", "season"].includes(view) ? view : "participants";
+        activeView = ["participants", "profile", "weekly", "spotlight", "rankings", "analytics", "season", "data-safety"].includes(view) ? view : "participants";
         elements.participantManager.hidden = activeView !== "participants";
         elements.profileView.hidden = activeView !== "profile";
         elements.weeklyView.hidden = activeView !== "weekly";
@@ -339,7 +343,8 @@
         elements.rankingsView.hidden = activeView !== "rankings";
         elements.analyticsView.hidden = activeView !== "analytics";
         elements.seasonView.hidden = activeView !== "season";
-        [elements.navParticipants, elements.navWeekly, elements.navSpotlight, elements.navRankings, elements.navAnalytics, elements.navSeason]
+        elements.dataSafetyView.hidden = activeView !== "data-safety";
+        [elements.navParticipants, elements.navWeekly, elements.navSpotlight, elements.navRankings, elements.navAnalytics, elements.navSeason, elements.navDataSafety]
             .forEach((link) => link.removeAttribute("aria-current"));
         if (activeView === "participants") elements.navParticipants.setAttribute("aria-current", "page");
         if (activeView === "profile") elements.navParticipants.setAttribute("aria-current", "page");
@@ -348,13 +353,15 @@
         if (activeView === "rankings") elements.navRankings.setAttribute("aria-current", "page");
         if (activeView === "analytics") elements.navAnalytics.setAttribute("aria-current", "page");
         if (activeView === "season") elements.navSeason.setAttribute("aria-current", "page");
-        const titles = { participants: "Participantes", profile: "Perfil", weekly: "Votación semanal", spotlight: "Destacados de la semana", rankings: "Rankings", analytics: "Estadísticas", season: "Temporada" };
+        if (activeView === "data-safety") elements.navDataSafety.setAttribute("aria-current", "page");
+        const titles = { participants: "Participantes", profile: "Perfil", weekly: "Votación semanal", spotlight: "Destacados de la semana", rankings: "Rankings", analytics: "Estadísticas", season: "Temporada", "data-safety": "Datos y seguridad" };
         const profileParticipant = activeView === "profile" ? findParticipant(profileIdFromLocation() || currentProfileId) : null;
         document.title = `${profileParticipant?.name || titles[activeView]} · Stats V2`;
         if (shouldRender) {
             if (activeView === "rankings") seasonController?.activate("rankings");
             else if (activeView === "analytics") analyticsController?.activate();
             else if (activeView === "season") seasonController?.activate("season");
+            else if (activeView === "data-safety") backupController?.activate();
             else if (activeView === "weekly") weeklyController?.activate();
             else if (activeView === "spotlight") spotlightController?.activate();
             else if (activeView === "profile") {
@@ -1077,12 +1084,14 @@
             rankingsView: byId("rankings"),
             analyticsView: byId("analytics"),
             seasonView: byId("season"),
+            dataSafetyView: byId("data-safety"),
             navParticipants: byId("nav-participants"),
             navWeekly: byId("nav-weekly"),
             navSpotlight: byId("nav-spotlight"),
             navRankings: byId("nav-rankings"),
             navAnalytics: byId("nav-analytics"),
             navSeason: byId("nav-season"),
+            navDataSafety: byId("nav-data-safety"),
             participantCount: byId("participant-count"),
             storageStatus: byId("storage-status"),
             search: byId("participant-search"),
@@ -1187,6 +1196,10 @@
             event.preventDefault();
             navigateToView("season");
         });
+        elements.navDataSafety.addEventListener("click", (event) => {
+            event.preventDefault();
+            navigateToView("data-safety");
+        });
         root.addEventListener("hashchange", () => activateView(activeViewFromLocation()));
 
         elements.addButton.addEventListener("click", () => openParticipantDialog());
@@ -1285,13 +1298,23 @@
         if (!constants || !ui || !data || !storage || !participantService || !tagService
             || !weeklyService || !weeklyMigration || !weeklyViewService || !spotlightService
             || !spotlightViewService || !profileHistoryService || !profileViewService || !analyticsViewService
-            || !seasonService || !seasonViewService || !imageStorage) {
+            || !seasonService || !seasonViewService || !imageStorage || !backupService || !backupViewService) {
             throw new Error("Stats V2 UI, participant, tag, weekly, Spotlight, profile, Analytics and Season modules did not load correctly.");
         }
 
         cacheElements();
+        backupController = backupViewService.createController({
+            getState: () => state,
+            notify: showToast
+        });
         bindEvents();
         const result = storage.initialize();
+        if (result.status === "invalid") {
+            state = null;
+            writable = false;
+            backupController.activateRecovery(result);
+            return;
+        }
         state = result.state;
         writable = result.status === "ready" || result.status === "initialized";
         if (writable) {
