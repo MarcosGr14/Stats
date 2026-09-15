@@ -57,6 +57,18 @@
         return candidate;
     }
 
+    function replaceExact(state, storage = defaultStorage()) {
+        const candidate = JSON.parse(JSON.stringify(state));
+        const validation = data.validateState(candidate);
+        if (!validation.valid) {
+            const error = new TypeError(`Refusing to restore invalid Stats V2 state: ${validation.errors.join(" ")}`);
+            error.validationErrors = validation.errors;
+            throw error;
+        }
+        storage.setItem(constants.STORAGE_KEY, JSON.stringify(candidate));
+        return candidate;
+    }
+
     function saveWithNamedBackup(state, backupKey, storage = defaultStorage(), timestamp = new Date().toISOString()) {
         if (typeof backupKey !== "string" || backupKey.trim() === "") {
             throw new TypeError("backupKey must be a non-empty string.");
@@ -109,6 +121,7 @@
         initialize,
         load,
         save,
+        replaceExact,
         saveWithBackup,
         saveWithNamedBackup,
         parseStoredState

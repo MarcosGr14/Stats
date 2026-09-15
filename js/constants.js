@@ -4,8 +4,10 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.8.5-product-cleanup",
+        APP_VERSION: "2.9.0-data-safety",
         SCHEMA_VERSION: 2,
+        BACKUP_FORMAT: "stats-v2-backup",
+        BACKUP_FORMAT_VERSION: 1,
         MAX_NAME_LENGTH: 80,
         MAX_TAG_NAME_LENGTH: 60,
         MAX_WEEKLY_REASON_TAGS: 3,
@@ -17,6 +19,7 @@
         TAG_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-tags-backup",
         WEEKLY_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-weekly-voting-backup",
         CATEGORY_VOTING_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-category-voting-backup",
+        LAST_EXPORT_KEY: "stats:v2:last-export",
         LEGACY_STORAGE_KEY: "rankingsApp_data",
         IMAGE_DB_NAME: "stats-v2",
         IMAGE_DB_VERSION: 1,

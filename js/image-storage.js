@@ -121,13 +121,61 @@
         return withStore("readwrite", (store) => requestResult(store.delete(id)), indexedDb);
     }
 
+    function listImages(indexedDb = root.indexedDB) {
+        return withStore("readonly", (store) => {
+            if (typeof store.getAll === "function") return requestResult(store.getAll());
+            return Promise.reject(new Error("This browser cannot enumerate stored images."));
+        }, indexedDb);
+    }
+
+    async function replaceAllImages(records, indexedDb = root.indexedDB) {
+        if (!Array.isArray(records)) {
+            throw new TypeError("Image records must be an array.");
+        }
+        records.forEach((record) => {
+            if (!record || typeof record.id !== "string" || !record.blob) {
+                throw new TypeError("Every image record requires an id and blob.");
+            }
+            const validation = validateImageFile(record.blob);
+            if (!validation.valid) {
+                const error = new TypeError(validation.message);
+                error.code = validation.code;
+                throw error;
+            }
+        });
+
+        const database = await openDatabase(indexedDb);
+        try {
+            await new Promise((resolve, reject) => {
+                const transaction = database.transaction(constants.IMAGE_STORE_NAME, "readwrite");
+                const store = transaction.objectStore(constants.IMAGE_STORE_NAME);
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error || new Error("Could not replace stored images."));
+                transaction.onabort = () => reject(transaction.error || new Error("Replacing stored images was aborted."));
+                store.clear();
+                records.forEach((record) => store.put({
+                    id: record.id,
+                    participantId: record.participantId || null,
+                    blob: record.blob,
+                    fileName: record.fileName || "image",
+                    mimeType: record.mimeType || record.blob.type,
+                    createdAt: record.createdAt || new Date().toISOString()
+                }));
+            });
+        } finally {
+            database.close();
+        }
+    }
+
     namespace.imageStorage = Object.freeze({
         validateImageFile,
         createImageRecord,
         openDatabase,
         putImage,
         getImage,
-        deleteImage
+        deleteImage,
+        listImages,
+        replaceAllImages
     });
     root.StatsV2 = namespace;
 })(globalThis);
