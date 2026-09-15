@@ -4,7 +4,7 @@ Aplicación local-first para organizar y, en fases posteriores, evaluar performe
 
 ## Estado actual
 
-Está implementada **Fase 8.5 - Product Cleanup** sobre Participant Manager, Tag System, Category-specific Voting, Weekly Spotlight, Profiles & History, Analytics y Season Standings:
+Está implementada **Fase 9 - Data Safety, Backup & Restore** sobre la base completa de Fase 8.5:
 
 - alta y edición de participantes;
 - grupos reutilizables, con creación rápida desde el formulario;
@@ -19,7 +19,7 @@ Está implementada **Fase 8.5 - Product Cleanup** sobre Participant Manager, Tag
 - Temporada concentra exclusivamente premios generales y ganadores por categoría;
 - Participantes conserva toda la gestión, búsqueda, filtros y archivados, sin duplicar esas funciones en Rankings;
 - perfiles y tags continúan como flujos contextuales, fuera de la navegación principal;
-- seis destinos principales estables: Participantes, Votación, Destacados, Rankings, Estadísticas y Temporada;
+- siete destinos principales estables: Participantes, Votación, Destacados, Rankings, Estadísticas, Temporada y Datos;
 - creación explícita de la semana ISO actual, lunes-domingo en `America/Panama`;
 - una sola semana `OPEN`, cierre confirmado y reapertura administrativa explícita de semanas `CLOSED`;
 - votación semanal independiente por categoría para los usuarios permanentes `p1` y `p2`;
@@ -58,9 +58,14 @@ Está implementada **Fase 8.5 - Product Cleanup** sobre Participant Manager, Tag
 - resumen de ganadores, podios, tablas completas y desglose accesible de cada puntuación;
 - archivado y restauración;
 - borrado permanente solo cuando no existe historial relacionado;
-- UI responsive y accesible con formularios y diálogos navegables por teclado.
+- UI responsive y accesible con formularios y diálogos navegables por teclado;
+- backup JSON portátil y versionado que incluye el estado autoritativo y todos los blobs de imágenes en Base64;
+- checksum SHA-256 nativo, vista previa y validación completa antes de cualquier restauración;
+- snapshot descargable pre-restore, reemplazo completo y rollback verificado ante fallos de escritura;
+- modo de recuperación para estado corrupto, con descarga del contenido original sin sobrescribirlo;
+- borrado total acotado a claves `stats:v2:*` e imágenes de Stats, protegido por la palabra `BORRAR`.
 
-No se han implementado `overallScore`, Best Group, Most Competitive Week, administración de múltiples temporadas ni ninguna función de Fase 9. La vista inicial sigue siendo Participantes.
+No se han implementado `overallScore`, Best Group, Most Competitive Week, administración de múltiples temporadas ni ninguna función de Fase 10. La vista inicial sigue siendo Participantes.
 
 ## Ejecución
 
@@ -83,7 +88,8 @@ Stats/
 │   ├── spotlight.css
 │   ├── profile.css
 │   ├── analytics.css
-│   └── season.css
+│   ├── season.css
+│   └── backup.css
 ├── js/
 │   ├── constants.js
 │   ├── ui.js
@@ -103,6 +109,8 @@ Stats/
 │   ├── participants.js
 │   ├── tags.js
 │   ├── image-storage.js
+│   ├── backup.js
+│   ├── backup-view.js
 │   └── app.js
 ├── docs/
 │   └── screenshots/
@@ -125,6 +133,8 @@ Stats/
 │   ├── analytics-ui-contract.test.cjs
 │   ├── season.test.cjs
 │   ├── season-ui-contract.test.cjs
+│   ├── backup.test.cjs
+│   ├── backup-ui-contract.test.cjs
 │   └── image-storage.test.cjs
 └── README.md
 ```
@@ -327,6 +337,14 @@ Abrir, filtrar u ordenar Analytics también es de solo lectura. Fase 7B no requi
 
 Abrir Rankings o Temporada también es de solo lectura. Fase 8.5 no introduce esquema, migración ni backup porque reorganiza vistas y optimiza derivaciones desde las colecciones existentes; no persiste resultados ni índices. IndexedDB se consulta solo para mostrar fotos ya referenciadas; ninguna prueba usa los datos reales ni modifica imágenes.
 
+## Data Safety, Backup & Restore
+
+La vista `#data-safety` exporta un único archivo `stats-backup-YYYY-MM-DD-HHmm.json`. El formato `stats-v2-backup` tiene una versión propia (`formatVersion: 1`), separada de `schemaVersion`, e incluye metadata de aplicación, el estado completo, imágenes con sus IDs, MIME, tamaño, relación y bytes Base64, además de un checksum SHA-256 calculado con Web Crypto.
+
+La importación solo acepta la versión y el esquema soportados. Antes de escribir valida JSON, formato, versión, checksum, todas las reglas de `validateState()`, referencias, IDs de imágenes, MIME, tamaño y contenido. Muestra un resumen y requiere confirmación. Al confirmar descarga automáticamente un backup pre-restore; después reemplaza las imágenes en una sola transacción de IndexedDB y escribe el estado exacto al final. Una lectura posterior vuelve a validar ambos almacenes. Como `localStorage` e IndexedDB no comparten una transacción, cualquier fallo activa un rollback con la instantánea en memoria y comunica si la recuperación se completó.
+
+Si el estado autoritativo está corrupto al iniciar, la aplicación no carga sus vistas normales ni guarda un estado vacío. El modo de recuperación permite descargar el texto original, importar un backup validado o reiniciar la carga. El borrado total solo elimina claves propias con prefijo `stats:v2:` y el object store de imágenes de Stats; exige escribir `BORRAR` y ofrece exportar antes.
+
 ## Archivado y borrado
 
 - Archivar conserva identidad, categorías, foto y referencias históricas.
@@ -350,7 +368,7 @@ Requiere Node.js 20 o superior y no instala paquetes:
 node --test tests/*.test.cjs
 ```
 
-Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, ambas migraciones y backups exactos, semanas ISO, cierre/reapertura, unicidad categorizada, conversión legacy, P1/P2, límite global de Standouts, reason tags, notas, métricas por categoría, desempates, UI contractual, Rankings acumulados, Weekly Spotlight, perfiles, historial categorizado, tendencias, Analytics, las fórmulas y umbrales de Season Score, los 12 standings, empates conjuntos, Grand Score, Grand Winners, helpers compartidos, limpieza de producto y errores de imágenes.
+Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, migraciones, semanas ISO, cierre/reapertura, votación, Rankings, Spotlight, perfiles, Analytics, Season y Data Safety: exportación completa, checksum, versiones, imágenes, referencias, restauración estructural, rollback, reset acotado y contratos de recuperación y accesibilidad.
 
 También se realizó un smoke test en un origen local aislado con roster ficticio: Female Vocal A=6, B=5, C=4, D=0 y E sin voto. El Top 3 mostró A/B/C, el ranking completo incluyó D y excluyó E. El cierre cambió Spotlight a OFFICIAL; la reapertura volvió a LIVE y una edición de C a 5 produjo `1, 2, 2, 4`. También se comprobaron Male, otra categoría, recap, motivos, badges y acceso al participante. El layout fue revisado en 320, 375, 768 y 1440 px sin overflow horizontal ni errores de consola.
 
@@ -364,6 +382,8 @@ Para Fase 8 se ejecutó un smoke en otro origen local desechable con nueve parti
 
 Para Fase 8.5 se repitió una regresión en un origen aislado con datos sintéticos. Se recorrieron los seis destinos, Rankings acumulados, premios de Temporada, perfiles y los controles accesibles principales. Se comparó el JSON del estado antes y después de la navegación de solo lectura. La cobertura contractual valida las reglas responsive específicas para 320, 375, 768 y 1440 px. El origen y el servidor de prueba son desechables; no comparten `localStorage` ni IndexedDB con la app real.
 
+Para Fase 9 se usa un dataset sintético rico con participante archivado, grupo, tag personalizado, asignación histórica removida, semana cerrada y reabierta, voto categorizado, reason tag, nota e imagen. El ciclo exportar-validar-restaurar exige igualdad estructural del estado y de los bytes de imagen. Los fallos simulados de `localStorage`, IndexedDB y cuota comprueban rollback y mensajes seguros. El smoke manual se ejecuta únicamente en un origen desechable, nunca contra los datos reales.
+
 ## Riesgos y decisiones pendientes
 
 - P1/P2 son identidades locales con el mismo peso, no autenticación; un dispositivo compartido depende de que el usuario confirme el selector visible.
@@ -373,10 +393,11 @@ Para Fase 8.5 se repitió una regresión en un origen aislado con datos sintéti
 - Rankings y Temporada recalculan desde la fuente autoritativa; los índices de cada derivación viven solo durante esa operación y un volumen muy superior al benchmark podría exigir nueva medición.
 - En Fase 8 todo el historial `CLOSED` representa una única temporada vigente; separar temporadas históricas requiere una futura decisión explícita de modelo y migración.
 - Una muestra mínima de 3 reduce resultados estadísticos engañosos, pero seguirá siendo una muestra pequeña y debe mostrarse junto a cada resultado.
-- La limpieza de blobs huérfanos se hace de forma oportunista; una herramienta integral de mantenimiento/backup pertenece a la Fase 9.
+- Un backup JSON con imágenes Base64 aumenta aproximadamente un tercio el tamaño binario original; la pantalla muestra el tamaño estimado antes de restaurar.
+- `localStorage` e IndexedDB no ofrecen una transacción común; Fase 9 reduce la ventana de riesgo escribiendo el estado al final y aplica rollback verificado si algo falla.
 - Navegadores sin IndexedDB mantienen el participant manager, pero usan el fallback visual y no pueden guardar fotos.
 - La fórmula de `overallScore` sigue sin definición y requiere aprobación explícita antes de implementarse.
 
 ## Límite de fase
 
-La Fase 8.5 termina con seis destinos principales, Rankings dedicado a standings acumulados, Temporada dedicada a premios, helpers de UI compartidos y derivaciones optimizadas. No se implementan `overallScore`, Best Group, Most Competitive Week, temporadas múltiples ni ninguna parte de Fase 9; el proyecto queda detenido al cierre de Fase 8.5.
+La Fase 9 termina con backup completo, restauración validada, rollback, recuperación y borrado acotado. No se implementan `overallScore`, Best Group, Most Competitive Week, temporadas múltiples ni ninguna parte de Fase 10; el proyecto queda detenido al cierre de Fase 9.
