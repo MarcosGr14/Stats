@@ -3,451 +3,1160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ MAMA LATINO 2026 ✨</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --bg-color: #fdf2f8; 
-            --card-bg: #ffffff;
-            --text-main: #5c4a52; 
-            --text-muted: #a78b97;
-            --primary: #ff8fb3; 
-            --primary-hover: #ff749f;
-            --primary-dark: #d81b60; /* Tono rosa más oscuro para el footer */
-            --danger: #ffffff; 
-            --border: #fce7f3; 
-            --bar-gradient: linear-gradient(90deg, #ff9a9e 0%, #fecfef 100%); 
-            --banner-gradient: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
-        }
-
-        body {
-            font-family: 'Nunito', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            background-image: radial-gradient(#ffe4e6 1px, transparent 1px);
-            background-size: 20px 20px; 
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        /* BANNER SUPERIOR */
-        .banner {
-            background: var(--banner-gradient);
-            padding: 30px 20px;
-            box-shadow: 0 4px 15px rgba(255, 117, 140, 0.3);
-            margin-bottom: 40px;
-        }
-
-        .banner-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .banner h1 {
-            margin: 0;
-            font-size: 32px;
-            font-weight: 900;
-            color: #ffffff;
-            letter-spacing: -0.5px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .btn-danger {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: var(--danger);
-            border: 2px solid var(--danger);
-            padding: 8px 18px;
-            border-radius: 20px;
-            font-weight: 800;
-            font-family: 'Nunito', sans-serif;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-danger:hover {
-            background-color: var(--danger);
-            color: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.4);
-        }
-
-        /* CONTENEDOR PRINCIPAL */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            flex-grow: 1; /* Esto empuja el footer hacia abajo */
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* Grid para los primeros 6 gráficos */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-        }
-
-        /* SECCIÓN DE VISUALES */
-        .visuals-section {
-            margin-top: 60px;
-            margin-bottom: 40px;
-        }
-
-        .visuals-title {
-            text-align: center;
-            font-size: 28px;
-            font-weight: 900;
-            color: var(--primary-dark);
-            margin-bottom: 30px;
-            position: relative;
-        }
-        
-        /* Línea decorativa al lado del título Visuales */
-        .visuals-title::before, .visuals-title::after {
-            content: "";
-            display: inline-block;
-            width: 100px;
-            height: 3px;
-            background: var(--primary);
-            vertical-align: middle;
-            margin: 0 15px;
-            border-radius: 5px;
-        }
-
-        /* Grid exclusivo para Visuales (2 columnas 100% ancho) */
-        .visuals-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* Exactamente mitad y mitad */
-            gap: 25px;
-        }
-
-        /* TARJETAS DE GRÁFICO (Compartido) */
-        .chart-card {
-            background: var(--card-bg);
-            border: 2px solid var(--border);
-            border-radius: 24px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(255, 182, 193, 0.15);
-            transition: transform 0.2s;
-        }
-        
-        .chart-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px dashed var(--border);
-        }
-
-        .chart-header h2 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--text-main);
-        }
-
-        .chart-actions button {
-            background: var(--bg-color);
-            border: none;
-            color: var(--primary-hover);
-            padding: 6px 14px;
-            border-radius: 15px;
-            font-size: 13px;
-            font-family: 'Nunito', sans-serif;
-            cursor: pointer;
-            margin-left: 5px;
-            font-weight: 700;
-            transition: all 0.2s;
-        }
-        
-        .chart-actions button:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        /* BARRAS Y COMPETIDORES */
-        .competitor {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            font-size: 15px;
-        }
-
-        .name {
-            width: 95px;
-            font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: var(--text-main);
-        }
-
-        .bar-container {
-            flex-grow: 1;
-            background: var(--border);
-            height: 22px;
-            border-radius: 12px;
-            margin: 0 12px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .bar {
-            height: 100%;
-            background: var(--bar-gradient);
-            width: 0%;
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding-right: 10px;
-            color: #5c4a52;
-            font-weight: 800;
-            font-size: 12px;
-            box-sizing: border-box;
-            min-width: 35px;
-            border-radius: 12px;
-        }
-
-        .controls button {
-            background: var(--bg-color);
-            border: none;
-            color: var(--primary);
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            cursor: pointer;
-            font-weight: 800;
-            font-size: 16px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-left: 4px;
-            transition: all 0.2s;
-        }
-
-        .controls button:hover {
-            background: var(--primary);
-            color: white;
-            transform: scale(1.1);
-        }
-
-        .empty-state {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 15px;
-            font-weight: 600;
-            padding: 30px 0;
-            background: var(--bg-color);
-            border-radius: 16px;
-            border: 2px dashed var(--border);
-        }
-
-        /* FOOTER */
-        .site-footer {
-            background-color: var(--primary-dark);
-            color: white;
-            text-align: center;
-            padding: 25px 20px;
-            font-size: 18px;
-            font-weight: 900;
-            letter-spacing: 2px;
-            margin-top: 50px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* Adaptabilidad para móviles */
-        @media (max-width: 768px) {
-            .visuals-grid {
-                grid-template-columns: 1fr; /* En celular se pondrán una sobre otra para que quepan */
-            }
-            .visuals-title::before, .visuals-title::after {
-                width: 30px;
-            }
-        }
-    </style>
+    <meta name="description" content="Stats V2: administra participantes y registra votaciones semanales P1/P2 con datos locales.">
+    <meta name="theme-color" content="#0B0B0F">
+    <title>Participantes · Stats V2</title>
+    <link rel="stylesheet" href="css/global.css?v=2.9.0">
+    <link rel="stylesheet" href="css/components.css?v=2.9.0">
+    <link rel="stylesheet" href="css/app.css?v=2.9.0">
+    <link rel="stylesheet" href="css/weekly.css?v=2.9.0">
+    <link rel="stylesheet" href="css/spotlight.css?v=2.9.0">
+    <link rel="stylesheet" href="css/profile.css?v=2.9.0">
+    <link rel="stylesheet" href="css/analytics.css?v=2.9.0">
+    <link rel="stylesheet" href="css/season.css?v=2.9.0">
+    <link rel="stylesheet" href="css/backup.css?v=2.9.0">
+    <script src="js/constants.js?v=2.9.0" defer></script>
+    <script src="js/ui.js?v=2.9.0" defer></script>
+    <script src="js/data.js?v=2.9.0" defer></script>
+    <script src="js/storage.js?v=2.9.0" defer></script>
+    <script src="js/weekly-migration.js?v=2.9.0" defer></script>
+    <script src="js/weekly.js?v=2.9.0" defer></script>
+    <script src="js/spotlight.js?v=2.9.0" defer></script>
+    <script src="js/profile-history.js?v=2.9.0" defer></script>
+    <script src="js/analytics.js?v=2.9.0" defer></script>
+    <script src="js/season.js?v=2.9.0" defer></script>
+    <script src="js/participants.js?v=2.9.0" defer></script>
+    <script src="js/tags.js?v=2.9.0" defer></script>
+    <script src="js/image-storage.js?v=2.9.0" defer></script>
+    <script src="js/backup.js?v=2.9.0" defer></script>
+    <script src="js/backup-view.js?v=2.9.0" defer></script>
+    <script src="js/weekly-view.js?v=2.9.0" defer></script>
+    <script src="js/spotlight-view.js?v=2.9.0" defer></script>
+    <script src="js/profile-view.js?v=2.9.0" defer></script>
+    <script src="js/analytics-view.js?v=2.9.0" defer></script>
+    <script src="js/season-view.js?v=2.9.0" defer></script>
+    <script src="js/app.js?v=2.9.0" defer></script>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Saltar al contenido</a>
 
-    <!-- BANNER -->
-    <header class="banner">
-        <div class="banner-content">
-            <h1>✨ K-Pop Rankings ✨</h1>
-            <button class="btn-danger" onclick="resetAllData()">Borrar todo 🗑️</button>
-        </div>
-    </header>
+    <div class="site-shell">
+        <header class="topbar">
+            <a class="brand" href="#participants" aria-label="Stats V2, participantes">
+                <span class="brand-mark" aria-hidden="true">S</span>
+                <span class="brand-copy">
+                    <strong>STATS</strong>
+                    <small>Seguimiento personal</small>
+                </span>
+            </a>
 
-    <!-- CUERPO PRINCIPAL -->
-    <main class="container">
-        
-        <!-- Categorías Principales (Las 6 de arriba) -->
-        <div class="charts-grid" id="main-grid">
-            <!-- Se inyectan con JS -->
-        </div>
+            <nav class="primary-nav" aria-label="Navegación principal">
+                <a id="nav-participants" href="#participants" aria-current="page">Participantes</a>
+                <a id="nav-weekly" href="#weekly">Votación</a>
+                <a id="nav-spotlight" href="#spotlight">Destacados</a>
+                <a id="nav-rankings" href="#rankings">Rankings</a>
+                <a id="nav-analytics" href="#analytics">Estadísticas</a>
+                <a id="nav-season" href="#season">Temporada</a>
+                <a id="nav-data-safety" href="#data-safety">Datos</a>
+            </nav>
 
-        <!-- Sección Exclusiva para Visuales -->
-        <div class="visuals-section">
-            <div class="visuals-title">🌸 VISUALES 🌸</div>
-            <div class="visuals-grid" id="visuals-grid">
-                <!-- Se inyectan con JS -->
+            <div class="build-status" title="Estado de la app">
+                <span class="status-dot" aria-hidden="true"></span>
+                Datos locales
             </div>
-        </div>
+        </header>
 
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="site-footer">
-        MAMA LATINO 2026 EDITION
-    </footer>
-
-    <script>
-        // Separamos las categorías para inyectarlas en diferentes lugares
-        const mainCategoriesMap = {
-            solistaM: "🎤 Solista Masculino",
-            solistaF: "✨ Solista Femenino",
-            bailarinM: "🕺 Bailarín Masculino",
-            bailarinaF: "💃 Bailarina Femenina",
-            raperoM: "🔥 Rapero Masculino",
-            raperaF: "👑 Rapera Femenina"
-        };
-
-        const visualCategoriesMap = {
-            visualM: "🌟 Visual Masculino",
-            visualF: "🌸 Visual Femenino"
-        };
-
-        const allCategoriesMap = { ...mainCategoriesMap, ...visualCategoriesMap };
-
-        const defaultData = {
-            solistaM: [], solistaF: [], bailarinM: [], 
-            bailarinaF: [], raperoM: [], raperaF: [],
-            visualM: [], visualF: []
-        };
-
-        let appData = JSON.parse(localStorage.getItem('rankingsApp_data'));
-
-        if (!appData) {
-            appData = JSON.parse(JSON.stringify(defaultData));
-        } else {
-            for (const key in defaultData) {
-                if (!appData[key]) {
-                    appData[key] = [];
-                }
-            }
-        }
-
-        function saveData() {
-            localStorage.setItem('rankingsApp_data', JSON.stringify(appData));
-        }
-
-        // Función auxiliar para construir el HTML de una tarjeta
-        function buildCardHtml(key, title) {
-            const categoryData = appData[key];
-            const maxPoints = Math.max(...categoryData.map(c => c.points), 100);
-            let competitorsHtml = '';
-            
-            if (categoryData.length === 0) {
-                competitorsHtml = `<div class="empty-state">Agrega a tu fav aquí 💖</div>`;
-            } else {
-                categoryData.forEach(comp => {
-                    const percentage = Math.min((comp.points / maxPoints) * 100, 100);
-                    competitorsHtml += `
-                        <div class="competitor">
-                            <div class="name" title="${comp.name}">${comp.name}</div>
-                            <div class="bar-container">
-                                <div class="bar" style="width: ${percentage}%">${comp.points}</div>
-                            </div>
-                            <div class="controls">
-                                <button onclick="changePoints('${key}', ${comp.id}, -1)">-</button>
-                                <button onclick="changePoints('${key}', ${comp.id}, 1)">+</button>
-                            </div>
+        <main id="main-content">
+            <section class="participant-manager" id="participants" aria-labelledby="participants-title">
+                <header class="manager-header">
+                    <div>
+                        <p class="eyebrow">Temporada 2026</p>
+                        <div class="title-row">
+                            <h1 id="participants-title">Participantes</h1>
+                            <span id="participant-count" class="title-count" aria-label="0 participantes">0</span>
                         </div>
-                    `;
-                });
-            }
-
-            return `
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h2>${title}</h2>
-                        <div class="chart-actions">
-                            <button onclick="sortCategory('${key}')">🏆 Ordenar</button>
-                            <button onclick="addCompetitor('${key}')">➕ Añadir</button>
-                        </div>
+                        <p class="manager-intro">
+                            Organiza tus participantes por disciplinas.
+                        </p>
                     </div>
-                    <div class="chart-content">
-                        ${competitorsHtml}
+                    <button class="button button--primary" id="add-participant" type="button">
+                        <span aria-hidden="true">＋</span> Agregar participante
+                    </button>
+                </header>
+
+                <div class="roster-stats" aria-label="Resumen del roster">
+                    <p><strong id="active-count">0</strong><span>Activos</span></p>
+                    <p><strong id="archived-count">0</strong><span>Archivados</span></p>
+                    <p><strong id="group-count">0</strong><span>Grupos</span></p>
+                    <p id="storage-status" class="storage-status" role="status">Comprobando almacenamiento…</p>
+                </div>
+
+                <section class="roster-toolbar" aria-label="Buscar, filtrar y ordenar participantes">
+                    <label class="search-control" for="participant-search">
+                        <span aria-hidden="true">⌕</span>
+                        <span class="sr-only">Buscar participantes</span>
+                        <input id="participant-search" type="search" placeholder="Buscar participantes..." autocomplete="off">
+                    </label>
+
+                    <label class="select-control" for="gender-filter">
+                        <span>Género</span>
+                        <select id="gender-filter">
+                            <option value="all">Todos</option>
+                            <option value="male">Hombres</option>
+                            <option value="female">Mujeres</option>
+                        </select>
+                    </label>
+
+                    <label class="select-control" for="status-filter">
+                        <span>Estado</span>
+                        <select id="status-filter">
+                            <option value="active">Activos</option>
+                            <option value="archived">Archivados</option>
+                            <option value="all">Todos</option>
+                        </select>
+                    </label>
+
+                    <label class="select-control" for="category-filter">
+                        <span>Categoría</span>
+                        <select id="category-filter">
+                            <option value="all">Todas</option>
+                            <option value="vocal">Vocal</option>
+                            <option value="rap">Rap</option>
+                            <option value="dance">Baile</option>
+                            <option value="stage">Escenario</option>
+                            <option value="visual">Visual</option>
+                            <option value="all-rounder">Integral</option>
+                        </select>
+                    </label>
+
+                    <label class="select-control" for="tag-filter">
+                        <span>Tag</span>
+                        <select id="tag-filter">
+                        <option value="all">Todos</option>
+                        </select>
+                    </label>
+
+                    <label class="select-control" for="sort-participants">
+                        <span>Orden</span>
+                        <select id="sort-participants">
+                            <option value="a-z">A–Z</option>
+                            <option value="recent">Más recientes</option>
+                        </select>
+                    </label>
+
+                    <button class="button button--quiet toolbar-reset" id="reset-filters" type="button">Limpiar</button>
+                </section>
+
+                <div class="results-heading">
+                    <p id="result-summary">0 participantes activos</p>
+                    <p>Guardado en este dispositivo</p>
+                </div>
+
+                <div class="participant-grid" id="participant-grid" aria-live="polite"></div>
+
+                <div class="manager-empty" id="participant-empty">
+                    <div class="empty-orbit" aria-hidden="true"><span>＋</span></div>
+                    <p class="eyebrow" id="empty-kicker">Tu lista empieza aquí</p>
+                    <h2 id="empty-title">Aún no hay participantes</h2>
+                    <p id="empty-copy">Agrega tu primer participante.</p>
+                    <button class="button button--secondary" id="empty-add-participant" type="button">Agregar participante</button>
+                </div>
+            </section>
+
+            <section class="profile-view" id="profile" aria-labelledby="profile-name" hidden>
+                <div class="profile-top-actions">
+                    <button class="button button--quiet" id="profile-back" type="button"><span aria-hidden="true">←</span> Volver</button>
+                    <div>
+                        <button class="button button--quiet" id="profile-manage-tags" type="button">Administrar tags</button>
+                        <button class="button button--secondary" id="profile-edit" type="button">Editar</button>
                     </div>
                 </div>
-            `;
-        }
 
-        function renderAll() {
-            // Renderizar Main Grid (Las primeras 6)
-            const mainGrid = document.getElementById('main-grid');
-            mainGrid.innerHTML = '';
-            for (const [key, title] of Object.entries(mainCategoriesMap)) {
-                mainGrid.innerHTML += buildCardHtml(key, title);
-            }
+                <header class="profile-hero">
+                    <div class="profile-photo" id="profile-photo">
+                        <img id="profile-photo-image" alt="" hidden>
+                        <span id="profile-photo-fallback" aria-hidden="true">ST</span>
+                    </div>
+                    <div class="profile-identity">
+                        <p class="eyebrow">Perfil e historial</p>
+                        <div class="profile-name-row">
+                            <h1 id="profile-name">Participante</h1>
+                            <span class="profile-status" id="profile-status">Activo</span>
+                        </div>
+                        <p class="profile-group" id="profile-group">Solista / Sin grupo</p>
+                        <div class="profile-identity-meta">
+                            <span id="profile-gender">Mujer</span>
+                            <div class="profile-category-chips" id="profile-category-chips"></div>
+                        </div>
+                    </div>
+                    <div class="profile-header-metrics" aria-label="Resumen del perfil">
+                        <p><strong id="profile-wins">0</strong><span>Victorias</span></p>
+                        <p><strong id="profile-top-three">0</strong><span>Top 3</span></p>
+                        <p><strong id="profile-weeks">0</strong><span>Semanas</span></p>
+                        <p><strong id="profile-categories">0</strong><span>Categorías</span></p>
+                    </div>
+                </header>
 
-            // Renderizar Visuals Grid (Las últimas 2)
-            const visualsGrid = document.getElementById('visuals-grid');
-            visualsGrid.innerHTML = '';
-            for (const [key, title] of Object.entries(visualCategoriesMap)) {
-                visualsGrid.innerHTML += buildCardHtml(key, title);
-            }
-        }
+                <section class="profile-section profile-summary" aria-labelledby="profile-summary-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">Historial general</p><h2 id="profile-summary-title">Resumen</h2></div>
+                    </div>
+                    <div class="profile-summary-grid">
+                        <article><span>Mejor semana</span><strong id="profile-best-week">Sin evaluar</strong></article>
+                        <article><span>Más elogiado</span><strong id="profile-most-praised">Aún sin elogios</strong></article>
+                        <article><span>Más victorias</span><strong id="profile-most-wins">Aún sin victorias</strong></article>
+                    </div>
+                </section>
 
-        function changePoints(categoryKey, id, amount) {
-            const competitor = appData[categoryKey].find(c => c.id === id);
-            if (competitor) {
-                competitor.points += amount;
-                if (competitor.points < 0) competitor.points = 0;
-                saveData();
-                renderAll(); 
-            }
-        }
+                <section class="profile-section profile-tags" aria-labelledby="profile-tags-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">Rasgos permanentes</p><h2 id="profile-tags-title">Tags del perfil</h2></div>
+                    </div>
+                    <div class="profile-tag-groups" id="profile-tag-groups"></div>
+                </section>
 
-        function sortCategory(categoryKey) {
-            appData[categoryKey].sort((a, b) => b.points - a.points);
-            saveData();
-            renderAll();
-        }
+                <section class="profile-section" aria-labelledby="profile-categories-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">Por disciplina</p><h2 id="profile-categories-title">Resultados por categoría</h2></div>
+                    </div>
+                    <div class="profile-category-grid" id="profile-category-grid"></div>
+                </section>
 
-        function addCompetitor(categoryKey) {
-            const title = allCategoriesMap[categoryKey];
-            const name = prompt(`🌟 Introduce el nombre para ${title}:`);
-            if (name && name.trim() !== '') {
-                const newId = Date.now(); 
-                appData[categoryKey].push({ id: newId, name: name.trim(), points: 0 });
-                saveData();
-                renderAll();
-            }
-        }
+                <section class="profile-section profile-trend-section" aria-labelledby="profile-trend-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">Semana a semana</p><h2 id="profile-trend-title">Evolución</h2></div>
+                        <p>Sin evaluar aparece como un espacio.</p>
+                    </div>
+                    <div class="profile-category-tabs" id="profile-trend-tabs" role="tablist" aria-label="Categoría de la evolución"></div>
+                    <div class="profile-trend-chart" id="profile-trend-chart" role="img" aria-label="Evolución"></div>
+                    <p class="sr-only" id="profile-trend-summary"></p>
+                </section>
 
-        function resetAllData() {
-            if (confirm("¿Seguro que quieres borrar a todos los artistas? 🥺 Esta acción no se puede deshacer.")) {
-                appData = JSON.parse(JSON.stringify(defaultData));
-                saveData();
-                renderAll();
-            }
-        }
+                <section class="profile-section profile-praise" aria-labelledby="profile-praise-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">Motivos históricos</p><h2 id="profile-praise-title">Elogios semanales</h2></div>
+                    </div>
+                    <div class="profile-praise-grid">
+                        <div><h3>Más elogiado</h3><div id="profile-top-reasons"></div></div>
+                        <div><h3>Distinciones</h3><div id="profile-badge-counts"></div></div>
+                    </div>
+                </section>
 
-        renderAll();
-    </script>
+                <section class="profile-section" aria-labelledby="profile-wins-title">
+                    <div class="section-heading section-heading--compact">
+                        <div><p class="micro-label">Primeros lugares</p><h2 id="profile-wins-title">Victorias</h2></div>
+                        <p>Los empates también cuentan.</p>
+                    </div>
+                    <div class="profile-win-list" id="profile-win-list"></div>
+                </section>
+
+                <section class="profile-section" aria-labelledby="profile-history-title">
+                    <div class="profile-history-heading">
+                        <div><p class="micro-label">Registro completo</p><h2 id="profile-history-title">Historial semanal</h2></div>
+                        <div class="profile-history-controls">
+                            <label class="select-control" for="profile-history-category"><span>Categoría</span><select id="profile-history-category"><option value="all">Todas</option></select></label>
+                            <label class="select-control" for="profile-history-order"><span>Orden</span><select id="profile-history-order"><option value="newest">Más recientes</option><option value="oldest">Más antiguas</option></select></label>
+                        </div>
+                    </div>
+                    <div class="profile-history-list" id="profile-history-list"></div>
+                    <div class="profile-history-empty" id="profile-history-empty" role="status" hidden>
+                        <h3>Aún no hay votos en esta categoría</h3>
+                    </div>
+                </section>
+            </section>
+
+            <section class="weekly-view" id="weekly" aria-labelledby="weekly-title" hidden>
+                <header class="weekly-header">
+                    <div>
+                        <p class="eyebrow">Votos de P1 y P2</p>
+                        <div class="weekly-title-row">
+                            <h1 id="weekly-title">Votación semanal</h1>
+                            <span class="week-status" id="weekly-status">Sin semana</span>
+                        </div>
+                        <p class="manager-intro">Cada categoría se evalúa por separado.</p>
+                    </div>
+                    <div class="week-actions">
+                        <label class="select-control" for="weekly-week-select">
+                            <span>Semana</span>
+                            <select id="weekly-week-select" aria-describedby="weekly-week-range">
+                                <option value="">Aún no hay semanas</option>
+                            </select>
+                        </label>
+                        <button class="button button--primary" id="open-current-week" type="button">Abrir semana actual</button>
+                        <button class="button button--danger" id="close-current-week" type="button" hidden>Cerrar semana</button>
+                        <button class="button button--secondary" id="reopen-current-week" type="button" hidden>Reabrir semana</button>
+                    </div>
+                </header>
+
+                <div class="weekly-empty" id="weekly-empty" role="status">
+                    <span aria-hidden="true">W</span>
+                    <h2>Aún no hay una semana abierta</h2>
+                    <p>Abre la semana actual para comenzar.</p>
+                </div>
+
+                <div id="weekly-workspace" hidden>
+                    <section class="week-overview" aria-labelledby="weekly-period-title">
+                        <div>
+                            <p class="micro-label">Semana seleccionada</p>
+                            <h2 id="weekly-period-title">Semana</h2>
+                            <p id="weekly-week-range"></p>
+                        </div>
+                        <div class="weekly-user-panel">
+                            <p class="micro-label">Votando como</p>
+                            <div class="user-switch" id="weekly-user-switch" role="group" aria-label="Votante actual"></div>
+                            <p id="weekly-voter-clarity" aria-live="polite"></p>
+                        </div>
+                        <div class="weekly-progress" aria-label="Progreso de la votación">
+                            <p><strong id="weekly-evaluated-count">0</strong><span>Evaluados</span></p>
+                            <p class="standout-progress" id="weekly-standout-progress"><strong id="weekly-standout-count">0/5</strong><span>Destacados</span></p>
+                            <p><strong id="weekly-standout-remaining">5</strong><span>Restantes</span></p>
+                        </div>
+                    </section>
+
+                    <div class="weekly-legacy-warning" id="weekly-legacy-warning" role="status" hidden>
+                        <strong>Hay votos antiguos por revisar.</strong>
+                        <span id="weekly-legacy-warning-copy"></span>
+                    </div>
+
+                    <section class="weekly-toolbar" aria-label="Buscar y filtrar participantes">
+                        <label class="search-control weekly-search" for="weekly-search">
+                            <span aria-hidden="true">⌕</span>
+                            <span class="sr-only">Buscar participante o grupo</span>
+                            <input id="weekly-search" type="search" placeholder="Buscar participante o grupo..." autocomplete="off">
+                        </label>
+                        <label class="select-control" for="weekly-category-filter">
+                            <span>Categoría</span>
+                            <select id="weekly-category-filter">
+                                <option value="all">Todas</option>
+                                <option value="vocal">Vocal</option>
+                                <option value="rap">Rap</option>
+                                <option value="dance">Baile</option>
+                                <option value="stage">Escenario</option>
+                                <option value="visual">Visual</option>
+                                <option value="all-rounder">Integral</option>
+                            </select>
+                        </label>
+                        <label class="select-control" for="weekly-gender-filter">
+                            <span>Género</span>
+                            <select id="weekly-gender-filter">
+                                <option value="all">Todos</option>
+                                <option value="female">Mujeres</option>
+                                <option value="male">Hombres</option>
+                            </select>
+                        </label>
+                        <label class="select-control" for="weekly-group-filter">
+                            <span>Grupo</span>
+                            <select id="weekly-group-filter"><option value="all">Todos</option></select>
+                        </label>
+                        <label class="select-control" for="weekly-evaluation-filter">
+                            <span>Evaluación</span>
+                            <select id="weekly-evaluation-filter">
+                                <option value="all">Todas</option>
+                                <option value="evaluated">Evaluados</option>
+                                <option value="not-evaluated">Sin evaluar</option>
+                                <option value="standout">Destacado</option>
+                                <option value="impressed">Impresionó</option>
+                                <option value="good">Bien</option>
+                                <option value="normal">Normal</option>
+                            </select>
+                        </label>
+                        <button class="button button--quiet" id="reset-weekly-filters" type="button">Limpiar</button>
+                    </section>
+
+                    <div class="weekly-results-heading">
+                        <p id="weekly-results-summary">0 participantes</p>
+                        <p id="weekly-readonly-copy">ABIERTA · Puedes editar los votos</p>
+                    </div>
+                    <div class="weekly-grid" id="weekly-grid" aria-live="polite"></div>
+                    <div class="weekly-no-results" id="weekly-no-results" role="status" hidden>
+                        <h2>No hay participantes con estos filtros</h2>
+                    </div>
+                </div>
+            </section>
+
+            <section class="spotlight-view" id="spotlight" aria-labelledby="spotlight-title" hidden>
+                <header class="spotlight-header">
+                    <div>
+                        <p class="eyebrow">Resultados semanales</p>
+                        <div class="spotlight-title-row">
+                            <h1 id="spotlight-title">Destacados de la semana</h1>
+                            <span class="spotlight-mode spotlight-mode--empty" id="spotlight-mode">Sin semana</span>
+                        </div>
+                        <p class="manager-intro" id="spotlight-intro">Resultados separados para mujeres y hombres.</p>
+                    </div>
+                    <label class="select-control spotlight-week-control" for="spotlight-week-select">
+                        <span>Semana</span>
+                        <select id="spotlight-week-select"><option value="">Aún no hay semanas</option></select>
+                    </label>
+                </header>
+
+                <div class="spotlight-empty" id="spotlight-empty" role="status">
+                    <span aria-hidden="true">◇</span>
+                    <h2>Aún no hay resultados</h2>
+                    <p>Abre una semana y registra votos.</p>
+                </div>
+
+                <div id="spotlight-workspace" hidden>
+                    <section class="spotlight-selector" aria-label="Filtros de resultados">
+                        <div class="spotlight-category-tabs" id="spotlight-category-tabs" role="tablist" aria-label="Categoría"></div>
+                        <div class="spotlight-gender-switch" id="spotlight-gender-switch" role="group" aria-label="Género">
+                            <button type="button" data-spotlight-gender="female" aria-pressed="true">Mujeres</button>
+                            <button type="button" data-spotlight-gender="male" aria-pressed="false">Hombres</button>
+                        </div>
+                    </section>
+
+                    <section class="spotlight-hero" aria-labelledby="spotlight-result-title">
+                        <div>
+                            <p class="micro-label" id="spotlight-result-kicker">Resultados en vivo</p>
+                            <h2 id="spotlight-result-title">Vocal femenino</h2>
+                            <p id="spotlight-week-range"></p>
+                        </div>
+                        <div class="spotlight-praised" id="spotlight-praised" hidden>
+                            <span>Habilidad más destacada</span>
+                            <strong id="spotlight-praised-name"></strong>
+                            <small id="spotlight-praised-count"></small>
+                        </div>
+                    </section>
+
+                    <section class="spotlight-top-section" aria-labelledby="spotlight-top-title">
+                        <div class="section-heading section-heading--compact">
+                            <div>
+                            <p class="micro-label">Podio</p>
+                                <h2 id="spotlight-top-title">Top 3</h2>
+                            </div>
+                            <p id="spotlight-winner-copy">Resultados provisionales</p>
+                        </div>
+                        <div class="spotlight-podium" id="spotlight-podium" aria-live="polite"></div>
+                    </section>
+
+                    <section class="spotlight-ranking-section" aria-labelledby="spotlight-ranking-title">
+                        <div class="section-heading section-heading--compact">
+                            <div>
+                                <p class="micro-label">Todos los evaluados</p>
+                                <h2 id="spotlight-ranking-title">Ranking completo</h2>
+                            </div>
+                            <p id="spotlight-ranking-summary">0 evaluados</p>
+                        </div>
+                        <div class="spotlight-ranking-list" id="spotlight-ranking-list"></div>
+                        <div class="spotlight-result-empty" id="spotlight-result-empty" role="status" hidden>
+                            <h3>Aún no hay votos</h3>
+                        </div>
+                    </section>
+
+                    <section class="spotlight-recap" aria-labelledby="spotlight-recap-title">
+                        <div class="section-heading section-heading--compact">
+                            <div>
+                                <p class="micro-label">Todas las categorías</p>
+                                <h2 id="spotlight-recap-title">Resumen semanal</h2>
+                            </div>
+                            <p id="spotlight-recap-copy">Resultados en vivo</p>
+                        </div>
+                        <div class="spotlight-recap-grid" id="spotlight-recap-grid"></div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="analytics-view" id="analytics" aria-labelledby="analytics-title" hidden>
+                <header class="analytics-hero">
+                    <div>
+                        <p class="eyebrow">Patrones de rendimiento</p>
+                        <h1 id="analytics-title">Estadísticas</h1>
+                        <p class="analytics-intro">Explora resultados, tendencias y hábitos de votación sin mezclar categorías ni géneros.</p>
+                    </div>
+                    <div class="analytics-scope-card" aria-live="polite">
+                        <p>Vista actual</p>
+                        <strong id="analytics-scope">Vocal · Mujeres · 0 semanas</strong>
+                        <span class="analytics-live-status" id="analytics-live-status" hidden>Incluye resultados en vivo</span>
+                    </div>
+                </header>
+
+                <section class="analytics-filters" aria-label="Filtros de estadísticas">
+                    <label class="select-control" for="analytics-range">
+                        <span>Rango</span>
+                        <select id="analytics-range">
+                            <option value="all">Todo el historial</option>
+                            <option value="4">Últimas 4 semanas</option>
+                            <option value="8">Últimas 8 semanas</option>
+                            <option value="12">Últimas 12 semanas</option>
+                        </select>
+                    </label>
+                    <label class="select-control" for="analytics-category">
+                        <span>Categoría</span>
+                        <select id="analytics-category">
+                            <option value="all">Todas</option>
+                            <option value="vocal" selected>Vocal</option>
+                            <option value="rap">Rap</option>
+                            <option value="dance">Baile</option>
+                            <option value="stage">Escenario</option>
+                            <option value="visual">Visual</option>
+                            <option value="all-rounder">Integral</option>
+                        </select>
+                    </label>
+                    <label class="select-control" for="analytics-gender">
+                        <span>Género</span>
+                        <select id="analytics-gender">
+                            <option value="all">Todos</option>
+                            <option value="male">Hombres</option>
+                            <option value="female" selected>Mujeres</option>
+                        </select>
+                    </label>
+                    <label class="select-control" for="analytics-group">
+                        <span>Grupo</span>
+                        <select id="analytics-group"><option value="all">Todos los grupos</option></select>
+                    </label>
+                    <label class="analytics-live-toggle" for="analytics-include-open">
+                        <input id="analytics-include-open" type="checkbox">
+                        <span>Incluir resultados en vivo</span>
+                    </label>
+                </section>
+
+                <div class="analytics-tabs" role="tablist" aria-label="Secciones de estadísticas">
+                    <button id="analytics-tab-summary" type="button" role="tab" aria-selected="true" aria-controls="analytics-panel-summary" tabindex="0" data-analytics-tab="summary">Resumen</button>
+                    <button id="analytics-tab-performance" type="button" role="tab" aria-selected="false" aria-controls="analytics-panel-performance" tabindex="-1" data-analytics-tab="performance">Rendimiento</button>
+                    <button id="analytics-tab-users" type="button" role="tab" aria-selected="false" aria-controls="analytics-panel-users" tabindex="-1" data-analytics-tab="users">P1 vs P2</button>
+                    <button id="analytics-tab-skills" type="button" role="tab" aria-selected="false" aria-controls="analytics-panel-skills" tabindex="-1" data-analytics-tab="skills">Habilidades</button>
+                    <button id="analytics-tab-activity" type="button" role="tab" aria-selected="false" aria-controls="analytics-panel-activity" tabindex="-1" data-analytics-tab="activity">Actividad</button>
+                </div>
+
+                <section class="analytics-panel" id="analytics-panel-summary" role="tabpanel" aria-labelledby="analytics-tab-summary" data-analytics-panel="summary">
+                    <header class="analytics-panel-header">
+                        <div><p class="micro-label">Lectura rápida</p><h2>Resumen</h2></div>
+                        <p>Seis señales principales del periodo seleccionado.</p>
+                    </header>
+                    <div class="analytics-summary-grid" id="analytics-summary-grid" aria-live="polite"></div>
+                </section>
+
+                <section class="analytics-panel" id="analytics-panel-performance" role="tabpanel" aria-labelledby="analytics-tab-performance" data-analytics-panel="performance" hidden>
+                    <header class="analytics-panel-header">
+                        <div><p class="micro-label">Comparación directa</p><h2>Rendimiento</h2></div>
+                        <p>Cada columna describe una métrica independiente; no existe un puntaje general.</p>
+                    </header>
+                    <div class="analytics-table-toolbar">
+                        <label class="select-control" for="analytics-performance-sort">
+                            <span>Ordenar por</span>
+                            <select id="analytics-performance-sort">
+                                <option value="wins">Victorias</option>
+                                <option value="topThree">Top 3</option>
+                                <option value="average">Promedio</option>
+                                <option value="standouts">Destacados</option>
+                                <option value="consistency">Consistencia</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="analytics-table-wrap">
+                        <table class="analytics-table">
+                            <thead><tr><th>Participante</th><th>Victorias</th><th>Top 3</th><th>Destacados</th><th>Promedio</th><th>Variación</th><th>Semanas</th></tr></thead>
+                            <tbody id="analytics-performance-body"></tbody>
+                        </table>
+                        <p class="analytics-section-empty" id="analytics-performance-empty" hidden>No hay datos con estos filtros.</p>
+                    </div>
+                </section>
+
+                <section class="analytics-panel" id="analytics-panel-users" role="tabpanel" aria-labelledby="analytics-tab-users" data-analytics-panel="users" hidden>
+                    <header class="analytics-panel-header">
+                        <div><p class="micro-label">Dos perspectivas</p><h2>P1 vs P2</h2></div>
+                        <p>Acuerdos, diferencias y distribución de valoraciones.</p>
+                    </header>
+                    <div class="analytics-comparison-grid" id="analytics-p1p2-cards"></div>
+                    <div class="analytics-event-grid" id="analytics-event-lists"></div>
+                    <div class="analytics-rating-grid" id="analytics-rating-distribution" aria-label="Distribución de valoraciones P1 y P2"></div>
+                </section>
+
+                <section class="analytics-panel" id="analytics-panel-skills" role="tabpanel" aria-labelledby="analytics-tab-skills" data-analytics-panel="skills" hidden>
+                    <header class="analytics-panel-header">
+                        <div><p class="micro-label">Motivos y rasgos</p><h2>Habilidades</h2></div>
+                        <p>Los elogios semanales y los tags del perfil se muestran por separado.</p>
+                    </header>
+                    <div class="analytics-skill-layout">
+                        <article class="analytics-skill-card">
+                            <p class="micro-label">Solo reason tags</p>
+                            <h3>Habilidades más destacadas</h3>
+                            <div id="analytics-praised-skills"></div>
+                        </article>
+                        <div class="analytics-tag-grid" id="analytics-profile-tags"></div>
+                    </div>
+                </section>
+
+                <section class="analytics-panel" id="analytics-panel-activity" role="tabpanel" aria-labelledby="analytics-tab-activity" data-analytics-panel="activity" hidden>
+                    <header class="analytics-panel-header">
+                        <div><p class="micro-label">Ritmo semanal</p><h2>Actividad</h2></div>
+                        <p>Volumen de uso por semana; no representa rendimiento.</p>
+                    </header>
+                    <div class="analytics-activity-layout">
+                        <article class="analytics-chart-card">
+                            <div class="analytics-chart-heading">
+                                <h3>Actividad semanal</h3>
+                                <label class="select-control" for="analytics-activity-metric">
+                                    <span>Métrica</span>
+                                    <select id="analytics-activity-metric">
+                                        <option value="votes">Votos</option>
+                                        <option value="participants">Participantes</option>
+                                        <option value="standouts">Destacados</option>
+                                        <option value="reasons">Motivos</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="analytics-activity-chart" id="analytics-activity-chart" role="img" aria-label="Actividad semanal"></div>
+                            <p class="analytics-activity-text" id="analytics-activity-text"></p>
+                        </article>
+                        <article class="analytics-active-week" id="analytics-active-week"></article>
+                    </div>
+                    <div class="analytics-category-grid" id="analytics-category-stats"></div>
+                </section>
+
+                <p class="analytics-render-time" id="analytics-render-time"></p>
+            </section>
+
+            <section class="season-view" id="season" aria-labelledby="season-title" hidden>
+                <header class="season-hero">
+                    <div>
+                        <p class="eyebrow">Temporada actual</p>
+                        <h1 id="season-title">Premios de temporada</h1>
+                        <p class="season-intro">Ganadores generales y por categoría, derivados del historial semanal.</p>
+                    </div>
+                    <aside class="season-mode-card" aria-live="polite">
+                        <p>Estado</p>
+                        <strong id="season-mode">Resultados oficiales</strong>
+                        <span id="season-period">0 semanas cerradas</span>
+                        <span class="season-live-status" id="season-live-status" hidden>Vista previa en vivo · Provisional</span>
+                    </aside>
+                </header>
+
+                <div class="season-command-bar season-command-bar--single">
+                    <label class="season-live-toggle" for="season-include-open">
+                        <input id="season-include-open" type="checkbox">
+                        <span>Incluir semana abierta</span>
+                    </label>
+                </div>
+
+                <section class="season-panel" aria-labelledby="season-awards-title">
+                    <header class="season-section-heading">
+                        <div><p class="micro-label">Premios principales</p><h2 id="season-awards-title">Ganadores de la temporada</h2></div>
+                        <p>El premio general usa la mejor categoría elegible y solo un 5% de la segunda.</p>
+                    </header>
+                    <div class="season-grand-grid" id="season-grand-grid" aria-live="polite"></div>
+
+                    <header class="season-section-heading season-section-heading--categories">
+                        <div><p class="micro-label">Doce resultados independientes</p><h2>Ganadores por categoría</h2></div>
+                        <p>Seis categorías, cada una separada entre mujeres y hombres.</p>
+                    </header>
+                    <div class="season-winners-grid" id="season-category-winners"></div>
+                </section>
+
+                <p class="season-render-time" id="season-render-time"></p>
+            </section>
+
+            <section class="season-rankings-view" id="rankings" aria-labelledby="rankings-title" hidden>
+                <header class="season-hero">
+                    <div>
+                        <p class="eyebrow">Temporada actual</p>
+                        <h1 id="rankings-title">Clasificación de temporada</h1>
+                        <p class="season-intro">Consulta posiciones acumuladas por categoría y género.</p>
+                    </div>
+                    <aside class="season-mode-card" aria-live="polite">
+                        <p>Estado</p>
+                        <strong id="rankings-mode">Resultados oficiales</strong>
+                        <span id="rankings-period">0 semanas cerradas</span>
+                        <span class="season-live-status" id="rankings-live-status" hidden>Vista previa en vivo · Provisional</span>
+                    </aside>
+                </header>
+
+                <div class="season-command-bar season-command-bar--single">
+                    <label class="season-live-toggle" for="rankings-include-open">
+                        <input id="rankings-include-open" type="checkbox">
+                        <span>Incluir semana abierta</span>
+                    </label>
+                </div>
+
+                <section class="season-panel" aria-labelledby="rankings-standing-title">
+                    <header class="season-section-heading">
+                        <div><p class="micro-label">Detalle oficial</p><h2 id="rankings-standing-title">Clasificación por categoría</h2></div>
+                        <p>Los provisionales aparecen aparte y no pueden ganar hasta completar cinco semanas.</p>
+                    </header>
+
+                    <div class="season-filter-stack">
+                        <div class="season-category-tabs" role="tablist" aria-label="Categoría de temporada">
+                            <button id="season-category-vocal" type="button" role="tab" aria-selected="true" tabindex="0" data-season-category="vocal">Vocal</button>
+                            <button id="season-category-rap" type="button" role="tab" aria-selected="false" tabindex="-1" data-season-category="rap">Rap</button>
+                            <button id="season-category-dance" type="button" role="tab" aria-selected="false" tabindex="-1" data-season-category="dance">Baile</button>
+                            <button id="season-category-stage" type="button" role="tab" aria-selected="false" tabindex="-1" data-season-category="stage">Escenario</button>
+                            <button id="season-category-visual" type="button" role="tab" aria-selected="false" tabindex="-1" data-season-category="visual">Visual</button>
+                            <button id="season-category-all-rounder" type="button" role="tab" aria-selected="false" tabindex="-1" data-season-category="all-rounder">Integral</button>
+                        </div>
+                        <div class="season-gender-toggle" role="group" aria-label="Género de temporada">
+                            <button type="button" aria-pressed="true" data-season-gender="female">Mujeres</button>
+                            <button type="button" aria-pressed="false" data-season-gender="male">Hombres</button>
+                        </div>
+                    </div>
+
+                    <div class="season-standing-heading">
+                        <div>
+                            <p class="micro-label" id="season-standing-kicker">Vocal · Mujeres</p>
+                            <h3>Top 3 de temporada</h3>
+                        </div>
+                        <span class="season-standing-count" id="season-standing-count">0 clasificadas</span>
+                    </div>
+                    <div class="season-podium" id="season-podium"></div>
+
+                    <section class="season-full-standing" aria-labelledby="season-full-title">
+                        <header>
+                            <div><p class="micro-label">Clasificados</p><h3 id="season-full-title">Clasificación completa</h3></div>
+                            <p>Ordenada únicamente por puntuación de temporada.</p>
+                        </header>
+                        <div class="season-table-wrap">
+                            <table class="season-table">
+                                <thead>
+                                    <tr><th>Puesto</th><th>Participante</th><th>Puntuación</th><th>Semanas</th><th>Victorias</th><th>Top 3</th><th>Promedio</th><th>Tasa de destacados</th><th>Detalle</th></tr>
+                                </thead>
+                                <tbody id="season-eligible-body"></tbody>
+                            </table>
+                            <p class="season-empty" id="season-eligible-empty" hidden>No hay participantes con cinco semanas evaluadas en esta categoría.</p>
+                        </div>
+                    </section>
+
+                    <section class="season-provisional-section" aria-labelledby="season-provisional-title">
+                        <header>
+                            <div><p class="micro-label">Aún no clasifican</p><h3 id="season-provisional-title">Provisionales</h3></div>
+                            <p>Su puntuación es informativa y no define ganadores.</p>
+                        </header>
+                        <div class="season-provisional-list" id="season-provisional-list"></div>
+                    </section>
+
+                    <details class="season-method">
+                        <summary>Cómo se calcula</summary>
+                        <div>
+                            <p><strong>Puntuación de temporada:</strong> 40% rendimiento promedio, 25% tasa de victorias, 20% tasa de Top 3 y 15% tasa de destacados.</p>
+                            <p>Normal cuenta como evaluación con 0 puntos. Sin evaluar no cuenta. Se requieren cinco semanas en la categoría para clasificar.</p>
+                            <p>Un empate exacto conserva ganadores conjuntos y puestos de competición como 1, 1, 3.</p>
+                        </div>
+                    </details>
+                </section>
+
+                <p class="season-render-time" id="rankings-render-time"></p>
+            </section>
+
+            <section class="data-safety-view" id="data-safety" aria-labelledby="data-safety-title" hidden>
+                <header class="data-safety-header">
+                    <div>
+                        <p class="eyebrow">Todo permanece en este dispositivo</p>
+                        <h1 id="data-safety-title">Datos y seguridad</h1>
+                        <p class="manager-intro">Guarda una copia completa o restaura Stats con validación previa.</p>
+                    </div>
+                    <span class="data-safety-badge">Backup local</span>
+                </header>
+
+                <div class="data-summary" aria-label="Contenido actual">
+                    <p><strong id="data-summary-participants">0</strong><span>Participantes</span></p>
+                    <p><strong id="data-summary-weeks">0</strong><span>Semanas</span></p>
+                    <p><strong id="data-summary-votes">0</strong><span>Votos</span></p>
+                    <p><strong id="data-summary-images">0</strong><span>Imágenes</span></p>
+                </div>
+
+                <div class="data-safety-grid">
+                    <article class="data-card">
+                        <p class="micro-label">Copia completa</p>
+                        <h2>Exportar backup</h2>
+                        <p>Incluye participantes, grupos, tags, semanas, votos, configuración e imágenes.</p>
+                        <p class="data-card-note" id="last-export-status">Aún no hay una exportación registrada.</p>
+                        <button class="button button--primary" id="export-backup" type="button">Exportar backup</button>
+                    </article>
+
+                    <article class="data-card">
+                        <p class="micro-label">Reemplazo completo</p>
+                        <h2>Importar backup</h2>
+                        <p>El archivo se revisa antes de escribir. No se mezclará con los datos actuales.</p>
+                        <label class="button button--secondary file-button" for="import-backup-file">Seleccionar archivo</label>
+                        <input id="import-backup-file" type="file" accept="application/json,.json">
+                        <p class="field-error" id="import-backup-error" role="alert" aria-live="assertive"></p>
+                    </article>
+                </div>
+
+                <section class="danger-zone" aria-labelledby="danger-zone-title">
+                    <div>
+                        <p class="micro-label">Zona de peligro</p>
+                        <h2 id="danger-zone-title">Borrar todos los datos de Stats</h2>
+                        <p>Elimina únicamente el estado de Stats V2 y sus imágenes locales. Otros datos del navegador no se tocan.</p>
+                    </div>
+                    <button class="button button--danger" id="open-reset-data" type="button">Borrar datos</button>
+                </section>
+            </section>
+
+            <dialog class="season-breakdown-dialog" id="season-breakdown-dialog" aria-labelledby="season-breakdown-title">
+                <form method="dialog" class="season-dialog-close-row">
+                    <button class="icon-button" type="submit" aria-label="Cerrar desglose">×</button>
+                </form>
+                <div id="season-breakdown-content"></div>
+            </dialog>
+        </main>
+
+        <footer class="site-footer">
+            <p><strong>STATS V2</strong> · Registro personal de K-pop</p>
+            <p id="schema-version">Datos locales</p>
+        </footer>
+    </div>
+
+    <section class="recovery-mode" id="recovery-mode" aria-labelledby="recovery-title" hidden>
+        <div class="recovery-card">
+            <span class="recovery-symbol" aria-hidden="true">!</span>
+            <p class="eyebrow">Modo de recuperación</p>
+            <h1 id="recovery-title">Stats encontró datos que no puede abrir</h1>
+            <p>No se modificó ni reemplazó el contenido actual. Puedes guardar el estado original o restaurar un backup válido.</p>
+            <p class="recovery-detail" id="recovery-detail" role="status"></p>
+            <div class="recovery-actions">
+                <label class="button button--primary file-button" for="recovery-import-file">Importar backup</label>
+                <input id="recovery-import-file" type="file" accept="application/json,.json">
+                <button class="button button--secondary" id="download-raw-state" type="button">Descargar estado original</button>
+                <button class="button button--quiet" id="restart-stats" type="button">Reiniciar Stats</button>
+            </div>
+            <p class="field-error" id="recovery-error" role="alert" aria-live="assertive"></p>
+        </div>
+    </section>
+
+    <dialog class="app-dialog participant-dialog" id="participant-dialog" aria-labelledby="participant-dialog-title">
+        <form id="participant-form" novalidate>
+            <header class="dialog-header">
+                <div>
+                    <p class="eyebrow" id="participant-dialog-kicker">Participante</p>
+                    <h2 id="participant-dialog-title">Agregar participante</h2>
+                </div>
+                <button class="icon-button" id="close-participant-dialog" type="button" aria-label="Cerrar formulario">×</button>
+            </header>
+
+            <div class="form-errors" id="form-errors" role="alert" aria-live="assertive" hidden></div>
+            <input id="participant-id" name="participantId" type="hidden">
+
+            <div class="participant-form-layout">
+                <div class="photo-field">
+                    <div class="photo-preview" id="photo-preview">
+                        <img id="photo-preview-image" alt="Vista previa de la foto" hidden>
+                        <span id="photo-preview-fallback" aria-hidden="true">ST</span>
+                    </div>
+                    <label class="button button--secondary file-button" for="participant-photo">Elegir imagen</label>
+                    <input id="participant-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp">
+                    <button class="text-button" id="remove-photo" type="button" hidden>Quitar foto</button>
+                    <p>JPEG, PNG o WebP · Máx. 5 MB</p>
+                    <p class="field-error" id="photo-error"></p>
+                </div>
+
+                <div class="form-fields">
+                    <label class="field" for="participant-name">
+                        <span>Nombre <strong aria-hidden="true">*</strong></span>
+                        <input id="participant-name" name="name" type="text" maxlength="80" autocomplete="off" required>
+                        <small class="field-error" id="name-error"></small>
+                    </label>
+
+                    <div class="group-field">
+                        <label class="field" for="participant-group">
+                            <span>Grupo</span>
+                            <select id="participant-group" name="groupId">
+                                <option value="">Solista / Sin grupo</option>
+                            </select>
+                        </label>
+                        <button class="button button--quiet" id="show-group-form" type="button">＋ Crear grupo</button>
+                    </div>
+
+                    <div class="inline-group-form" id="inline-group-form" hidden>
+                        <label class="field" for="new-group-name">
+                            <span>Nombre del grupo</span>
+                            <input id="new-group-name" type="text" maxlength="80" autocomplete="off">
+                            <small class="field-error" id="group-error"></small>
+                        </label>
+                        <div>
+                            <button class="button button--secondary" id="create-group" type="button">Guardar grupo</button>
+                            <button class="text-button" id="cancel-group" type="button">Cancelar</button>
+                        </div>
+                    </div>
+
+                    <fieldset class="choice-fieldset gender-fieldset">
+                        <legend>Género <strong aria-hidden="true">*</strong></legend>
+                        <label><input type="radio" name="gender" value="female" required><span>Mujer</span></label>
+                        <label><input type="radio" name="gender" value="male" required><span>Hombre</span></label>
+                        <small class="field-error" id="gender-error"></small>
+                    </fieldset>
+
+                    <fieldset class="choice-fieldset category-fieldset">
+                        <legend>Categorías <strong aria-hidden="true">*</strong></legend>
+                        <div class="category-options">
+                            <label class="category-option category-option--vocal"><input type="checkbox" name="categories" value="vocal"><span>Vocal</span></label>
+                            <label class="category-option category-option--rap"><input type="checkbox" name="categories" value="rap"><span>Rap</span></label>
+                            <label class="category-option category-option--dance"><input type="checkbox" name="categories" value="dance"><span>Baile</span></label>
+                            <label class="category-option category-option--stage"><input type="checkbox" name="categories" value="stage"><span>Escenario</span></label>
+                            <label class="category-option category-option--visual"><input type="checkbox" name="categories" value="visual"><span>Visual</span></label>
+                            <label class="category-option category-option--all-rounder"><input type="checkbox" name="categories" value="all-rounder"><span>Integral</span></label>
+                        </div>
+                        <small class="field-error" id="categories-error"></small>
+                    </fieldset>
+                </div>
+            </div>
+
+            <footer class="dialog-actions">
+                <button class="button button--quiet" id="cancel-participant" type="button">Cancelar</button>
+                <button class="button button--primary" id="save-participant" type="submit">Guardar</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog class="app-dialog confirm-dialog" id="delete-dialog" aria-labelledby="delete-dialog-title">
+        <div class="confirm-symbol" aria-hidden="true">!</div>
+        <p class="eyebrow">Acción permanente</p>
+        <h2 id="delete-dialog-title">¿Eliminar participante?</h2>
+        <p id="delete-dialog-message">No podrás deshacerlo.</p>
+        <div class="dialog-actions">
+            <button class="button button--quiet" id="cancel-delete" type="button">Cancelar</button>
+            <button class="button button--danger" id="confirm-delete" type="button">Eliminar</button>
+        </div>
+    </dialog>
+
+    <dialog class="app-dialog tag-dialog" id="tag-dialog" aria-labelledby="tag-dialog-title">
+        <header class="dialog-header">
+            <div>
+                <p class="eyebrow">Tags del participante</p>
+                <h2 id="tag-dialog-title">Administrar tags</h2>
+                <p class="tag-dialog-identity" id="tag-dialog-identity"></p>
+            </div>
+            <button class="icon-button" id="close-tag-dialog" type="button" aria-label="Cerrar gestor de tags">×</button>
+        </header>
+
+        <div class="tag-dialog-body">
+            <section class="assigned-tag-panel" aria-labelledby="assigned-tags-title">
+                <div class="tag-section-heading">
+                    <div>
+                        <p class="micro-label">Descripción actual</p>
+                        <h3 id="assigned-tags-title">Tags asignados</h3>
+                    </div>
+                    <span class="tag-count" id="assigned-tag-count">0</span>
+                </div>
+                <div class="assigned-tag-groups" id="assigned-tag-groups"></div>
+                <p class="tag-empty-copy" id="assigned-tags-empty">Aún no hay tags asignados.</p>
+            </section>
+
+            <section class="tag-catalog-panel" aria-labelledby="tag-catalog-title">
+                <div class="tag-section-heading">
+                    <div>
+                        <p class="micro-label">Catálogo</p>
+                        <h3 id="tag-catalog-title">Agregar tags</h3>
+                    </div>
+                    <button class="button button--secondary" id="show-custom-tag-form" type="button">＋ Tag personalizado</button>
+                </div>
+
+                <div class="tag-picker-controls">
+                    <label class="search-control" for="tag-search">
+                        <span aria-hidden="true">⌕</span>
+                        <span class="sr-only">Buscar tags</span>
+                        <input id="tag-search" type="search" placeholder="Buscar tags..." autocomplete="off">
+                    </label>
+                    <label class="select-control" for="tag-category-filter">
+                        <span>Categoría</span>
+                        <select id="tag-category-filter">
+                            <option value="all">Todas</option>
+                            <option value="vocal">Vocal</option>
+                            <option value="rap">Rap</option>
+                            <option value="dance">Baile</option>
+                            <option value="stage">Escenario</option>
+                            <option value="general">General</option>
+                        </select>
+                    </label>
+                    <label class="select-control" for="tag-type-filter">
+                        <span>Tipo</span>
+                        <select id="tag-type-filter">
+                            <option value="all">Todos</option>
+                            <option value="strength">Fortalezas</option>
+                            <option value="weakness">Por mejorar</option>
+                            <option value="neutral">Especial</option>
+                        </select>
+                    </label>
+                </div>
+
+                <p class="tag-warning" id="tag-category-warning" role="status" aria-live="polite" hidden></p>
+                <div class="tag-catalog-list" id="tag-catalog-list"></div>
+                <p class="tag-empty-copy" id="tag-catalog-empty" hidden>No hay tags con estos filtros.</p>
+
+                <form class="custom-tag-form" id="custom-tag-form" novalidate hidden>
+                    <input id="custom-tag-id" type="hidden">
+                    <div class="tag-section-heading">
+                        <div>
+                            <p class="micro-label">Catálogo</p>
+                            <h3 id="custom-tag-form-title">Crear tag personalizado</h3>
+                        </div>
+                    </div>
+                    <div class="custom-tag-fields">
+                        <label class="field" for="custom-tag-name">
+                            <span>Nombre del tag <strong aria-hidden="true">*</strong></span>
+                            <input id="custom-tag-name" type="text" maxlength="60" autocomplete="off" required>
+                        </label>
+                        <label class="field" for="custom-tag-category">
+                            <span>Categoría <strong aria-hidden="true">*</strong></span>
+                            <select id="custom-tag-category" required>
+                                <option value="vocal">Vocal</option>
+                                <option value="rap">Rap</option>
+                                <option value="dance">Baile</option>
+                                <option value="stage">Escenario</option>
+                                <option value="general">General</option>
+                            </select>
+                        </label>
+                        <label class="field" for="custom-tag-type">
+                            <span>Tipo <strong aria-hidden="true">*</strong></span>
+                            <select id="custom-tag-type" required>
+                                <option value="strength">Fortaleza</option>
+                                <option value="weakness">Por mejorar</option>
+                                <option value="neutral">Especial</option>
+                            </select>
+                        </label>
+                    </div>
+                    <label class="custom-tag-assign" id="custom-tag-assign-field" for="assign-custom-tag">
+                        <input id="assign-custom-tag" type="checkbox" checked>
+                        <span>Asignar ahora</span>
+                    </label>
+                    <p class="field-error" id="custom-tag-error" role="alert"></p>
+                    <div class="custom-tag-actions">
+                        <button class="button button--quiet" id="cancel-custom-tag" type="button">Cancelar</button>
+                        <button class="button button--primary" id="save-custom-tag" type="submit">Crear y asignar</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <footer class="dialog-actions">
+            <button class="button button--quiet" id="done-managing-tags" type="button">Listo</button>
+        </footer>
+    </dialog>
+
+    <dialog class="app-dialog confirm-dialog" id="tag-delete-dialog" aria-labelledby="tag-delete-dialog-title">
+        <div class="confirm-symbol" aria-hidden="true">!</div>
+        <p class="eyebrow">Tag personalizado</p>
+        <h2 id="tag-delete-dialog-title">¿Eliminar tag?</h2>
+        <p id="tag-delete-dialog-message">No podrás deshacerlo.</p>
+        <div class="dialog-actions">
+            <button class="button button--quiet" id="cancel-tag-delete" type="button">Cancelar</button>
+            <button class="button button--danger" id="confirm-tag-delete" type="button">Eliminar tag</button>
+        </div>
+    </dialog>
+
+    <dialog class="app-dialog weekly-vote-dialog" id="weekly-vote-dialog" aria-labelledby="weekly-vote-title">
+        <form id="weekly-vote-form" novalidate>
+            <header class="dialog-header">
+                <div>
+                    <p class="eyebrow" id="weekly-vote-kicker">Votación semanal</p>
+                    <h2 id="weekly-vote-title">Evaluar participante</h2>
+                    <p id="weekly-vote-identity"></p>
+                </div>
+                <button class="icon-button" id="close-weekly-vote" type="button" aria-label="Cerrar evaluación">×</button>
+            </header>
+            <div class="weekly-vote-body">
+                <div class="form-errors" id="weekly-vote-error" role="alert" aria-live="assertive" hidden></div>
+                <div class="weekly-category-tabs" id="weekly-category-tabs" role="tablist" aria-label="Categoría"></div>
+                <div class="weekly-legacy-conversion" id="weekly-legacy-conversion" hidden>
+                    <div>
+                        <strong>Voto antiguo sin categoría</strong>
+                        <p id="weekly-legacy-conversion-copy"></p>
+                    </div>
+                    <button class="button button--secondary" id="assign-legacy-category" type="button">Asignar a esta categoría</button>
+                </div>
+                <fieldset class="weekly-rating-fieldset">
+                    <legend><span id="weekly-rating-category">Categoría</span> <strong aria-hidden="true">*</strong></legend>
+                    <div class="weekly-rating-options" id="weekly-rating-options">
+                        <button class="weekly-rating weekly-rating--standout" type="button" data-weekly-rating="standout" aria-pressed="false"><strong>Destacado</strong><span>3 pts</span></button>
+                        <button class="weekly-rating weekly-rating--impressed" type="button" data-weekly-rating="impressed" aria-pressed="false"><strong>Impresionó</strong><span>2 pts</span></button>
+                        <button class="weekly-rating weekly-rating--good" type="button" data-weekly-rating="good" aria-pressed="false"><strong>Bien</strong><span>1 pt</span></button>
+                        <button class="weekly-rating weekly-rating--normal" type="button" data-weekly-rating="normal" aria-pressed="false"><strong>Normal</strong><span>0 pts</span></button>
+                    </div>
+                </fieldset>
+                <section class="weekly-reasons" aria-labelledby="weekly-reasons-title">
+                    <div class="tag-section-heading">
+                        <div>
+                            <p class="micro-label">Opcional · Máximo 3</p>
+                            <h3 id="weekly-reasons-title">Motivos de la semana</h3>
+                        </div>
+                        <span class="tag-count" id="weekly-reason-count">0 / 3</span>
+                    </div>
+                    <p class="weekly-reason-note">Solo describen esta semana; no cambian los tags del perfil.</p>
+                    <div class="weekly-selected-reasons" id="weekly-selected-reasons"></div>
+                    <label class="search-control" for="weekly-reason-search">
+                        <span aria-hidden="true">⌕</span>
+                        <span class="sr-only">Buscar motivos</span>
+                        <input id="weekly-reason-search" type="search" placeholder="Buscar motivos..." autocomplete="off">
+                    </label>
+                    <div class="weekly-reason-list" id="weekly-reason-list"></div>
+                </section>
+                <label class="field weekly-note" for="weekly-note">
+                    <span>Nota opcional</span>
+                    <textarea id="weekly-note" maxlength="500" rows="4" placeholder="¿Qué destacó esta semana?"></textarea>
+                    <small><span id="weekly-note-count">0</span> / 500</small>
+                </label>
+            </div>
+            <footer class="dialog-actions weekly-vote-actions">
+                <button class="button button--danger" id="remove-weekly-vote" type="button" hidden>Quitar evaluación</button>
+                <span></span>
+                <button class="button button--quiet" id="cancel-weekly-vote" type="button">Cancelar</button>
+                <button class="button button--primary" id="save-weekly-vote" type="submit">Guardar</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog class="app-dialog confirm-dialog" id="close-week-dialog" aria-labelledby="close-week-dialog-title">
+        <div class="confirm-symbol" aria-hidden="true">!</div>
+        <p class="eyebrow">Resultados semanales</p>
+        <h2 id="close-week-dialog-title">¿Cerrar esta semana?</h2>
+        <p id="close-week-dialog-message">Los votos quedarán cerrados.</p>
+        <div class="dialog-actions">
+            <button class="button button--quiet" id="cancel-close-week" type="button">Cancelar</button>
+            <button class="button button--danger" id="confirm-close-week" type="button">Cerrar</button>
+        </div>
+    </dialog>
+
+    <dialog class="app-dialog confirm-dialog" id="reopen-week-dialog" aria-labelledby="reopen-week-dialog-title">
+        <div class="confirm-symbol" aria-hidden="true">↻</div>
+        <p class="eyebrow">Semana cerrada</p>
+        <h2 id="reopen-week-dialog-title">¿Reabrir esta semana?</h2>
+        <p id="reopen-week-dialog-message">Podrás volver a editar los votos.</p>
+        <div class="dialog-actions">
+            <button class="button button--quiet" id="cancel-reopen-week" type="button">Cancelar</button>
+            <button class="button button--primary" id="confirm-reopen-week" type="button">Reabrir</button>
+        </div>
+    </dialog>
+
+    <dialog class="app-dialog backup-preview-dialog" id="backup-preview-dialog" aria-labelledby="backup-preview-title">
+        <header class="dialog-header">
+            <div>
+                <p class="eyebrow">Archivo validado</p>
+                <h2 id="backup-preview-title">Revisar restauración</h2>
+            </div>
+            <button class="icon-button" id="close-backup-preview" type="button" aria-label="Cerrar vista previa">×</button>
+        </header>
+        <p>La restauración reemplazará por completo los datos actuales. Antes se descargará una copia de seguridad automática.</p>
+        <dl class="backup-preview-summary">
+            <div><dt>Participantes</dt><dd id="preview-participants">0</dd></div>
+            <div><dt>Grupos</dt><dd id="preview-groups">0</dd></div>
+            <div><dt>Tags</dt><dd id="preview-tags">0</dd></div>
+            <div><dt>Semanas</dt><dd id="preview-weeks">0</dd></div>
+            <div><dt>Votos</dt><dd id="preview-votes">0</dd></div>
+            <div><dt>Imágenes</dt><dd id="preview-images">0</dd></div>
+        </dl>
+        <p class="backup-size" id="preview-size"></p>
+        <p class="field-error" id="restore-backup-error" role="alert" aria-live="assertive"></p>
+        <footer class="dialog-actions">
+            <button class="button button--quiet" id="cancel-backup-preview" type="button">Cancelar</button>
+            <button class="button button--primary" id="confirm-restore-backup" type="button">Restaurar backup</button>
+        </footer>
+    </dialog>
+
+    <dialog class="app-dialog reset-data-dialog" id="reset-data-dialog" aria-labelledby="reset-data-title">
+        <div class="confirm-symbol" aria-hidden="true">!</div>
+        <p class="eyebrow">Acción permanente</p>
+        <h2 id="reset-data-title">¿Borrar todos los datos de Stats?</h2>
+        <p>Exporta primero si quieres conservar una copia. Para continuar, escribe <strong>BORRAR</strong>.</p>
+        <button class="button button--secondary" id="export-before-reset" type="button">Exportar antes</button>
+        <label class="field" for="reset-confirmation">
+            <span>Confirmación</span>
+            <input id="reset-confirmation" type="text" autocomplete="off" spellcheck="false">
+        </label>
+        <p class="field-error" id="reset-data-error" role="alert" aria-live="assertive"></p>
+        <footer class="dialog-actions">
+            <button class="button button--quiet" id="cancel-reset-data" type="button">Cancelar</button>
+            <button class="button button--danger" id="confirm-reset-data" type="button" disabled>Borrar definitivamente</button>
+        </footer>
+    </dialog>
+
+    <div class="app-toast" id="app-toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>

@@ -1,786 +1,403 @@
-# Stats V2 — K-Pop Performance Tracker
+# Stats V2
 
-Stats V2 es una aplicación local-first para organizar, evaluar y seguir el rendimiento de performers de K-pop a lo largo del tiempo.
+Aplicación local-first para organizar y, en fases posteriores, evaluar performers K-pop a lo largo de una temporada. Mantiene HTML, CSS y JavaScript Vanilla, sin backend, framework ni dependencias de ejecución.
 
-El proyecto comenzó como un ranking simple con barras y controles manuales, pero evolucionó hacia una herramienta más completa basada en:
+## Estado actual
 
-- participantes;
-- categorías;
-- grupos;
-- fotos;
-- tags;
-- evaluaciones semanales;
-- historial;
-- rankings;
-- análisis comparativos;
-- ganadores finales masculino y femenino.
+Está implementada **Fase 9 - Data Safety, Backup & Restore** sobre la base completa de Fase 8.5:
 
-La aplicación está construida con HTML, CSS y JavaScript Vanilla, sin frameworks y sin backend.
+- alta y edición de participantes;
+- grupos reutilizables, con creación rápida desde el formulario;
+- género `male`/`female` independiente de las categorías;
+- categorías múltiples: `vocal`, `rap`, `dance`, `stage`, `visual` y `all-rounder`;
+- foto opcional en IndexedDB, con fallback visual;
+- catálogo reutilizable de 84 tags predefinidos, organizado por disciplina y tipo;
+- tags personalizados globales con reutilización case-insensitive, edición y borrado protegidos;
+- asignación many-to-many entre participantes y tags, con remoción no destructiva;
+- búsqueda por nombre o grupo, filtros por género/estado/categoría/tag y orden A-Z/recientes;
+- Rankings concentra la clasificación acumulada por categoría y género, con Top 3, tabla completa y provisionales;
+- Temporada concentra exclusivamente premios generales y ganadores por categoría;
+- Participantes conserva toda la gestión, búsqueda, filtros y archivados, sin duplicar esas funciones en Rankings;
+- perfiles y tags continúan como flujos contextuales, fuera de la navegación principal;
+- siete destinos principales estables: Participantes, Votación, Destacados, Rankings, Estadísticas, Temporada y Datos;
+- creación explícita de la semana ISO actual, lunes-domingo en `America/Panama`;
+- una sola semana `OPEN`, cierre confirmado y reapertura administrativa explícita de semanas `CLOSED`;
+- votación semanal independiente por categoría para los usuarios permanentes `p1` y `p2`;
+- ratings Standout (3), Impressed (2), Good (1) y Normal (0), separados de Not evaluated;
+- máximo global de 5 Standouts por usuario y semana, sin reiniciarlo por categoría;
+- hasta 3 reason tags por voto y nota opcional de hasta 500 caracteres;
+- Weekly Points, votes/voters count, standout count, provisional y diferencia de ratings derivados por categoría;
+- orden semanal por puntos, votos y Standouts con empates de competición `1, 1, 3`;
+- filtros semanales por categoría, género, grupo, búsqueda y estado de evaluación;
+- `createWeeklyPointsProvider()` se conserva como API de compatibilidad para resultados semanales;
+- Weekly Spotlight derivado por `weekId + categoryId + gender`, con resultados Female/Male separados;
+- Top 3 real, ganadores simples o conjuntos y ranking completo de competición `1, 1, 3`;
+- estados `LIVE PREVIEW` para semanas abiertas y `OFFICIAL RESULTS` para semanas cerradas;
+- recap de seis categorías y ambos géneros, badges editoriales y motivos semanales destacados;
+- perfiles completos derivados desde la identidad y el historial existentes, sin crear una entidad `profile`;
+- resumen por participante con semanas evaluadas únicas, victorias, Top 3, mejores semanas y motivo más citado;
+- récords y tendencias independientes por categoría, incluyendo huecos explícitos para `Not evaluated`;
+- historial semanal filtrable y ordenable con posición, puntos, votantes, Standouts, badges y motivos;
+- navegación al perfil desde Manager, Rankings, Weekly, Spotlight y Recap, con estado por URL;
+- participantes archivados con perfil, foto e historial íntegros y en modo de solo lectura histórica;
+- capa `analytics.js` pura, explicable y de solo lectura, sin colecciones derivadas persistidas;
+- métricas de victorias, Top 3, Standouts, Duo Standouts, Solo Picks y Split Decisions por categoría y género;
+- consistencia, mejora, promedios de score/posición, acuerdo y controversia con muestras mínimas explícitas;
+- Weekly Praise, profile tags, P1/P2, distribución de ratings, actividad semanal y agregados descriptivos;
+- alcance oficial `CLOSED` por defecto, con `includeOpen` explícito para análisis live y filtros temporales;
+- vista Estadísticas con filtros globales por periodo, categoría, género y grupo;
+- secciones Resumen, Rendimiento, P1 vs P2, Habilidades y Actividad;
+- tabla ordenable por métricas individuales, sin score compuesto ni desempate alfabético competitivo;
+- gráficos CSS de actividad con equivalente textual accesible y estados explícitos de datos insuficientes;
+- reason tags semanales y tags permanentes del perfil presentados en bloques independientes;
+- 12 clasificaciones de temporada independientes: seis categorías por dos géneros;
+- Season Score explicable `40/25/20/15`, con cinco semanas evaluadas como mínimo y provisionales separados;
+- ganadores por categoría, incluyendo empates conjuntos exactos, sin desempates ocultos;
+- Grand Winners Female y Male mediante el 95% de la mejor categoría y el 5% de la segunda elegible;
+- vista oficial basada en semanas `CLOSED` y preview `LIVE / PROVISIONAL` opcional para incluir `OPEN`;
+- resumen de ganadores, podios, tablas completas y desglose accesible de cada puntuación;
+- archivado y restauración;
+- borrado permanente solo cuando no existe historial relacionado;
+- UI responsive y accesible con formularios y diálogos navegables por teclado;
+- backup JSON portátil y versionado que incluye el estado autoritativo y todos los blobs de imágenes en Base64;
+- checksum SHA-256 nativo, vista previa y validación completa antes de cualquier restauración;
+- snapshot descargable pre-restore, reemplazo completo y rollback verificado ante fallos de escritura;
+- modo de recuperación para estado corrupto, con descarga del contenido original sin sobrescribirlo;
+- borrado total acotado a claves `stats:v2:*` e imágenes de Stats, protegido por la palabra `BORRAR`.
 
----
+No se han implementado `overallScore`, Best Group, Most Competitive Week, administración de múltiples temporadas ni ninguna función de Fase 10. La vista inicial sigue siendo Participantes.
 
-## Objetivo
+## Ejecución
 
-Stats busca responder preguntas como:
+No hay build step. Se puede abrir `index.html` directamente o servir la carpeta con un servidor estático:
 
-- ¿Quién está destacando más esta semana?
-- ¿Quién sobresale en vocal, rap, dance o stage?
-- ¿Qué fortalezas tiene cada performer?
-- ¿Qué aspectos necesita mejorar?
-- ¿Quién ha sido más consistente?
-- ¿Qué performers generan mayor consenso o desacuerdo entre los dos usuarios?
-- ¿Quién debería terminar la temporada como Male Performer of the Year y Female Performer of the Year?
-
-El proyecto prioriza una experiencia simple, visual y orientada al seguimiento histórico.
-
----
-
-# Características actuales
-
-## Participant Manager
-
-Permite administrar participantes directamente desde la aplicación.
-
-Cada performer puede tener:
-
-- nombre;
-- grupo;
-- género;
-- múltiples categorías;
-- fotografía;
-- estado activo o archivado.
-
-Funciones disponibles:
-
-- crear participante;
-- editar participante;
-- buscar;
-- filtrar;
-- ordenar;
-- archivar;
-- restaurar;
-- eliminar cuando no existe historial asociado.
-
-Las fotografías se almacenan en IndexedDB y no dentro de localStorage.
-
----
-
-## Categorías
-
-Actualmente se utilizan seis categorías principales:
-
-- Vocal
-- Rap
-- Dance
-- Stage
-- Visual
-- All-Rounder
-
-Un mismo participante puede pertenecer a varias categorías.
-
-Ejemplo:
-
-```text
-Jurin
-├── Rap
-├── Dance
-└── Stage
-````
-
-Esto permite reutilizar una sola entidad de participante en toda la aplicación.
-
----
-
-## Grupos
-
-Los grupos se manejan como entidades reutilizables.
-
-Ejemplos:
-
-```text
-TWICE
-aespa
-XG
-NMIXX
-SEVENTEEN
+```bash
+python -m http.server 4173
 ```
 
-También se admiten performers sin grupo mediante `groupId: null`.
-
----
-
-# Tag System
-
-Stats incluye un sistema reutilizable de tags para describir las capacidades de cada performer.
-
-Los tags se dividen visualmente en:
-
-```text
-Strengths
-Needs Work
-Special
-```
-
-Internamente:
-
-```text
-strength
-weakness
-neutral
-```
-
-Los tags existen una sola vez en el catálogo y pueden asignarse a múltiples participantes.
-
-Ejemplo:
-
-```text
-Stage Presence
-├── Ningning
-├── Jurin
-└── Jihyo
-```
-
----
-
-## Tags predefinidos
-
-El catálogo inicial contiene decenas de tags organizados por área.
-
-### Vocal
-
-Ejemplos:
-
-* High Notes
-* Vocal Power
-* Stable Live
-* Vocal Range
-* Vocal Tone
-* Falsetto
-* Belting
-* Breath Control
-* Harmonies
-* Emotional Delivery
-
-### Rap
-
-Ejemplos:
-
-* Flow
-* Fast Rap
-* Diction
-* Rhythm
-* Delivery
-* Freestyle
-* Wordplay
-* Breath Control
-* Aggressive Flow
-* Melodic Rap
-
-### Dance
-
-Ejemplos:
-
-* Precision
-* Isolation
-* Footwork
-* Body Control
-* Musicality
-* Power
-* Fluidity
-* Synchronization
-* Popping
-* Versatility
-
-### Stage
-
-Ejemplos:
-
-* Stage Presence
-* Facial Expressions
-* Charisma
-* Camera Awareness
-* Crowd Control
-* Energy
-* Confidence
-* Center Presence
-* Consistency
-
-### General / Special
-
-Ejemplos:
-
-* All-Rounder
-* Ace
-* Fast Improvement
-* Standout Performer
-* Reliable Live
-* Great Chemistry
-* Concept Chameleon
-
----
-
-## Custom Tags
-
-También se pueden crear tags personalizados.
-
-Ejemplos:
-
-```text
-Killer Bridge
-Encore Queen
-Dance Break Specialist
-Ending Fairy
-Award Show Monster
-```
-
-Los custom tags pueden:
-
-* crearse;
-* editarse;
-* asignarse a participantes;
-* removerse;
-* filtrarse;
-* eliminarse cuando es seguro.
-
-Los tags predefinidos están protegidos contra eliminación destructiva.
-
----
-
-# Rankings
-
-Stats incluye una vista de rankings por:
-
-* Vocal
-* Rap
-* Dance
-* Stage
-* Visual
-* All-Rounder
-
-Actualmente el sistema funciona en modo:
-
-```text
-Unranked
-```
-
-porque todavía no se utiliza una fórmula artificial para determinar posiciones.
-
-La aplicación prioriza datos reales antes que inventar scores.
-
----
-
-## Filtros disponibles
-
-Los participantes pueden explorarse mediante:
-
-* categoría;
-* género;
-* grupo;
-* tag;
-* estado activo/archivado;
-* búsqueda;
-* orden A-Z;
-* fecha de creación.
-
-Los rankings se derivan en memoria y no modifican los datos persistentes.
-
----
-
-# Weekly Voting
-
-Stats está diseñado para incorporar un sistema de evaluación semanal entre dos usuarios.
-
-Escala definida:
-
-```text
-🔥 Standout   = 3 puntos
-✨ Impressed  = 2 puntos
-👍 Good       = 1 punto
-➖ Normal      = 0 puntos
-— Not evaluated = sin voto
-```
-
-Una evaluación `Normal` no es lo mismo que no evaluar a un participante.
-
----
-
-## Standout Limit
-
-Cada usuario puede otorgar como máximo:
-
-```text
-5 Standout 🔥 por semana
-```
-
-Esto evita que la categoría pierda valor.
-
-Los votos:
-
-* Impressed;
-* Good;
-* Normal;
-
-no tienen límite.
-
----
-
-## Dos usuarios
-
-El sistema está pensado para dos evaluadores con el mismo peso.
-
-Conceptualmente:
-
-```text
-P1 = 50%
-P2 = 50%
-```
-
-Cada usuario puede emitir como máximo una evaluación por participante y semana.
-
----
-
-## Weekly Points
-
-La puntuación semanal se calcula mediante la suma de las evaluaciones existentes.
-
-Ejemplo:
-
-```text
-P1 → 🔥 Standout   3
-P2 → ✨ Impressed  2
-
-Weekly Points = 5
-```
-
-Máximo posible:
-
-```text
-6 puntos
-```
-
----
-
-## Reglas de ranking semanal
-
-El futuro Weekly Ranking utiliza:
-
-```text
-1. Weekly Points
-2. Número de votantes
-3. Cantidad de Standout
-4. Empate real
-```
-
-No se utilizan desempates arbitrarios por nombre, género o fecha de creación.
-
----
-
-# Weekly Reasons
-
-Las evaluaciones semanales pueden utilizar tags como razones.
-
-Ejemplo:
-
-```text
-🔥 Standout
-
-Reasons:
-[Stage Presence]
-[High Notes]
-[Stable Live]
-```
-
-Estos tags semanales no modifican automáticamente los tags permanentes del perfil.
-
-Se consideran dos conceptos diferentes:
-
-```text
-Profile Tag
-→ fortaleza habitual
-
-Weekly Reason
-→ razón por la que destacó esta semana
-```
-
----
-
-# Weekly System
-
-Las semanas utilizan formato ISO:
-
-```text
-2026-W36
-```
-
-y siguen una estructura:
-
-```text
-Monday → Sunday
-```
-
-Estados:
-
-```text
-OPEN
-CLOSED
-```
-
-Mientras una semana está abierta se pueden editar evaluaciones.
-
-Una semana cerrada conserva sus resultados para historial.
-
----
-
-# Futuras funciones
-
-El roadmap contempla varias fases adicionales.
-
-## Weekly Spotlight
-
-Permitirá mostrar:
-
-* Weekly Top 3;
-* Performer of the Week;
-* Vocalist of the Week;
-* Rapper of the Week;
-* Dancer of the Week;
-* Stage Performer of the Week;
-* Visual of the Week.
-
----
-
-## Participant Profiles
-
-Cada perfil podrá mostrar:
-
-```text
-Weekly Score
-Best Week
-Weekly Wins
-Voting History
-Tag History
-Performance Trend
-```
-
----
-
-## Analytics
-
-Funciones previstas:
-
-* Most Improved;
-* Most Consistent;
-* Most Versatile;
-* Most Weekly Wins;
-* Most Tagged Skill;
-* Biggest P1/P2 Disagreement;
-* Most Controversial Performer.
-
----
-
-# Grand Winners
-
-El objetivo final del sistema es coronar dos ganadores generales:
-
-```text
-Male Performer of the Year
-Female Performer of the Year
-```
-
-También se podrán mostrar durante la temporada:
-
-```text
-Male Leader
-Female Leader
-```
-
-La fórmula final todavía no está definida.
-
-No se implementará una fórmula arbitraria: deberá basarse en información acumulada como:
-
-* weekly performance;
-* consistency;
-* category performance;
-* standout weeks;
-* wins.
-
----
-
-# Arquitectura
-
-El proyecto utiliza:
-
-```text
-HTML
-CSS
-Vanilla JavaScript
-localStorage
-IndexedDB
-```
-
-No utiliza actualmente:
-
-* React;
-* Vue;
-* backend;
-* Supabase;
-* autenticación;
-* servidores externos.
-
-La aplicación está diseñada como:
-
-```text
-local-first
-```
-
----
-
-## Estructura aproximada
+## Estructura
 
 ```text
 Stats/
-│
 ├── index.html
-│
 ├── css/
 │   ├── global.css
 │   ├── components.css
-│   └── app.css
-│
+│   ├── app.css
+│   ├── weekly.css
+│   ├── spotlight.css
+│   ├── profile.css
+│   ├── analytics.css
+│   ├── season.css
+│   └── backup.css
 ├── js/
-│   ├── app.js
 │   ├── constants.js
+│   ├── ui.js
+│   ├── data.js
 │   ├── storage.js
+│   ├── weekly-migration.js
+│   ├── weekly.js
+│   ├── weekly-view.js
+│   ├── spotlight.js
+│   ├── spotlight-view.js
+│   ├── profile-history.js
+│   ├── profile-view.js
+│   ├── analytics.js
+│   ├── analytics-view.js
+│   ├── season.js
+│   ├── season-view.js
 │   ├── participants.js
 │   ├── tags.js
-│   ├── rankings.js
-│   └── ...
-│
-├── assets/
-│
+│   ├── image-storage.js
+│   ├── backup.js
+│   ├── backup-view.js
+│   └── app.js
+├── docs/
+│   └── screenshots/
 ├── tests/
-│
+│   ├── foundation.test.cjs
+│   ├── participants.test.cjs
+│   ├── tags.test.cjs
+│   ├── ui.test.cjs
+│   ├── product-cleanup.test.cjs
+│   ├── weekly.test.cjs
+│   ├── weekly-migration.test.cjs
+│   ├── category-voting-migration.test.cjs
+│   ├── weekly-ui-contract.test.cjs
+│   ├── spotlight.test.cjs
+│   ├── spotlight-ui-contract.test.cjs
+│   ├── profile-history.test.cjs
+│   ├── profile-ui-contract.test.cjs
+│   ├── analytics.test.cjs
+│   ├── analytics-view.test.cjs
+│   ├── analytics-ui-contract.test.cjs
+│   ├── season.test.cjs
+│   ├── season-ui-contract.test.cjs
+│   ├── backup.test.cjs
+│   ├── backup-ui-contract.test.cjs
+│   └── image-storage.test.cjs
 └── README.md
 ```
 
----
+Los módulos comparten el namespace global `StatsV2` para conservar compatibilidad con un sitio estático y con la apertura mediante `file://`.
 
-# Persistencia
+## Modelo de participante
 
-El estado principal se almacena en:
-
-```text
-localStorage:
-stats:v2:state
+```js
+{
+  id,
+  name,
+  groupId,
+  gender,
+  imageId,
+  categoryIds: [],
+  archivedAt,
+  createdAt,
+  updatedAt
+}
 ```
 
-Las imágenes se almacenan en:
+Cada persona existe una sola vez y puede tener varias categorías. Los grupos son entidades separadas; el género funciona como filtro y queda listo para los ganadores masculino/femenino de una fase posterior.
 
-```text
-IndexedDB:
-stats-v2
+## Modelo de tags
 
-Object Store:
-images
+Los tags son entidades globales independientes y las asignaciones son relaciones normalizadas:
+
+```js
+// Tag
+{ id, name, categoryId, type, predefined, isCustom, createdAt, updatedAt }
+
+// Relación participante-tag
+{ id, participantId, tagId, assignedAt, removedAt }
 ```
 
-Esto evita guardar blobs o imágenes codificadas dentro de localStorage.
+Las categorías del catálogo son `vocal`, `rap`, `dance`, `stage` y `general`; los tipos son `strength`, `weakness` y `neutral`. Un tag global se puede reutilizar en varios participantes y removerlo de una persona no borra el catálogo ni las demás asignaciones.
 
----
+Los reason tags semanales reutilizan el catálogo, pero viven únicamente en `weeklyVote.reasonTagIds`. Nunca crean ni modifican una relación en `participantTagAssignments`. Un tag usado como razón histórica queda protegido frente a edición o borrado global.
 
-# Seguridad de datos
+## Weekly Voting
 
-Desde la incorporación de participantes reales, el proyecto utiliza una filosofía estrictamente no destructiva.
+```js
+// Week
+{
+  id: "2026-W36",
+  label: "W36",
+  startDate: "2026-08-31",
+  endDate: "2026-09-06",
+  status: "OPEN", // OPEN | CLOSED
+  openedAt,
+  closedAt,
+  reopenedAt,
+  reopenCount,
+  createdAt,
+  updatedAt
+}
 
-Las nuevas fases deben ser:
-
-```text
-estado existente
-+
-nuevas estructuras
-=
-nuevo estado
+// Weekly vote
+{
+  id,
+  weekId,
+  participantId,
+  categoryId,
+  userId, // p1 | p2
+  rating, // standout | impressed | good | normal
+  reasonTagIds: [],
+  note,
+  createdAt,
+  updatedAt
+}
 ```
 
-Nunca:
+Existe como máximo un voto por `weekId + participantId + categoryId + userId`. `categoryId` debe existir y estar asignada al participante. `Not evaluated` es ausencia de registro en esa categoría; `Normal` sí crea un voto con 0 puntos. Rating, reason tags y nota pertenecen únicamente a ese voto categorizado.
 
-```text
-borrar
-→ reconstruir
+Mientras la semana está `OPEN`, cada voto categorizado puede crearse, editarse o removerse. Al cerrar, `closedAt` congela el historial y la UI queda en modo lectura. `Reopen Week` requiere confirmación explícita, se rechaza si otra semana está abierta y registra `reopenedAt` y `reopenCount` sin borrar el `closedAt` anterior. La semana puede cerrarse de nuevo y actualiza `closedAt`.
+
+Los agregados no se persisten. Para cada `weekId + participantId + categoryId` se derivan `weeklyPoints`, `votesCount`, `votersCount`, `standoutCount`, estado provisional y diferencia entre ratings. El orden semanal usa puntos DESC, voters count DESC y Standouts DESC; si todo coincide, conserva un empate real y asigna ranking de competición. El orden alfabético solo estabiliza la presentación del empate. No existe una suma Overall entre categorías.
+
+## Rankings acumulados
+
+Rankings muestra las clasificaciones de temporada ya definidas por `season.js`: seis categorías independientes, cada una separada entre mujeres y hombres. Incluye Top 3, clasificación completa, provisionales y desglose auditable. Por defecto utiliza solo semanas `CLOSED`; incluir la semana abierta es una vista previa explícita y provisional.
+
+La gestión de participantes permanece en Participantes. Se eliminó el antiguo directorio duplicado `Unranked`, su módulo específico y sus filtros redundantes. Rankings sigue siendo de solo lectura: no agrega posiciones a participantes, no crea una colección persistente y no reimplementa las fórmulas de temporada.
+
+## Weekly Spotlight
+
+`spotlight.js` deriva cada resultado de una selección exacta `weekId + categoryId + gender`. Solo entran participantes con al menos un voto categorizado: `Normal` aparece con 0 puntos y `Not evaluated` queda fuera. El orden usa `weeklyPoints DESC`, `votersCount DESC` y `standoutCount DESC`; si las tres métricas coinciden, conserva el empate real. El nombre se usa únicamente para estabilidad visual.
+
+El resultado incluye Top 3, ranking completo, todos los ganadores de la posición 1, motivos semanales principales, `Most Praised Skill` y los badges `Duo Standout`, `Duo Approved`, `Solo Pick` y `Split Decision`. Una semana `OPEN` se presenta como `LIVE PREVIEW`; una `CLOSED`, como `OFFICIAL RESULTS`; una reapertura vuelve inmediatamente a LIVE. El recap muestra Female y Male en las seis categorías, sin sumar disciplinas ni crear un ganador overall.
+
+Todo es de solo lectura. No existen colecciones `weeklyRankings` o `weeklyWinners`, ni campos persistidos de posición o ganador. `deriveParticipantHistory()` prepara consultas futuras de victorias, Top 3, posiciones y mejor semana a partir del historial existente, pero no implementa standings de temporada.
+
+## Profiles & History
+
+`profile-history.js` deriva el dossier completo de un participante desde `participants`, `groups`, asignaciones activas de tags, `weeks` y `weeklyVotes`. No persiste una colección de perfiles, estadísticas, tendencias ni historial. Para cada semana y categoría reutiliza el mismo ranking de competición de Weekly Spotlight, con el mismo orden por puntos, votantes y Standouts y los mismos empates reales.
+
+El resumen general cuenta semanas evaluadas únicas, aunque una persona tenga votos en varias categorías durante la misma semana. Las victorias conjuntas cuentan como una victoria completa y las apariciones Top 3 conservan la posición de competición. Los récords permanecen separados por categoría: victorias, Top 3, mejor puntuación, mejores semanas empatadas por las tres métricas, semanas evaluadas y motivo más citado. No existe un score combinado ni una “Best Category”.
+
+El historial distingue `Normal` de `Not evaluated`: un voto Normal aparece con 0 puntos; la ausencia de voto queda fuera del historial y como hueco accesible en la tendencia. Los tags permanentes provienen únicamente de `participantTagAssignments`; los motivos semanales se leen de `weeklyVote.reasonTagIds` y nunca modifican el perfil. Los participantes archivados conservan identidad, imagen, tags e historial, pero siguen excluidos de votos nuevos.
+
+`profile-view.js` presenta Summary, Profile Tags, Category Records, Performance Trend, Weekly Praise, Wins y Weekly History. El historial se filtra por categoría y se ordena de más reciente a más antiguo o al revés. Participantes, Rankings, Weekly, Spotlight y Recap enlazan al mismo perfil mediante `participant` en el hash; Back restaura la vista interna cuando existe y vuelve a Participantes al entrar por URL directa. Edit Participant y Manage Tags reutilizan los diálogos existentes.
+
+## Core Analytics
+
+`analytics.js` es una capa de funciones puras sobre el estado existente. Reutiliza `weekly.js` para scores y desempates y `spotlight.js` para posiciones, ganadores y badges; no copia esas fórmulas ni persiste resultados. Las métricas de performance siempre se agrupan independientemente por `categoryId + gender`, de modo que competir en más categorías no produce una ventaja global. El nombre solo estabiliza la presentación después de asignar empates reales.
+
+Métricas disponibles y fórmulas:
+
+- **Most Weekly Wins:** cuenta resultados con rank 1; cada joint winner recibe una victoria completa.
+- **Most Top 3 Appearances:** cuenta ranks de competición 1, 2 o 3; en `1, 1, 3` las tres apariciones cuentan.
+- **Most Standouts:** cuenta votos individuales `rating === standout`; `weeksWithStandout` se conserva como metadata separada.
+- **Duo Standouts / Solo Picks / Split Decisions:** cuentan eventos semanales usando los badges oficiales de Spotlight. Duo es P1+P2 Standout; Solo requiere un único voto mayor que Normal; Split conserva la definición existente de diferencia 3.
+- **Most Controversial:** promedio de `abs(P1 score - P2 score)` usando únicamente semanas con ambos votos. **Biggest Disagreement** devuelve todos los eventos empatados con la mayor diferencia.
+- **Highest Agreement:** el menor promedio de diferencia con al menos 3 semanas de doble voto.
+- **Most Consistent:** desviación estándar poblacional de `weeklyPoints` en semanas evaluadas. Requiere 3 semanas; empata primero por menor desviación, después por más semanas y luego por mayor promedio. Si todo coincide, conserva empate real.
+- **Most Improved:** pendiente de regresión lineal ordinaria de `weeklyPoints` frente a la posición cronológica de la semana. Requiere 3 evaluaciones y slope positivo; los gaps conservan distancia temporal, `Normal` aporta 0 y `Not evaluated` no aporta score.
+- **Best Average Weekly Score:** media aritmética de Weekly Points con al menos 3 semanas evaluadas.
+- **Best Average Placement:** media de ranks de competición con al menos 3 apariciones.
+- **Most Praised Skill:** menciones en `weeklyVotes.reasonTagIds`, globales o filtradas. No existe una segunda métrica duplicada llamada Most Used Reason Tag.
+- **Profile Tag Analytics:** conteo independiente de asignaciones activas `strength`, `weakness` y `neutral` (Special); excluye relaciones removidas y Weekly Praise.
+- **P1/P2 Analytics:** total de votos, rating promedio, Standouts dados, razones más usadas, participantes más evaluados y distribución Standout/Impressed/Good/Normal por usuario.
+- **Weekly Activity / Most Active Week:** votos, participantes, categorías, Standouts y reason tags por semana; mide actividad, no calidad, y conserva empates.
+- **Category Analytics:** votos, participantes evaluados, score semanal promedio, Standouts, skill más elogiada y participantes con más victorias por categoría/género.
+- **Group Analytics:** participantes evaluados, victorias, Top 3 y Standouts descriptivos por grupo/categoría/género; no asigna Best Group.
+
+Todas las respuestas incluyen scope, valor, tamaño de muestra y metadata explicativa cuando corresponde. Las métricas estadísticas devuelven `insufficientData: true` si no alcanzan su umbral. Se soportan filtros lógicos `categoryId`, `gender`, `groupId`, `participantId`, `userId` donde aplica, `fromWeekId`, `toWeekId` y `lastNWeeks`. Por defecto solo entran semanas `CLOSED`; `includeOpen: true` incorpora explícitamente `OPEN + CLOSED` para análisis live.
+
+Quedan deliberadamente fuera de Analytics `Most Competitive Week`, `overallScore` y Best Group. Season Score, standings y Grand Winners pertenecen a `season.js`; `analytics-view.js` no duplica ni altera sus fórmulas.
+
+## Analytics UI
+
+La vista `#analytics` aplica un único alcance global por periodo, categoría, género y grupo. Mantiene resultados oficiales `CLOSED` por defecto; el control “Incluir resultados en vivo” incorpora `OPEN` de forma explícita y visible. Las opciones temporales son todo el historial o las últimas 4, 8 y 12 semanas del alcance oficial/live elegido.
+
+Resumen muestra victorias, Top 3, Standouts, mejora, consistencia y habilidad más elogiada. Rendimiento conserva una fila independiente por participante, categoría y género, y permite ordenar por una métrica a la vez. P1 vs P2 muestra acuerdos, desacuerdos, Duo Standouts, Solo Picks, Split Decisions y distribuciones de rating. Habilidades separa estrictamente `reasonTagIds` de las asignaciones activas del perfil. Actividad presenta votos, participantes, Standouts y motivos por semana, la semana más activa y agregados descriptivos por categoría; nunca asigna Best Group.
+
+Los gráficos se construyen con CSS, conservan valores visibles y exponen un resumen textual mediante `aria-label` y texto en pantalla. Las pestañas admiten flechas, Home y End. Cuando el filtro no define una comparación válida o una muestra no alcanza el mínimo estadístico, la UI explica “Elige categoría y género” o “Datos insuficientes” en vez de inventar un ganador.
+
+La vista no persiste resultados ni crea una caché. Cada cambio de alcance vuelve a derivar los datos desde el estado autoritativo y muestra el costo medido de esa derivación. Cambiar únicamente la métrica del gráfico recalcula solo la actividad semanal.
+
+## Season Standings y Grand Winners
+
+`season.js` deriva las 12 clasificaciones posibles (`categoryId + gender`) desde el historial actual. Por defecto usa únicamente semanas `CLOSED`; el control explícito de preview incorpora `OPEN` y marca todo el resultado como `LIVE / PROVISIONAL`. Esta fase considera todo el historial cerrado como la temporada vigente y no crea todavía entidades ni controles para múltiples temporadas.
+
+El Season Score se calcula con precisión completa y se muestra con un decimal:
+
+- 40% rendimiento promedio: `(averageWeeklyPoints / 6) * 100`;
+- 25% tasa de victorias: `wins / weeksEvaluated * 100`;
+- 20% tasa de Top 3: `topThreeAppearances / weeksEvaluated * 100`;
+- 15% tasa de Standouts: `standoutVotes / (weeksEvaluated * 2) * 100`.
+
+`Normal` cuenta como semana evaluada con cero puntos y `Not evaluated` es ausencia de registro. Se requieren cinco semanas evaluadas dentro de la misma categoría; con cuatro o menos el resultado queda en Provisionales y no puede ganar. Las posiciones oficiales ordenan solo por Season Score exacto y usan ranking de competición (`1, 1, 3`). El nombre se usa después únicamente para estabilidad visual.
+
+El Grand Score se calcula por género con categorías ya elegibles: 95% de la mejor categoría y 5% de la segunda. Cuando solo existe una categoría elegible se usa su puntuación completa, sin penalización. Categorías adicionales no aportan ventaja y los empates exactos producen ganadores conjuntos. `season-view.js` comparte un único controlador: Rankings presenta podios, standings elegibles y provisionales; Temporada presenta los ganadores de las 12 clasificaciones y Grand Winners Female/Male. Ambos reutilizan el mismo desglose y las fórmulas no viven en `app.js`.
+
+## Auditoría y rendimiento de Fase 8.5
+
+La auditoría clasificó Participantes, Votación, Destacados, Perfiles y Analytics como capacidades a mantener; Rankings y las clasificaciones internas de Temporada como vistas a fusionar/reubicar; el directorio `Unranked`, sus handlers y CSS como elementos a eliminar; y los helpers DOM, labels, iniciales y formato numérico como utilidades a reutilizar. Perfiles y Tags permanecen contextuales. No se detectaron defectos P0 ni fue necesario cambiar reglas de negocio.
+
+Se eliminó el principal cuello de botella comprobado: cada pantalla recorría repetidamente todos los votos para reconstruir el mismo ranking. Ahora una derivación crea índices efímeros por selección y reutiliza métricas dentro de la misma operación. No existe caché persistente ni una segunda fuente de verdad.
+
+Benchmark sintético, mediana de cinco ejecuciones con 100 participantes, 52 semanas y 20,800 votos:
+
+| Derivación | Antes | Después |
+| --- | ---: | ---: |
+| Spotlight | 142.0 ms | 15.9 ms |
+| Perfil | 8276.9 ms | 191.6 ms |
+| Dashboard de Analytics | 21061.0 ms | 104.5 ms |
+| Clasificaciones de temporada | 8738.0 ms | 413.3 ms |
+| Ganadores generales | 8716.2 ms | 406.8 ms |
+
+El benchmark usa estado enteramente sintético en memoria y no accede al almacenamiento real del navegador.
+
+## Persistencia
+
+| Uso | Nombre exacto |
+| --- | --- |
+| Estado y metadata en `localStorage` | `stats:v2:state` |
+| Backup exacto previo a la migración de tags | `stats:v2:state:pre-tags-backup` |
+| Backup exacto previo a Weekly Voting | `stats:v2:state:pre-weekly-voting-backup` |
+| Backup exacto previo a votos por categoría | `stats:v2:state:pre-category-voting-backup` |
+| Base IndexedDB | `stats-v2` |
+| Object store de imágenes | `images` |
+
+Las fotos admiten JPEG, PNG o WebP de hasta 5 MB. El blob se guarda en IndexedDB y `localStorage` conserva únicamente su `imageId`. Si la imagen no existe o IndexedDB falla, la tarjeta muestra las iniciales como fallback.
+
+La migración Fase 3 -> Fase 4 clona el estado, conserva participantes, grupos, tags, asignaciones, IDs e `imageId`, añade solo el modelo semanal faltante y convierte de forma compatible los campos semanales heredados. Valida referencias y unicidad antes de persistir. El primer guardado conserva el JSON anterior exacto en `stats:v2:state:pre-weekly-voting-backup`; no crea backups infinitos. Si la copia, validación o escritura falla, el estado principal original no se reemplaza. La migración no abre ni modifica IndexedDB.
+
+La migración Fase 4 -> Fase 4.1 conserva el JSON exacto previo en `stats:v2:state:pre-category-voting-backup`, una sola vez. Un voto antiguo de un participante con exactamente una categoría recibe esa categoría de forma segura. Si el participante tiene varias, el voto mantiene ID, rating, razones, nota y timestamps, queda marcado `legacyUncategorized` y se muestra para conversión manual. Nunca se duplica ni se asigna arbitrariamente. IndexedDB no se abre ni se modifica.
+
+Abrir, filtrar o cambiar categoría/género en Rankings es una operación de solo lectura: no llama al helper de guardado, no modifica participantes y solo consulta IndexedDB cuando necesita mostrar una foto ya referenciada.
+
+Abrir o navegar Weekly Spotlight tampoco guarda estado. Fase 5 no requiere migración, backup adicional ni cambios de esquema porque consume exclusivamente `weeks`, `weeklyVotes`, participantes, grupos, tags e IDs ya existentes.
+
+Abrir, filtrar u ordenar un perfil también es de solo lectura. Fase 6 no requiere migración, backup adicional ni cambios de esquema: la identidad, la foto y todo el historial se consultan desde las colecciones e IDs existentes. IndexedDB solo se lee para mostrar la imagen y nunca se usa para pruebas con datos reales.
+
+Ejecutar Core Analytics tampoco escribe estado. Fase 7A no requiere migración, backup ni cambio de esquema porque deriva exclusivamente desde participantes, grupos, tags, asignaciones, semanas y votos existentes; no abre IndexedDB.
+
+Abrir, filtrar u ordenar Analytics también es de solo lectura. Fase 7B no requiere migración, backup ni cambio de esquema: consume las derivaciones de Fase 7A, no guarda métricas y no abre IndexedDB ni carga imágenes.
+
+Abrir Rankings o Temporada también es de solo lectura. Fase 8.5 no introduce esquema, migración ni backup porque reorganiza vistas y optimiza derivaciones desde las colecciones existentes; no persiste resultados ni índices. IndexedDB se consulta solo para mostrar fotos ya referenciadas; ninguna prueba usa los datos reales ni modifica imágenes.
+
+## Data Safety, Backup & Restore
+
+La vista `#data-safety` exporta un único archivo `stats-backup-YYYY-MM-DD-HHmm.json`. El formato `stats-v2-backup` tiene una versión propia (`formatVersion: 1`), separada de `schemaVersion`, e incluye metadata de aplicación, el estado completo, imágenes con sus IDs, MIME, tamaño, relación y bytes Base64, además de un checksum SHA-256 calculado con Web Crypto.
+
+La importación solo acepta la versión y el esquema soportados. Antes de escribir valida JSON, formato, versión, checksum, todas las reglas de `validateState()`, referencias, IDs de imágenes, MIME, tamaño y contenido. Muestra un resumen y requiere confirmación. Al confirmar descarga automáticamente un backup pre-restore; después reemplaza las imágenes en una sola transacción de IndexedDB y escribe el estado exacto al final. Una lectura posterior vuelve a validar ambos almacenes. Como `localStorage` e IndexedDB no comparten una transacción, cualquier fallo activa un rollback con la instantánea en memoria y comunica si la recuperación se completó.
+
+Si el estado autoritativo está corrupto al iniciar, la aplicación no carga sus vistas normales ni guarda un estado vacío. El modo de recuperación permite descargar el texto original, importar un backup validado o reiniciar la carga. El borrado total solo elimina claves propias con prefijo `stats:v2:` y el object store de imágenes de Stats; exige escribir `BORRAR` y ofrece exportar antes.
+
+## Archivado y borrado
+
+- Archivar conserva identidad, categorías, foto y referencias históricas.
+- Restaurar vuelve a mostrar el participante en el roster activo.
+- El borrado permanente se permite solo cuando no existen votos ni asignaciones históricas de tags.
+- Si hay historial, la UI ofrece archivar en lugar de destruir el registro.
+
+## Seguridad y accesibilidad
+
+- Los datos editables se insertan con `textContent` y creación segura de nodos; no se usa `innerHTML`.
+- Hay enlace de salto, landmarks, labels, estados de error, foco visible y diálogos nativos.
+- El layout fue revisado en 320, 375, 768 y 1440 px, sin overflow horizontal.
+- Los controles no dependen solo de hover o color y se respeta `prefers-reduced-motion`.
+- No se cargan fuentes, scripts ni estilos de terceros.
+
+## Pruebas
+
+Requiere Node.js 20 o superior y no instala paquetes:
+
+```bash
+node --test tests/*.test.cjs
 ```
 
-Las migraciones deben:
+Las pruebas usan `localStorage` e IndexedDB simulados; no tocan el almacenamiento real del navegador. Cubren modelo, validación, duplicados, grupos, edición, filtros, archivo/restauración, tags, protección referencial, migraciones, semanas ISO, cierre/reapertura, votación, Rankings, Spotlight, perfiles, Analytics, Season y Data Safety: exportación completa, checksum, versiones, imágenes, referencias, restauración estructural, rollback, reset acotado y contratos de recuperación y accesibilidad.
 
-1. leer el estado actual;
-2. validarlo;
-3. clonar;
-4. añadir los nuevos campos;
-5. validar la migración;
-6. persistir únicamente si es segura.
+También se realizó un smoke test en un origen local aislado con roster ficticio: Female Vocal A=6, B=5, C=4, D=0 y E sin voto. El Top 3 mostró A/B/C, el ranking completo incluyó D y excluyó E. El cierre cambió Spotlight a OFFICIAL; la reapertura volvió a LIVE y una edición de C a 5 produjo `1, 2, 2, 4`. También se comprobaron Male, otra categoría, recap, motivos, badges y acceso al participante. El layout fue revisado en 320, 375, 768 y 1440 px sin overflow horizontal ni errores de consola.
 
----
+Para Fase 6 se ejecutó además un smoke aislado con un participante archivado y cinco resultados en Vocal/Stage. Se verificaron tres semanas únicas, tres victorias, cinco Top 3, mejores semanas empatadas, motivos y tags independientes, el hueco `Not evaluated`, orden histórico, navegación/Back, URL directa y los diálogos existentes. El perfil se revisó en 320, 375, 768 y 1440 px sin overflow horizontal ni errores de consola.
 
-## Backups de migración
+El smoke aislado de Fase 7A usa seis participantes ficticios, ambos géneros, Vocal/Stage, cinco semanas cerradas y una abierta. Verifica joint winners, gaps, Normals, Duo Standouts, Solo Picks, Split Decisions, razones, consistencia, mejora, promedios, acuerdo/controversia, P1/P2, filtros temporales, archivado y `CLOSED` frente a `includeOpen`, sin acceder al almacenamiento real.
 
-Algunas migraciones importantes generan copias preventivas.
+Para Fase 7B se ejecutó además un smoke en un origen local desechable con seis participantes ficticios, seis semanas cerradas y una abierta. Se recorrieron las cinco secciones, filtros combinados, últimas 4 semanas, grupo, modo live, orden de la tabla, cambio de métrica del gráfico, estado sin mezcla y acceso al perfil. La UI se inspeccionó en 320, 375, 768 y 1440 px sin overflow de página; las pestañas usan scroll interno en móvil. No hubo errores ni warnings en consola.
 
-Ejemplo:
+Para Fase 8 se ejecutó un smoke en otro origen local desechable con nueve participantes ficticios, ambos géneros, seis semanas cerradas y una abierta, resultados `Normal`, provisionales, empates conjuntos y participantes elegibles en varias categorías. Se verificaron overview, los 12 ganadores potenciales, Grand Winners, podios, standings, provisionales, desgloses, navegación a perfil, teclado y preview live. La UI se inspeccionó en 320, 375, 768 y 1440 px sin overflow de página; tablas y diálogos se adaptaron a móvil y no hubo errores ni warnings de consola. El almacenamiento real permaneció fuera del origen de prueba.
 
-```text
-stats:v2:state:pre-tags-backup
-```
+Para Fase 8.5 se repitió una regresión en un origen aislado con datos sintéticos. Se recorrieron los seis destinos, Rankings acumulados, premios de Temporada, perfiles y los controles accesibles principales. Se comparó el JSON del estado antes y después de la navegación de solo lectura. La cobertura contractual valida las reglas responsive específicas para 320, 375, 768 y 1440 px. El origen y el servidor de prueba son desechables; no comparten `localStorage` ni IndexedDB con la app real.
 
-Esto permite conservar un punto de restauración antes de cambios estructurales.
+Para Fase 9 se usa un dataset sintético rico con participante archivado, grupo, tag personalizado, asignación histórica removida, semana cerrada y reabierta, voto categorizado, reason tag, nota e imagen. El ciclo exportar-validar-restaurar exige igualdad estructural del estado y de los bytes de imagen. Los fallos simulados de `localStorage`, IndexedDB y cuota comprueban rollback y mensajes seguros. El smoke manual se ejecuta únicamente en un origen desechable, nunca contra los datos reales.
 
----
+## Riesgos y decisiones pendientes
 
-# Seguridad de interfaz
+- P1/P2 son identidades locales con el mismo peso, no autenticación; un dispositivo compartido depende de que el usuario confirme el selector visible.
+- `localStorage` no ofrece transacciones entre pestañas; ediciones simultáneas pueden producir last-write-wins.
+- El crecimiento de votos y notas está sujeto a la cuota de `localStorage`; las fotos continúan separadas en IndexedDB.
+- La reapertura es una acción administrativa local sin autenticación; queda auditada con contador y último timestamp, no con identidad ni motivo.
+- Rankings y Temporada recalculan desde la fuente autoritativa; los índices de cada derivación viven solo durante esa operación y un volumen muy superior al benchmark podría exigir nueva medición.
+- En Fase 8 todo el historial `CLOSED` representa una única temporada vigente; separar temporadas históricas requiere una futura decisión explícita de modelo y migración.
+- Una muestra mínima de 3 reduce resultados estadísticos engañosos, pero seguirá siendo una muestra pequeña y debe mostrarse junto a cada resultado.
+- Un backup JSON con imágenes Base64 aumenta aproximadamente un tercio el tamaño binario original; la pantalla muestra el tamaño estimado antes de restaurar.
+- `localStorage` e IndexedDB no ofrecen una transacción común; Fase 9 reduce la ventana de riesgo escribiendo el estado al final y aplica rollback verificado si algo falla.
+- Navegadores sin IndexedDB mantienen el participant manager, pero usan el fallback visual y no pueden guardar fotos.
+- La fórmula de `overallScore` sigue sin definición y requiere aprobación explícita antes de implementarse.
 
-El contenido introducido por el usuario se renderiza mediante APIs seguras del DOM.
+## Límite de fase
 
-Se prioriza:
-
-```javascript
-textContent
-```
-
-en lugar de insertar directamente datos del usuario mediante `innerHTML`.
-
----
-
-# Accesibilidad
-
-El proyecto contempla:
-
-* navegación por teclado;
-* `focus-visible`;
-* labels accesibles;
-* botones semánticos;
-* alt text;
-* contraste;
-* modales con manejo de foco;
-* touch targets adecuados;
-* soporte para `prefers-reduced-motion`.
-
----
-
-# Responsive
-
-La interfaz se verifica regularmente en:
-
-```text
-320px
-375px
-768px
-1440px
-```
-
-El objetivo es mantener la aplicación completamente utilizable tanto en móvil como en escritorio.
-
----
-
-# Design System
-
-Stats utiliza la misma familia visual dark de otros proyectos personales relacionados.
-
-Base:
-
-```text
-Background      #0B0B0F
-Surface         #141419
-Elevated        #1C1C23
-Primary Text    #F5F5F7
-Muted Text      #8D8D98
-```
-
-Accents:
-
-```text
-VOCAL         Pink
-RAP           Red / Orange
-DANCE         Cyan
-STAGE         Purple
-VISUAL        Gold
-ALL-ROUNDER   Green
-```
-
-La intención visual es:
-
-```text
-K-pop
-dark
-editorial
-fashion
-moderna
-competitiva
-```
-
-evitando una apariencia genérica de dashboard administrativo.
-
----
-
-# Testing
-
-El proyecto cuenta con pruebas automatizadas para:
-
-* modelo de participantes;
-* relaciones;
-* persistencia;
-* fotografías;
-* tags;
-* migraciones;
-* filtros;
-* rankings;
-* seguridad de datos.
-
-Las pruebas utilizan entornos aislados y no interactúan con el almacenamiento real del usuario.
-
----
-
-# Estado actual del desarrollo
-
-Fases completadas:
-
-```text
-✅ Fase 0 — Foundation
-✅ Fase 1 — Participant Manager
-✅ Fase 2 — Tag System
-✅ Fase 3 — Rankings / Unranked
-🚧 Fase 4 — Weekly Voting
-⬜ Fase 5 — Weekly Spotlight
-⬜ Fase 6 — Profiles & History
-⬜ Fase 7 — Analytics
-⬜ Fase 8 — Grand Winners
-⬜ Fase 9 — Data Safety
-⬜ Fase 10 — Final Polish
-```
-
----
-
-# Principios del proyecto
-
-```text
-Datos reales > datos inventados
-
-Integridad > velocidad
-
-Tests > asumir
-
-Cambios incrementales > reescrituras
-
-Historial > información descartable
-
-Local-first > complejidad innecesaria
-```
-
----
-
-# Autor
-
-Desarrollado por **MarcosGr14** como proyecto personal de seguimiento y evaluación de performers K-pop.
-
----
-
-## Status
-
-Stats V2 se encuentra actualmente en desarrollo activo.
+La Fase 9 termina con backup completo, restauración validada, rollback, recuperación y borrado acotado. No se implementan `overallScore`, Best Group, Most Competitive Week, temporadas múltiples ni ninguna parte de Fase 10; el proyecto queda detenido al cierre de Fase 9.
