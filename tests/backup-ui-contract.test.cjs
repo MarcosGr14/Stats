@@ -14,7 +14,7 @@ test("loads backup services before the application and exposes Data Safety", () 
     assert.ok(html.indexOf("js/image-storage.js") < html.indexOf("js/backup.js"));
     assert.ok(html.indexOf("js/backup.js") < html.indexOf("js/backup-view.js"));
     assert.ok(html.indexOf("js/backup-view.js") < html.indexOf("js/app.js"));
-    assert.match(html, /href="#data-safety"/);
+    assert.match(html, /id="nav-data" href="#data"/);
     assert.match(html, /id="data-safety"/);
 });
 

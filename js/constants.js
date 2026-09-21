@@ -4,7 +4,7 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.9.0-data-safety",
+        APP_VERSION: "2.10.0-simplified",
         SCHEMA_VERSION: 2,
         BACKUP_FORMAT: "stats-v2-backup",
         BACKUP_FORMAT_VERSION: 1,
@@ -19,6 +19,7 @@
         TAG_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-tags-backup",
         WEEKLY_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-weekly-voting-backup",
         CATEGORY_VOTING_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-category-voting-backup",
+        SEASON_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-seasons-backup",
         LAST_EXPORT_KEY: "stats:v2:last-export",
         LEGACY_STORAGE_KEY: "rankingsApp_data",
         IMAGE_DB_NAME: "stats-v2",
@@ -47,6 +48,7 @@
             neutral: "Especial"
         }),
         WEEK_STATUSES: Object.freeze(["OPEN", "CLOSED"]),
+        SEASON_STATUSES: Object.freeze(["OPEN", "CLOSED"]),
         VOTER_IDS: Object.freeze(["p1", "p2"]),
         RATING_OPTIONS: Object.freeze([
             Object.freeze({ id: "standout", score: 3, label: "Destacado" }),

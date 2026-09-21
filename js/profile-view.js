@@ -37,7 +37,7 @@
             wins: document.getElementById("profile-wins"),
             topThree: document.getElementById("profile-top-three"),
             weeks: document.getElementById("profile-weeks"),
-            categories: document.getElementById("profile-categories"),
+            standouts: document.getElementById("profile-standouts"),
             bestWeek: document.getElementById("profile-best-week"),
             mostPraised: document.getElementById("profile-most-praised"),
             mostWins: document.getElementById("profile-most-wins"),
@@ -99,7 +99,7 @@
             elements.wins.textContent = String(summary.wins);
             elements.topThree.textContent = String(summary.topThreeAppearances);
             elements.weeks.textContent = String(summary.weeksEvaluated);
-            elements.categories.textContent = String(summary.categories);
+            elements.standouts.textContent = String(summary.standoutVotes);
             loadPhoto(participant);
         }
 

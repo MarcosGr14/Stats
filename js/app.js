@@ -15,9 +15,10 @@
     const spotlightViewService = namespace && namespace.spotlightView;
     const profileHistoryService = namespace && namespace.profileHistory;
     const profileViewService = namespace && namespace.profileView;
-    const analyticsViewService = namespace && namespace.analyticsView;
     const seasonService = namespace && namespace.season;
+    const seasonsService = namespace && namespace.seasons;
     const seasonViewService = namespace && namespace.seasonView;
+    const productViewService = namespace && namespace.productView;
     const imageStorage = namespace && namespace.imageStorage;
     const backupService = namespace && namespace.backup;
     const backupViewService = namespace && namespace.backupView;
@@ -38,8 +39,8 @@
     let weeklyController = null;
     let spotlightController = null;
     let profileController = null;
-    let analyticsController = null;
     let seasonController = null;
+    let productController = null;
     let backupController = null;
     let currentProfileId = null;
     let profileHasInternalReturn = false;
@@ -91,6 +92,7 @@
             migrated: "Datos preservados · módulos V2 actualizados",
             "weekly-migrated": "Datos preservados · Votación semanal lista",
             "category-voting-migrated": "Datos preservados · Votos por categoría listos",
+            "seasons-migrated": "Datos preservados · temporadas listas",
             invalid: "Datos V2 inválidos · edición bloqueada",
             unavailable: "Almacenamiento no disponible · edición bloqueada"
         };
@@ -319,11 +321,9 @@
 
     function activeViewFromLocation() {
         if (root.location.hash === "#weekly") return "weekly";
-        if (root.location.hash === "#spotlight") return "spotlight";
-        if (root.location.hash === "#rankings") return "rankings";
-        if (root.location.hash === "#analytics") return "analytics";
-        if (root.location.hash === "#season") return "season";
-        if (root.location.hash === "#data-safety") return "data-safety";
+        if (["#results", "#spotlight", "#rankings", "#season", "#analytics"].includes(root.location.hash)) return "results";
+        if (root.location.hash === "#hall-of-fame") return "hall-of-fame";
+        if (["#data", "#data-safety"].includes(root.location.hash)) return "data";
         if (root.location.hash.startsWith("#profile?")) return "profile";
         return "participants";
     }
@@ -335,35 +335,30 @@
     }
 
     function activateView(view, shouldRender = true) {
-        activeView = ["participants", "profile", "weekly", "spotlight", "rankings", "analytics", "season", "data-safety"].includes(view) ? view : "participants";
+        activeView = ["participants", "profile", "weekly", "results", "hall-of-fame", "data"].includes(view) ? view : "participants";
         elements.participantManager.hidden = activeView !== "participants";
         elements.profileView.hidden = activeView !== "profile";
         elements.weeklyView.hidden = activeView !== "weekly";
-        elements.spotlightView.hidden = activeView !== "spotlight";
-        elements.rankingsView.hidden = activeView !== "rankings";
-        elements.analyticsView.hidden = activeView !== "analytics";
-        elements.seasonView.hidden = activeView !== "season";
-        elements.dataSafetyView.hidden = activeView !== "data-safety";
-        [elements.navParticipants, elements.navWeekly, elements.navSpotlight, elements.navRankings, elements.navAnalytics, elements.navSeason, elements.navDataSafety]
+        elements.dataSafetyView.hidden = activeView !== "data";
+        elements.hallView.hidden = activeView !== "hall-of-fame";
+        elements.analyticsView.hidden = true;
+        productController?.hideResultPanels();
+        [elements.navParticipants, elements.navWeekly, elements.navResults, elements.navHall, elements.navData]
             .forEach((link) => link.removeAttribute("aria-current"));
         if (activeView === "participants") elements.navParticipants.setAttribute("aria-current", "page");
         if (activeView === "profile") elements.navParticipants.setAttribute("aria-current", "page");
         if (activeView === "weekly") elements.navWeekly.setAttribute("aria-current", "page");
-        if (activeView === "spotlight") elements.navSpotlight.setAttribute("aria-current", "page");
-        if (activeView === "rankings") elements.navRankings.setAttribute("aria-current", "page");
-        if (activeView === "analytics") elements.navAnalytics.setAttribute("aria-current", "page");
-        if (activeView === "season") elements.navSeason.setAttribute("aria-current", "page");
-        if (activeView === "data-safety") elements.navDataSafety.setAttribute("aria-current", "page");
-        const titles = { participants: "Participantes", profile: "Perfil", weekly: "Votación semanal", spotlight: "Destacados de la semana", rankings: "Rankings", analytics: "Estadísticas", season: "Temporada", "data-safety": "Datos y seguridad" };
+        if (activeView === "results") elements.navResults.setAttribute("aria-current", "page");
+        if (activeView === "hall-of-fame") elements.navHall.setAttribute("aria-current", "page");
+        if (activeView === "data") elements.navData.setAttribute("aria-current", "page");
+        const titles = { participants: "Participantes", profile: "Perfil", weekly: "Votación", results: "Resultados", "hall-of-fame": "Hall of Fame", data: "Datos" };
         const profileParticipant = activeView === "profile" ? findParticipant(profileIdFromLocation() || currentProfileId) : null;
         document.title = `${profileParticipant?.name || titles[activeView]} · Stats V2`;
         if (shouldRender) {
-            if (activeView === "rankings") seasonController?.activate("rankings");
-            else if (activeView === "analytics") analyticsController?.activate();
-            else if (activeView === "season") seasonController?.activate("season");
-            else if (activeView === "data-safety") backupController?.activate();
+            if (activeView === "results") productController?.activateResults();
+            else if (activeView === "hall-of-fame") productController?.activateHall();
+            else if (activeView === "data") backupController?.activate();
             else if (activeView === "weekly") weeklyController?.activate();
-            else if (activeView === "spotlight") spotlightController?.activate();
             else if (activeView === "profile") {
                 const participantId = profileIdFromLocation() || currentProfileId;
                 if (findParticipant(participantId)) {
@@ -381,7 +376,8 @@
         const targetHash = `#${view}`;
         if (root.location.hash !== targetHash) root.history.pushState(null, "", targetHash);
         activateView(view);
-        byId(view)?.scrollIntoView({ block: "start" });
+        const targetId = view === "data" ? "data-safety" : view;
+        byId(targetId)?.scrollIntoView({ block: "start" });
     }
 
     function openParticipantProfile(participantId) {
@@ -1080,18 +1076,18 @@
             participantManager: byId("participants"),
             profileView: byId("profile"),
             weeklyView: byId("weekly"),
+            resultsView: byId("results"),
             spotlightView: byId("spotlight"),
             rankingsView: byId("rankings"),
             analyticsView: byId("analytics"),
             seasonView: byId("season"),
+            hallView: byId("hall-of-fame"),
             dataSafetyView: byId("data-safety"),
             navParticipants: byId("nav-participants"),
             navWeekly: byId("nav-weekly"),
-            navSpotlight: byId("nav-spotlight"),
-            navRankings: byId("nav-rankings"),
-            navAnalytics: byId("nav-analytics"),
-            navSeason: byId("nav-season"),
-            navDataSafety: byId("nav-data-safety"),
+            navResults: byId("nav-results"),
+            navHall: byId("nav-hall-of-fame"),
+            navData: byId("nav-data"),
             participantCount: byId("participant-count"),
             storageStatus: byId("storage-status"),
             search: byId("participant-search"),
@@ -1180,25 +1176,17 @@
             event.preventDefault();
             navigateToView("weekly");
         });
-        elements.navSpotlight.addEventListener("click", (event) => {
+        elements.navResults.addEventListener("click", (event) => {
             event.preventDefault();
-            navigateToView("spotlight");
+            navigateToView("results");
         });
-        elements.navRankings.addEventListener("click", (event) => {
+        elements.navHall.addEventListener("click", (event) => {
             event.preventDefault();
-            navigateToView("rankings");
+            navigateToView("hall-of-fame");
         });
-        elements.navAnalytics.addEventListener("click", (event) => {
+        elements.navData.addEventListener("click", (event) => {
             event.preventDefault();
-            navigateToView("analytics");
-        });
-        elements.navSeason.addEventListener("click", (event) => {
-            event.preventDefault();
-            navigateToView("season");
-        });
-        elements.navDataSafety.addEventListener("click", (event) => {
-            event.preventDefault();
-            navigateToView("data-safety");
+            navigateToView("data");
         });
         root.addEventListener("hashchange", () => activateView(activeViewFromLocation()));
 
@@ -1297,8 +1285,9 @@
     function initialize() {
         if (!constants || !ui || !data || !storage || !participantService || !tagService
             || !weeklyService || !weeklyMigration || !weeklyViewService || !spotlightService
-            || !spotlightViewService || !profileHistoryService || !profileViewService || !analyticsViewService
-            || !seasonService || !seasonViewService || !imageStorage || !backupService || !backupViewService) {
+            || !spotlightViewService || !profileHistoryService || !profileViewService
+            || !seasonService || !seasonsService || !seasonViewService || !productViewService
+            || !imageStorage || !backupService || !backupViewService) {
             throw new Error("Stats V2 UI, participant, tag, weekly, Spotlight, profile, Analytics and Season modules did not load correctly.");
         }
 
@@ -1342,6 +1331,14 @@
                     result.status = "migrated";
                     result.tagsAdded = tagMigration.addedCount;
                 }
+                const seasonUpgrade = seasonsService.ensureCurrentSeason(state);
+                if (seasonUpgrade.changed) {
+                    state = storage.saveWithNamedBackup(
+                        seasonUpgrade.state,
+                        constants.SEASON_MIGRATION_BACKUP_KEY
+                    );
+                    result.status = "seasons-migrated";
+                }
             } catch (error) {
                 writable = false;
                 result.status = "unavailable";
@@ -1367,14 +1364,22 @@
             editParticipant: openParticipantDialog,
             manageTags: openTagDialog
         });
-        analyticsController = analyticsViewService.createController({
-            getState: () => state,
-            viewParticipant: openParticipantProfile
-        });
         seasonController = seasonViewService.createController({
             getState: () => state,
             viewParticipant: openParticipantProfile,
             getImage: imageStorage.getImage
+        });
+        productController = productViewService.createController({
+            getState: () => state,
+            commitState,
+            canWrite: () => writable,
+            notify: showToast,
+            activateSpotlight: () => spotlightController.activate(),
+            activateSeason: () => {
+                seasonController.activate("season");
+                seasonController.activate("rankings");
+            },
+            viewParticipant: openParticipantProfile
         });
         activeView = activeViewFromLocation();
         showStorageStatus(result);

@@ -14,8 +14,9 @@ test("loads Weekly Spotlight derivation and view before the application", () => 
     assert.ok(html.indexOf("js/weekly.js") < html.indexOf("js/spotlight.js"));
     assert.ok(html.indexOf("js/spotlight.js") < html.indexOf("js/spotlight-view.js"));
     assert.ok(html.indexOf("js/spotlight-view.js") < html.indexOf("js/app.js"));
-    assert.match(html, /id="nav-spotlight" href="#spotlight"/);
+    assert.match(html, /id="nav-results" href="#results"/);
     assert.match(app, /spotlightController = spotlightViewService\.createController/);
+    assert.match(html, /data-results-tab="week"/);
 });
 
 test("exposes week, six categories and separate Mujeres and Hombres controls accessibly", () => {

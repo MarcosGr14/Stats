@@ -1,0 +1,255 @@
+.results-shell,
+.hall-view {
+    padding: clamp(2.5rem, 6vw, 5rem) 0 var(--space-6);
+}
+
+.results-header,
+.hall-header {
+    display: flex;
+    gap: var(--space-6);
+    align-items: end;
+    justify-content: space-between;
+}
+
+.results-header h1,
+.hall-header h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(3.4rem, 9vw, 7rem);
+    font-weight: 900;
+    letter-spacing: -0.065em;
+    line-height: 0.86;
+    text-transform: uppercase;
+}
+
+.results-tabs {
+    display: inline-flex;
+    gap: var(--space-1);
+    padding: var(--space-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+}
+
+.results-tabs button {
+    min-height: 2.7rem;
+    padding: 0 1.2rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-muted);
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.results-tabs button[aria-selected="true"] {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+.current-season-bar {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+    padding: var(--space-5);
+    align-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(120deg, rgba(155, 108, 255, 0.12), rgba(255, 79, 163, 0.05));
+}
+
+.current-season-bar[hidden],
+.season-context-highlights[hidden] { display: none; }
+
+.current-season-bar > div { display: grid; gap: 0.15rem; }
+.current-season-bar span,
+.current-season-bar small { color: var(--color-muted); font-size: 0.7rem; }
+.current-season-bar strong { font-family: var(--font-display); font-size: 1.5rem; }
+
+.season-open-badge {
+    padding: 0.45rem 0.7rem;
+    border: 1px solid rgba(85, 213, 138, 0.35);
+    border-radius: var(--radius-pill);
+    color: var(--color-success) !important;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+}
+
+.season-context-highlights,
+.hall-highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.season-highlight-card {
+    min-width: 0;
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+}
+
+.season-highlight-card > span,
+.season-highlight-card small { color: var(--color-muted); font-size: 0.68rem; }
+.season-highlight-card strong { overflow-wrap: anywhere; font-size: 0.95rem; }
+
+.results-shell + .spotlight-view,
+.results-shell ~ .season-view,
+.results-shell ~ .season-rankings-view {
+    padding-top: var(--space-5);
+}
+
+.hall-list { display: grid; gap: var(--space-6); margin-top: var(--space-7); }
+
+.hall-season-card {
+    padding: clamp(1.2rem, 4vw, 2rem);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+}
+
+.hall-season-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.hall-season-heading h2 { margin: 0; font-family: var(--font-display); font-size: 2rem; }
+.hall-season-heading .eyebrow { margin-bottom: var(--space-1); }
+.hall-season-period { color: var(--color-soft); }
+
+.hall-grand-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+}
+
+.hall-grand-card {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-elevated);
+}
+
+.hall-grand-card > span { color: var(--color-muted); font-size: 0.7rem; text-transform: uppercase; }
+.hall-grand-card--female { border-color: rgba(255, 79, 163, 0.35); }
+.hall-grand-card--male { border-color: rgba(37, 216, 232, 0.35); }
+
+.hall-winner-list { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.hall-person {
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid var(--color-border-strong);
+    background: transparent;
+    color: var(--color-text);
+    font-weight: 850;
+    cursor: pointer;
+}
+.hall-person:hover { border-color: var(--color-vocal); color: var(--color-vocal); }
+.hall-no-winner { color: var(--color-muted); font-size: 0.78rem; }
+
+.hall-category-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+}
+
+.hall-category-card {
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+.hall-category-card h3 { margin-bottom: var(--space-3); font-family: var(--font-display); }
+.hall-category-row { display: grid; grid-template-columns: 4rem 1fr; gap: var(--space-2); padding-top: var(--space-2); }
+.hall-category-row > span { color: var(--color-muted); font-size: 0.7rem; }
+.hall-highlight-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+.hall-empty {
+    min-height: 22rem;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    margin-top: var(--space-6);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+.hall-empty[hidden] { display: none; }
+.hall-empty > span { margin-bottom: var(--space-3); color: var(--color-vocal); font-size: 2rem; }
+.hall-empty h2 { margin-bottom: var(--space-2); }
+.hall-empty p { color: var(--color-muted); }
+
+.data-safety-view .data-safety-grid { margin-top: var(--space-6); }
+.data-safety-view .data-card { min-height: 13rem; justify-content: space-between; }
+.data-safety-view .danger-zone { margin-top: var(--space-6); }
+
+@media (max-width: 70rem) {
+    .hall-highlight-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 50rem) {
+    .season-context-highlights { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hall-category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 44rem) {
+    body { padding-bottom: 5.25rem; }
+    .topbar { grid-template-columns: 1fr auto; }
+    .primary-nav {
+        position: fixed;
+        right: 0.65rem;
+        bottom: 0.65rem;
+        left: 0.65rem;
+        z-index: 15;
+        width: auto;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.2rem;
+        margin: 0;
+        padding: 0.35rem;
+        overflow: visible;
+        border-color: var(--color-border-strong);
+        border-radius: 1.1rem;
+        background: rgba(20, 20, 25, 0.96);
+        box-shadow: 0 14px 50px rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(16px);
+    }
+    .primary-nav a {
+        min-width: 0;
+        min-height: 3.35rem;
+        padding: 0 0.2rem;
+        justify-content: center;
+        border-radius: 0.8rem;
+        font-size: 0.63rem;
+        text-align: center;
+    }
+    .results-header,
+    .hall-header { align-items: stretch; flex-direction: column; }
+    .results-tabs { width: 100%; }
+    .results-tabs button { flex: 1; }
+    .current-season-bar { grid-template-columns: 1fr auto; }
+    .current-season-bar .button { grid-column: 1 / -1; }
+    .hall-grand-grid,
+    .hall-category-grid { grid-template-columns: 1fr; }
+    .hall-highlight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 32rem) {
+    .brand-copy small,
+    .build-status { display: none; }
+    .season-context-highlights,
+    .hall-highlight-grid { grid-template-columns: 1fr; }
+    .hall-season-heading { align-items: flex-start; flex-direction: column; gap: var(--space-2); }
+}

@@ -55,7 +55,7 @@ test("weekly assets load before the app while Rankings uses accumulated Season s
     assert.ok(html.indexOf("js/weekly-view.js") < html.indexOf("js/app.js"));
     assert.doesNotMatch(html, /js\/rankings\.js|Sin ranking/);
     assert.match(html, /id="rankings-title">Clasificación de temporada<\/h1>/);
-    assert.match(app, /seasonController\?\.activate\("rankings"\)/);
+    assert.match(app, /seasonController\.activate\("rankings"\)/);
 });
 
 test("weekly layout contains mobile, tablet and desktop safeguards", () => {

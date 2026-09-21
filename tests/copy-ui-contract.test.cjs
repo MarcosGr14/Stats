@@ -16,7 +16,8 @@ const tags = read("js", "tags.js");
 test("uses concise Spanish copy across the primary views", () => {
     assert.match(html, />Participantes<\/h1>/);
     assert.match(html, />Votación semanal<\/h1>/);
-    assert.match(html, />Destacados de la semana<\/h1>/);
+    assert.match(html, /id="results-title">Resultados<\/h1>/);
+    assert.match(html, /id="hall-title">Hall of Fame<\/h1>/);
     assert.match(html, />Clasificación de temporada<\/h1>/);
     assert.match(html, />Premios de temporada<\/h1>/);
     assert.match(app, /Administrar tags de/);

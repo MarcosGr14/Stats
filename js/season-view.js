@@ -4,16 +4,18 @@
     const namespace = root.StatsV2 || {};
     const constants = namespace.constants;
     const season = namespace.season;
+    const seasons = namespace.seasons;
     const ui = namespace.ui;
 
-    if (!constants || !season || !ui) {
+    if (!constants || !season || !seasons || !ui) {
         throw new Error("Stats V2 constants, UI helpers and Season Standings must load before the Season view.");
     }
 
     const { element, initials, categoryLabel, genderLabel, decimal } = ui;
 
     function createViewModel(state, options = {}) {
-        const overview = season.deriveSeasonOverview(state, { includeOpen: options.includeOpen === true });
+        const periodOptions = seasons.periodOptionsForCurrent(state, options.includeOpen === true);
+        const overview = season.deriveSeasonOverview(state, periodOptions);
         const categoryId = options.categoryId || "vocal";
         const gender = options.gender || "female";
         return Object.freeze({

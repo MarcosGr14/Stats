@@ -10,13 +10,11 @@ const app = fs.readFileSync(path.join(projectRoot, "js", "app.js"), "utf8");
 const css = fs.readFileSync(path.join(projectRoot, "css", "analytics.css"), "utf8");
 const analyticsSection = html.match(/<section class="analytics-view"[\s\S]*?<section class="season-view"/)?.[0] || "";
 
-test("loads the Analytics UI after its core and before the application", () => {
-    assert.ok(html.indexOf("js/analytics.js") < html.indexOf("js/analytics-view.js"));
-    assert.ok(html.indexOf("js/analytics-view.js") < html.indexOf("js/app.js"));
-    assert.ok(html.indexOf("css/analytics.css") >= 0);
-    assert.match(html, /id="nav-analytics" href="#analytics"/);
-    assert.match(app, /analyticsController = analyticsViewService\.createController/);
-    assert.match(app, /activeView === "analytics"/);
+test("keeps Analytics as reusable logic instead of a primary destination", () => {
+    assert.ok(html.indexOf("js/analytics.js") < html.indexOf("js/season.js"));
+    assert.doesNotMatch(html, /js\/analytics-view\.js|css\/analytics\.css/);
+    assert.doesNotMatch(html, /id="nav-analytics"/);
+    assert.doesNotMatch(app, /analyticsController|activeView === "analytics"/);
 });
 
 test("exposes the approved global filters and defaults to official results", () => {

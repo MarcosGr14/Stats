@@ -4,8 +4,9 @@
     const namespace = root.StatsV2 || {};
     const constants = namespace.constants;
     const weekly = namespace.weekly;
+    const seasons = namespace.seasons;
     const ui = namespace.ui;
-    if (!constants || !weekly || !ui) throw new Error("Stats V2 constants, UI helpers and weekly voting must load before the weekly view.");
+    if (!constants || !weekly || !seasons || !ui) throw new Error("Stats V2 constants, UI helpers, seasons and weekly voting must load before the weekly view.");
 
     const { byId, categoryLabel, ratingLabel } = ui;
     const createElement = ui.element;
@@ -326,7 +327,8 @@
             if (!canWrite()) return;
             try {
                 const result = weekly.openCurrentIsoWeek(state()); selectedWeekId = result.week.id;
-                if (result.created || state().settings.activeWeekId !== result.week.id) commitState(result.state); else render();
+                const nextState = seasons.assignWeekToCurrentSeason(result.state, result.week.id);
+                if (result.created || state().settings.activeWeekId !== result.week.id) commitState(nextState); else render();
                 notify(result.created ? `${result.week.label} abierta para votar.` : `${result.week.label} seleccionada.`);
             } catch (error) { notify(error.message, "error"); }
         }
@@ -334,7 +336,7 @@
             if (!canWrite()) return;
             try {
                 const result = weekly.openNextIsoWeek(state()); selectedWeekId = result.week.id;
-                commitState(result.state);
+                commitState(seasons.assignWeekToCurrentSeason(result.state, result.week.id));
                 notify(`${result.week.label} abierta para votar.`);
             } catch (error) { notify(error.message, "error"); }
         }

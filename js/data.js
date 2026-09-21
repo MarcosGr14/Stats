@@ -96,8 +96,10 @@
             participantTagAssignments: [],
             weeks: [],
             weeklyVotes: [],
+            seasons: [],
             settings: {
                 activeWeekId: null,
+                currentSeasonId: null,
                 voters: [
                     { id: "p1", name: "P1" },
                     { id: "p2", name: "P2" }
@@ -188,6 +190,23 @@
         return week;
     }
 
+    function createSeason(input, timestamp = nowIso()) {
+        const weekIds = uniqueStrings(input.weekIds || [], "weekIds");
+        const status = requireChoice(input.status || "OPEN", constants.SEASON_STATUSES, "status");
+        return {
+            id: requireText(input.id, "id"),
+            label: requireText(input.label, "label"),
+            status,
+            weekIds,
+            startWeekId: input.startWeekId || weekIds[0] || null,
+            endWeekId: input.endWeekId || (status === "CLOSED" ? weekIds.at(-1) || null : null),
+            closedAt: input.closedAt || null,
+            resultsSnapshot: input.resultsSnapshot || null,
+            createdAt: input.createdAt || timestamp,
+            updatedAt: timestamp
+        };
+    }
+
     function createWeeklyVote(input, timestamp = nowIso()) {
         const rating = requireChoice(input.rating, [...ratingIds], "rating");
         return {
@@ -258,6 +277,10 @@
         const hasWeeklyVoting = weeklyVotingVersion === 1 || weeklyVotingVersion === 2;
         const hasCategoryVoting = weeklyVotingVersion === 2;
 
+        if (state.seasons !== undefined && !Array.isArray(state.seasons)) {
+            errors.push("seasons must be an array when present.");
+        }
+
         collectionNames.forEach((collection) => {
             if (!Array.isArray(state[collection])) {
                 errors.push(`${collection} must be an array.`);
@@ -285,6 +308,51 @@
             if (state.settings.activeWeekId !== null && typeof state.settings.activeWeekId !== "string") {
                 errors.push("settings.activeWeekId must be null or a string.");
             }
+            if (state.settings.currentSeasonId !== undefined
+                && state.settings.currentSeasonId !== null
+                && typeof state.settings.currentSeasonId !== "string") {
+                errors.push("settings.currentSeasonId must be null or a string when present.");
+            }
+        }
+
+        if (Array.isArray(state.seasons)) {
+            validateUniqueIds(state.seasons, "seasons", errors);
+            let openSeasonCount = 0;
+            const assignedWeekIds = new Set();
+            state.seasons.forEach((season, index) => {
+                if (!isRecord(season)) return;
+                const path = `seasons[${index}]`;
+                requireEntityText(season, "label", path, errors);
+                validateTimestamps(season, path, errors);
+                if (!constants.SEASON_STATUSES.includes(season.status)) errors.push(`${path}.status must be OPEN or CLOSED.`);
+                if (!Array.isArray(season.weekIds)
+                    || season.weekIds.some((weekId) => typeof weekId !== "string")
+                    || new Set(season.weekIds).size !== season.weekIds.length) {
+                    errors.push(`${path}.weekIds must contain unique strings.`);
+                } else {
+                    season.weekIds.forEach((weekId) => {
+                        if (assignedWeekIds.has(weekId)) errors.push(`${path} assigns week ${weekId} more than once.`);
+                        assignedWeekIds.add(weekId);
+                    });
+                }
+                requireNullableText(season, "startWeekId", path, errors);
+                requireNullableText(season, "endWeekId", path, errors);
+                requireNullableText(season, "closedAt", path, errors);
+                if (season.resultsSnapshot !== null && !isRecord(season.resultsSnapshot)) {
+                    errors.push(`${path}.resultsSnapshot must be null or an object.`);
+                }
+                if (season.status === "OPEN") {
+                    openSeasonCount += 1;
+                    if (season.closedAt !== null || season.endWeekId !== null || season.resultsSnapshot !== null) {
+                        errors.push(`${path} cannot contain final results while OPEN.`);
+                    }
+                }
+                if (season.status === "CLOSED"
+                    && (season.closedAt === null || season.endWeekId === null || !isRecord(season.resultsSnapshot))) {
+                    errors.push(`${path} requires closedAt, endWeekId and resultsSnapshot while CLOSED.`);
+                }
+            });
+            if (openSeasonCount > 1) errors.push("Only one season may be OPEN.");
         }
 
         if (Array.isArray(state.participants)) {
@@ -505,6 +573,27 @@
                     errors.push("settings.activeWeekId must identify the only OPEN week.");
                 }
             }
+            if (Array.isArray(state.seasons)) {
+                const seasonIds = new Set(state.seasons.map((season) => season && season.id));
+                state.seasons.forEach((season, index) => {
+                    if (!season || !Array.isArray(season.weekIds)) return;
+                    season.weekIds.forEach((weekId) => {
+                        if (!weekIds.has(weekId)) errors.push(`seasons[${index}] references a missing week.`);
+                    });
+                    if (season.startWeekId !== null && !season.weekIds.includes(season.startWeekId)) {
+                        errors.push(`seasons[${index}].startWeekId must belong to the season.`);
+                    }
+                    if (season.endWeekId !== null && !season.weekIds.includes(season.endWeekId)) {
+                        errors.push(`seasons[${index}].endWeekId must belong to the season.`);
+                    }
+                });
+                if (state.settings.currentSeasonId !== undefined && state.settings.currentSeasonId !== null) {
+                    const current = state.seasons.find((season) => season.id === state.settings.currentSeasonId);
+                    if (!seasonIds.has(state.settings.currentSeasonId) || !current || current.status !== "OPEN") {
+                        errors.push("settings.currentSeasonId must identify the OPEN season.");
+                    }
+                }
+            }
         }
 
         return { valid: errors.length === 0, errors };
@@ -519,6 +608,7 @@
         createTag,
         createTagAssignment,
         createWeek,
+        createSeason,
         createWeeklyVote,
         validateState
     });

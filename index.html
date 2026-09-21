@@ -6,36 +6,37 @@
     <meta name="description" content="Stats V2: administra participantes y registra votaciones semanales P1/P2 con datos locales.">
     <meta name="theme-color" content="#0B0B0F">
     <title>Participantes · Stats V2</title>
-    <link rel="stylesheet" href="css/global.css?v=2.9.0">
-    <link rel="stylesheet" href="css/components.css?v=2.9.0">
-    <link rel="stylesheet" href="css/app.css?v=2.9.0">
-    <link rel="stylesheet" href="css/weekly.css?v=2.9.0">
-    <link rel="stylesheet" href="css/spotlight.css?v=2.9.0">
-    <link rel="stylesheet" href="css/profile.css?v=2.9.0">
-    <link rel="stylesheet" href="css/analytics.css?v=2.9.0">
-    <link rel="stylesheet" href="css/season.css?v=2.9.0">
-    <link rel="stylesheet" href="css/backup.css?v=2.9.0">
-    <script src="js/constants.js?v=2.9.0" defer></script>
-    <script src="js/ui.js?v=2.9.0" defer></script>
-    <script src="js/data.js?v=2.9.0" defer></script>
-    <script src="js/storage.js?v=2.9.0" defer></script>
-    <script src="js/weekly-migration.js?v=2.9.0" defer></script>
-    <script src="js/weekly.js?v=2.9.0" defer></script>
-    <script src="js/spotlight.js?v=2.9.0" defer></script>
-    <script src="js/profile-history.js?v=2.9.0" defer></script>
-    <script src="js/analytics.js?v=2.9.0" defer></script>
-    <script src="js/season.js?v=2.9.0" defer></script>
-    <script src="js/participants.js?v=2.9.0" defer></script>
-    <script src="js/tags.js?v=2.9.0" defer></script>
-    <script src="js/image-storage.js?v=2.9.0" defer></script>
-    <script src="js/backup.js?v=2.9.0" defer></script>
-    <script src="js/backup-view.js?v=2.9.0" defer></script>
-    <script src="js/weekly-view.js?v=2.9.0" defer></script>
-    <script src="js/spotlight-view.js?v=2.9.0" defer></script>
-    <script src="js/profile-view.js?v=2.9.0" defer></script>
-    <script src="js/analytics-view.js?v=2.9.0" defer></script>
-    <script src="js/season-view.js?v=2.9.0" defer></script>
-    <script src="js/app.js?v=2.9.0" defer></script>
+    <link rel="stylesheet" href="css/global.css?v=2.10.0">
+    <link rel="stylesheet" href="css/components.css?v=2.10.0">
+    <link rel="stylesheet" href="css/app.css?v=2.10.0">
+    <link rel="stylesheet" href="css/weekly.css?v=2.10.0">
+    <link rel="stylesheet" href="css/spotlight.css?v=2.10.0">
+    <link rel="stylesheet" href="css/profile.css?v=2.10.0">
+    <link rel="stylesheet" href="css/season.css?v=2.10.0">
+    <link rel="stylesheet" href="css/backup.css?v=2.10.0">
+    <link rel="stylesheet" href="css/product.css?v=2.10.0">
+    <script src="js/constants.js?v=2.10.0" defer></script>
+    <script src="js/ui.js?v=2.10.0" defer></script>
+    <script src="js/data.js?v=2.10.0" defer></script>
+    <script src="js/storage.js?v=2.10.0" defer></script>
+    <script src="js/weekly-migration.js?v=2.10.0" defer></script>
+    <script src="js/weekly.js?v=2.10.0" defer></script>
+    <script src="js/spotlight.js?v=2.10.0" defer></script>
+    <script src="js/profile-history.js?v=2.10.0" defer></script>
+    <script src="js/analytics.js?v=2.10.0" defer></script>
+    <script src="js/season.js?v=2.10.0" defer></script>
+    <script src="js/seasons.js?v=2.10.0" defer></script>
+    <script src="js/participants.js?v=2.10.0" defer></script>
+    <script src="js/tags.js?v=2.10.0" defer></script>
+    <script src="js/image-storage.js?v=2.10.0" defer></script>
+    <script src="js/backup.js?v=2.10.0" defer></script>
+    <script src="js/backup-view.js?v=2.10.0" defer></script>
+    <script src="js/weekly-view.js?v=2.10.0" defer></script>
+    <script src="js/spotlight-view.js?v=2.10.0" defer></script>
+    <script src="js/profile-view.js?v=2.10.0" defer></script>
+    <script src="js/season-view.js?v=2.10.0" defer></script>
+    <script src="js/product-view.js?v=2.10.0" defer></script>
+    <script src="js/app.js?v=2.10.0" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -53,11 +54,9 @@
             <nav class="primary-nav" aria-label="Navegación principal">
                 <a id="nav-participants" href="#participants" aria-current="page">Participantes</a>
                 <a id="nav-weekly" href="#weekly">Votación</a>
-                <a id="nav-spotlight" href="#spotlight">Destacados</a>
-                <a id="nav-rankings" href="#rankings">Rankings</a>
-                <a id="nav-analytics" href="#analytics">Estadísticas</a>
-                <a id="nav-season" href="#season">Temporada</a>
-                <a id="nav-data-safety" href="#data-safety">Datos</a>
+                <a id="nav-results" href="#results">Resultados</a>
+                <a id="nav-hall-of-fame" href="#hall-of-fame">Hall of Fame</a>
+                <a id="nav-data" href="#data">Datos</a>
             </nav>
 
             <div class="build-status" title="Estado de la app">
@@ -193,7 +192,7 @@
                         <p><strong id="profile-wins">0</strong><span>Victorias</span></p>
                         <p><strong id="profile-top-three">0</strong><span>Top 3</span></p>
                         <p><strong id="profile-weeks">0</strong><span>Semanas</span></p>
-                        <p><strong id="profile-categories">0</strong><span>Categorías</span></p>
+                        <p><strong id="profile-standouts">0</strong><span>Destacados</span></p>
                     </div>
                 </header>
 
@@ -375,12 +374,28 @@
                 </div>
             </section>
 
+            <section class="results-shell" id="results" aria-labelledby="results-title" hidden>
+                <header class="results-header">
+                    <div><p class="eyebrow">Semana y temporada</p><h1 id="results-title">Resultados</h1></div>
+                    <div class="results-tabs" role="tablist" aria-label="Tipo de resultados">
+                        <button id="results-tab-week" type="button" role="tab" aria-selected="true" data-results-tab="week">Semana</button>
+                        <button id="results-tab-season" type="button" role="tab" aria-selected="false" data-results-tab="season">Temporada</button>
+                    </div>
+                </header>
+                <div class="current-season-bar" id="current-season-bar" hidden>
+                    <div><span>Temporada actual</span><strong id="current-season-label">TEMPORADA 1</strong><small id="current-season-period">Sin semanas</small></div>
+                    <span class="season-open-badge">EN CURSO</span>
+                    <button class="button button--danger" id="open-close-season" type="button">Cerrar temporada</button>
+                </div>
+                <div class="season-context-highlights" id="season-context-highlights" hidden></div>
+            </section>
+
             <section class="spotlight-view" id="spotlight" aria-labelledby="spotlight-title" hidden>
                 <header class="spotlight-header">
                     <div>
                         <p class="eyebrow">Resultados semanales</p>
                         <div class="spotlight-title-row">
-                            <h1 id="spotlight-title">Destacados de la semana</h1>
+                            <h1 id="spotlight-title">Semana</h1>
                             <span class="spotlight-mode spotlight-mode--empty" id="spotlight-mode">Sin semana</span>
                         </div>
                         <p class="manager-intro" id="spotlight-intro">Resultados separados para mujeres y hombres.</p>
@@ -454,6 +469,18 @@
                         </div>
                         <div class="spotlight-recap-grid" id="spotlight-recap-grid"></div>
                     </section>
+                </div>
+            </section>
+
+            <section class="hall-view" id="hall-of-fame" aria-labelledby="hall-title" hidden>
+                <header class="hall-header">
+                    <div><p class="eyebrow">Temporadas cerradas</p><h1 id="hall-title">Hall of Fame</h1></div>
+                </header>
+                <div class="hall-list" id="hall-list"></div>
+                <div class="hall-empty" id="hall-empty" role="status">
+                    <span aria-hidden="true">◇</span>
+                    <h2>Aún no hay temporadas cerradas</h2>
+                    <p>Cuando cierres una temporada, sus ganadores aparecerán aquí.</p>
                 </div>
             </section>
 
@@ -739,33 +766,21 @@
             <section class="data-safety-view" id="data-safety" aria-labelledby="data-safety-title" hidden>
                 <header class="data-safety-header">
                     <div>
-                        <p class="eyebrow">Todo permanece en este dispositivo</p>
-                        <h1 id="data-safety-title">Datos y seguridad</h1>
-                        <p class="manager-intro">Guarda una copia completa o restaura Stats con validación previa.</p>
+                        <p class="eyebrow">Copia y restauración</p>
+                        <h1 id="data-safety-title">Datos</h1>
                     </div>
-                    <span class="data-safety-badge">Backup local</span>
                 </header>
-
-                <div class="data-summary" aria-label="Contenido actual">
-                    <p><strong id="data-summary-participants">0</strong><span>Participantes</span></p>
-                    <p><strong id="data-summary-weeks">0</strong><span>Semanas</span></p>
-                    <p><strong id="data-summary-votes">0</strong><span>Votos</span></p>
-                    <p><strong id="data-summary-images">0</strong><span>Imágenes</span></p>
-                </div>
 
                 <div class="data-safety-grid">
                     <article class="data-card">
-                        <p class="micro-label">Copia completa</p>
                         <h2>Exportar backup</h2>
-                        <p>Incluye participantes, grupos, tags, semanas, votos, configuración e imágenes.</p>
-                        <p class="data-card-note" id="last-export-status">Aún no hay una exportación registrada.</p>
+                        <p id="last-export-status">Guarda una copia completa de Stats.</p>
                         <button class="button button--primary" id="export-backup" type="button">Exportar backup</button>
                     </article>
 
                     <article class="data-card">
-                        <p class="micro-label">Reemplazo completo</p>
                         <h2>Importar backup</h2>
-                        <p>El archivo se revisa antes de escribir. No se mezclará con los datos actuales.</p>
+                        <p>Restaura una copia guardada anteriormente.</p>
                         <label class="button button--secondary file-button" for="import-backup-file">Seleccionar archivo</label>
                         <input id="import-backup-file" type="file" accept="application/json,.json">
                         <p class="field-error" id="import-backup-error" role="alert" aria-live="assertive"></p>
@@ -775,10 +790,9 @@
                 <section class="danger-zone" aria-labelledby="danger-zone-title">
                     <div>
                         <p class="micro-label">Zona de peligro</p>
-                        <h2 id="danger-zone-title">Borrar todos los datos de Stats</h2>
-                        <p>Elimina únicamente el estado de Stats V2 y sus imágenes locales. Otros datos del navegador no se tocan.</p>
+                        <h2 id="danger-zone-title">Borrar todos los datos</h2>
                     </div>
-                    <button class="button button--danger" id="open-reset-data" type="button">Borrar datos</button>
+                    <button class="button button--danger" id="open-reset-data" type="button">Borrar todos los datos</button>
                 </section>
             </section>
 
@@ -1113,6 +1127,17 @@
         <div class="dialog-actions">
             <button class="button button--quiet" id="cancel-reopen-week" type="button">Cancelar</button>
             <button class="button button--primary" id="confirm-reopen-week" type="button">Reabrir</button>
+        </div>
+    </dialog>
+
+    <dialog class="app-dialog confirm-dialog" id="close-season-dialog" aria-labelledby="close-season-title">
+        <div class="confirm-symbol" aria-hidden="true">◇</div>
+        <p class="eyebrow">Cerrar temporada</p>
+        <h2 id="close-season-title">¿Cerrar temporada?</h2>
+        <p>Los resultados actuales pasarán al Hall of Fame y comenzará una nueva temporada.</p>
+        <div class="dialog-actions">
+            <button class="button button--quiet" id="cancel-close-season" type="button">Cancelar</button>
+            <button class="button button--danger" id="confirm-close-season" type="button">Cerrar temporada</button>
         </div>
     </dialog>
 

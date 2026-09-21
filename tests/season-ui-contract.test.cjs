@@ -15,14 +15,16 @@ const rankingsSection = html.match(/<section class="season-rankings-view"[\s\S]*
 
 test("loads the shared Season source before its view and the application", () => {
     assert.ok(html.indexOf("js/analytics.js") < html.indexOf("js/season.js"));
+    assert.ok(html.indexOf("js/season.js") < html.indexOf("js/seasons.js"));
+    assert.ok(html.indexOf("js/seasons.js") < html.indexOf("js/season-view.js"));
     assert.ok(html.indexOf("js/season.js") < html.indexOf("js/season-view.js"));
     assert.ok(html.indexOf("js/season-view.js") < html.indexOf("js/app.js"));
-    assert.match(html, /js\/app\.js\?v=2\.9\.0/);
-    assert.match(html, /id="nav-rankings" href="#rankings"/);
-    assert.match(html, /id="nav-season" href="#season"/);
+    assert.match(html, /js\/app\.js\?v=2\.10\.0/);
+    assert.match(html, /id="nav-results" href="#results"/);
+    assert.match(html, /data-results-tab="season"/);
     assert.match(app, /seasonController = seasonViewService\.createController/);
-    assert.match(app, /seasonController\?\.activate\("rankings"\)/);
-    assert.match(app, /seasonController\?\.activate\("season"\)/);
+    assert.match(app, /seasonController\.activate\("rankings"\)/);
+    assert.match(app, /seasonController\.activate\("season"\)/);
 });
 
 test("separates accumulated standings from Season awards without duplicating them", () => {

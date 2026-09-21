@@ -11,13 +11,13 @@ const appCss = read("css", "app.css");
 const seasonView = read("js", "season-view.js");
 const weeklyView = read("js", "weekly-view.js");
 
-test("keeps a focused seven-destination navigation and contextual profiles and tags", () => {
+test("keeps five primary destinations with contextual profiles and tags", () => {
     const navigation = html.match(/<nav class="primary-nav"[\s\S]*?<\/nav>/)?.[0] || "";
-    assert.equal((navigation.match(/<a /g) || []).length, 7);
-    ["participants", "weekly", "spotlight", "rankings", "analytics", "season", "data-safety"].forEach((id) => {
+    assert.equal((navigation.match(/<a /g) || []).length, 5);
+    ["participants", "weekly", "results", "hall-of-fame", "data"].forEach((id) => {
         assert.match(navigation, new RegExp(`href="#${id}"`));
     });
-    assert.doesNotMatch(navigation, /profile|tags/i);
+    assert.doesNotMatch(navigation, /profile|tags|spotlight|rankings|analytics|season/i);
     assert.match(app, /#profile\?participant=/);
 });
 
@@ -31,7 +31,7 @@ test("keeps Participants as the deterministic default view", () => {
 test("loads shared UI helpers before every renderer", () => {
     const uiIndex = html.indexOf("js/ui.js");
     assert.ok(html.indexOf("js/constants.js") < uiIndex);
-    ["weekly-view.js", "spotlight-view.js", "profile-view.js", "analytics-view.js", "season-view.js", "app.js"]
+    ["weekly-view.js", "spotlight-view.js", "profile-view.js", "season-view.js", "product-view.js", "app.js"]
         .forEach((asset) => assert.ok(uiIndex < html.indexOf(`js/${asset}`)));
 });
 
@@ -57,9 +57,9 @@ test("removes obsolete visible English copy without renaming domain identifiers"
     assert.match(read("js", "weekly.js"), /standoutCount/);
 });
 
-test("keeps the schema stable while advancing to the Data Safety release", () => {
+test("keeps the schema stable while simplifying the product", () => {
     assert.doesNotMatch(read("js", "ui.js"), /localStorage|sessionStorage|indexedDB|storage/);
     assert.doesNotMatch(seasonView, /cache|memo/i);
-    assert.match(read("js", "constants.js"), /APP_VERSION: "2\.9\.0-data-safety"/);
+    assert.match(read("js", "constants.js"), /APP_VERSION: "2\.10\.0-simplified"/);
     assert.match(read("js", "constants.js"), /SCHEMA_VERSION: 2/);
 });

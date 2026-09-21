@@ -39,7 +39,8 @@
             includeOpen: options.includeOpen === true,
             fromWeekId: options.fromWeekId || options.startWeekId || undefined,
             toWeekId: options.toWeekId || options.endWeekId || undefined,
-            lastNWeeks: options.lastNWeeks
+            lastNWeeks: options.lastNWeeks,
+            weekIds: options.weekIds
         };
     }
 

@@ -79,6 +79,10 @@
         if (options.lastNWeeks !== undefined && (!Number.isInteger(options.lastNWeeks) || options.lastNWeeks < 1)) {
             throw new TypeError("lastNWeeks must be a positive integer.");
         }
+        if (options.weekIds !== undefined
+            && (!Array.isArray(options.weekIds) || options.weekIds.some((weekId) => typeof weekId !== "string"))) {
+            throw new TypeError("weekIds must be an array of strings.");
+        }
         return {
             categoryId,
             gender,
@@ -88,6 +92,7 @@
             fromWeekId: options.fromWeekId || options.startWeekId || null,
             toWeekId: options.toWeekId || options.endWeekId || null,
             lastNWeeks: options.lastNWeeks || null,
+            weekIds: options.weekIds === undefined ? null : [...new Set(options.weekIds)],
             includeOpen: options.includeOpen === true,
             minimumEvaluatedWeeks: positiveInteger(options.minimumEvaluatedWeeks, DEFAULT_MINIMUMS.evaluatedWeeks, "minimumEvaluatedWeeks"),
             minimumDualVoteWeeks: positiveInteger(options.minimumDualVoteWeeks, DEFAULT_MINIMUMS.dualVoteWeeks, "minimumDualVoteWeeks"),
@@ -98,6 +103,7 @@
     function selectedWeeks(state, normalized) {
         let weeks = [...state.weeks]
             .filter((week) => normalized.includeOpen || week.status === "CLOSED")
+            .filter((week) => normalized.weekIds === null || normalized.weekIds.includes(week.id))
             .filter((week) => !normalized.fromWeekId || week.id >= normalized.fromWeekId)
             .filter((week) => !normalized.toWeekId || week.id <= normalized.toWeekId)
             .sort((left, right) => left.id.localeCompare(right.id));
@@ -115,6 +121,7 @@
             fromWeekId: normalized.fromWeekId,
             toWeekId: normalized.toWeekId,
             lastNWeeks: normalized.lastNWeeks,
+            selectedWeekIds: normalized.weekIds === null ? null : Object.freeze([...normalized.weekIds]),
             categoryId: normalized.categoryId,
             gender: normalized.gender,
             groupId: normalized.groupId,

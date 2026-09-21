@@ -199,6 +199,7 @@
                 weeksEvaluated: new Set(history.map((record) => record.week.id)).size,
                 wins: history.filter((record) => record.winner).length,
                 topThreeAppearances: history.filter((record) => record.rank <= 3).length,
+                standoutVotes: votes.filter((vote) => vote.rating === "standout").length,
                 categories: categoryIds.length,
                 bestRecords: bestRecords(history),
                 mostPraised: topReasons[0] || null,

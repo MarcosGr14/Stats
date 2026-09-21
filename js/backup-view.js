@@ -199,18 +199,29 @@
         async function renderSummary() {
             const currentState = options.getState();
             if (!currentState) return;
-            byId("data-summary-participants").textContent = String(currentState.participants.length);
-            byId("data-summary-weeks").textContent = String(currentState.weeks.length);
-            byId("data-summary-votes").textContent = String(currentState.weeklyVotes.length);
-            try {
-                byId("data-summary-images").textContent = String((await imageStorage.listImages(indexedDb)).length);
-            } catch (error) {
-                byId("data-summary-images").textContent = "—";
+            const summaries = {
+                participants: currentState.participants.length,
+                weeks: currentState.weeks.length,
+                votes: currentState.weeklyVotes.length
+            };
+            Object.entries(summaries).forEach(([key, value]) => {
+                const target = byId(`data-summary-${key}`);
+                if (target) target.textContent = String(value);
+            });
+            const imageSummary = byId("data-summary-images");
+            if (imageSummary) {
+                try {
+                    imageSummary.textContent = String((await imageStorage.listImages(indexedDb)).length);
+                } catch (error) {
+                    imageSummary.textContent = "—";
+                }
             }
             const lastExport = localStorage.getItem(constants.LAST_EXPORT_KEY);
-            elements.lastExport.textContent = lastExport
-                ? `Última exportación: ${new Date(lastExport).toLocaleString("es-PA")}.`
-                : "Aún no hay una exportación registrada.";
+            if (elements.lastExport) {
+                elements.lastExport.textContent = lastExport
+                    ? `Última exportación: ${new Date(lastExport).toLocaleString("es-PA")}.`
+                    : "Guarda una copia completa de Stats.";
+            }
         }
 
         function activate() {
