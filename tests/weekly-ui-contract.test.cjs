@@ -12,8 +12,11 @@ const app = fs.readFileSync(path.join(projectRoot, "js", "app.js"), "utf8");
 test("exposes Weekly navigation and explicit week creation without automatic opening", () => {
     assert.match(html, /id="nav-weekly" href="#weekly"/);
     assert.match(html, /id="open-current-week"[^>]*>Abrir semana actual/);
+    assert.match(html, /id="new-week"[^>]*>Nueva semana/);
     assert.doesNotMatch(app, /openCurrentIsoWeek\(/);
     assert.match(view, /elements\.openWeek\.addEventListener\("click", openCurrentWeek\)/);
+    assert.match(view, /elements\.newWeek\.addEventListener\("click", openNextWeek\)/);
+    assert.match(view, /weekly\.openNextIsoWeek/);
 });
 
 test("weekly voting controls communicate category, user, rating, removal and reopen accessibly", () => {

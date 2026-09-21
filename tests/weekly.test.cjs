@@ -73,6 +73,45 @@ test("opens explicitly, allows one OPEN week and closes read-only", () => {
     assert.throws(() => vote(closed.state, "participant-1", "rap", "p1", "good"), (error) => error.code === "WEEK_NOT_FOUND");
 });
 
+test("opens the ISO week after the latest registered week and preserves existing data", () => {
+    let state = openWeek(fixtureState(), "2026-12-21T14:00:00.000Z");
+    state = vote(state, "participant-1", "rap", "p1", "good", ["tag-rap"], "Preserve me");
+    state = weekly.closeWeek(state, "2026-W52", "2026-12-27T23:00:00.000Z").state;
+    const preserved = JSON.stringify({
+        weeks: state.weeks, votes: state.weeklyVotes, participants: state.participants,
+        tags: state.tags, groups: state.groups, assignments: state.participantTagAssignments
+    });
+    const result = weekly.openNextIsoWeek(state, "2026-12-28T14:00:00.000Z");
+    assert.deepEqual(result.week, {
+        id: "2026-W53", label: "W53", startDate: "2026-12-28", endDate: "2027-01-03",
+        status: "OPEN", openedAt: "2026-12-28T14:00:00.000Z", closedAt: null,
+        reopenedAt: null, reopenCount: 0, createdAt: "2026-12-28T14:00:00.000Z",
+        updatedAt: "2026-12-28T14:00:00.000Z"
+    });
+    assert.equal(result.state.settings.activeWeekId, "2026-W53");
+    assert.equal(JSON.stringify({
+        weeks: result.state.weeks.slice(0, -1), votes: result.state.weeklyVotes,
+        participants: result.state.participants, tags: result.state.tags,
+        groups: result.state.groups, assignments: result.state.participantTagAssignments
+    }), preserved);
+    assert.equal(data.validateState(result.state).valid, true);
+});
+
+test("new week crosses the ISO year correctly and rejects another while one is OPEN", () => {
+    let state = openWeek(fixtureState(), "2026-12-28T14:00:00.000Z");
+    state = weekly.closeWeek(state, "2026-W53", "2027-01-03T23:00:00.000Z").state;
+    const result = weekly.openNextIsoWeek(state, "2027-01-04T14:00:00.000Z");
+    assert.equal(result.week.id, "2027-W01");
+    assert.equal(result.week.startDate, "2027-01-04");
+    assert.equal(result.week.endDate, "2027-01-10");
+    assert.equal(new Set(result.state.weeks.map((week) => week.id)).size, result.state.weeks.length);
+    assert.throws(() => weekly.openNextIsoWeek(result.state), (error) => {
+        assert.equal(error.code, "OPEN_WEEK_EXISTS");
+        assert.equal(error.message, "Cierra la semana abierta antes de crear una nueva.");
+        return true;
+    });
+});
+
 test("reopens only CLOSED weeks with an explicit audit trail and can close again", () => {
     let state = openWeek(fixtureState());
     state = vote(state, "participant-1", "rap", "p1", "standout", ["tag-rap"], "Historic");

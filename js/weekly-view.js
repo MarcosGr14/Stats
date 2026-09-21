@@ -18,6 +18,7 @@
         const viewParticipant = options.viewParticipant;
         const elements = {
             weekSelect: byId("weekly-week-select"), openWeek: byId("open-current-week"),
+            newWeek: byId("new-week"),
             closeWeek: byId("close-current-week"), reopenWeek: byId("reopen-current-week"),
             status: byId("weekly-status"), empty: byId("weekly-empty"), workspace: byId("weekly-workspace"),
             periodTitle: byId("weekly-period-title"), weekRange: byId("weekly-week-range"),
@@ -176,7 +177,7 @@
             if (state()?.meta?.weeklyVotingVersion !== 2) {
                 selectedWeekId = null;
                 elements.weekSelect.replaceChildren(createElement("option", "", "Votación semanal no disponible"));
-                elements.weekSelect.disabled = true; elements.openWeek.disabled = true;
+                elements.weekSelect.disabled = true; elements.openWeek.disabled = true; elements.newWeek.disabled = true;
                 elements.closeWeek.hidden = true; elements.reopenWeek.hidden = true;
                 elements.empty.hidden = false; elements.workspace.hidden = true;
                 elements.status.textContent = "No disponible"; elements.status.dataset.state = "none";
@@ -184,7 +185,8 @@
             }
             ensureSelection(); renderWeekSelect(); renderGroupOptions();
             const week = currentWeek();
-            elements.empty.hidden = Boolean(week); elements.workspace.hidden = !week; elements.openWeek.disabled = !canWrite();
+            elements.empty.hidden = Boolean(week); elements.workspace.hidden = !week;
+            elements.openWeek.disabled = !canWrite(); elements.newWeek.disabled = !canWrite();
             if (!week) {
                 elements.status.textContent = "Sin semana"; elements.status.dataset.state = "none";
                 elements.closeWeek.hidden = true; elements.reopenWeek.hidden = true; return;
@@ -328,6 +330,14 @@
                 notify(result.created ? `${result.week.label} abierta para votar.` : `${result.week.label} seleccionada.`);
             } catch (error) { notify(error.message, "error"); }
         }
+        function openNextWeek() {
+            if (!canWrite()) return;
+            try {
+                const result = weekly.openNextIsoWeek(state()); selectedWeekId = result.week.id;
+                commitState(result.state);
+                notify(`${result.week.label} abierta para votar.`);
+            } catch (error) { notify(error.message, "error"); }
+        }
         function openCloseDialog() {
             const week = currentWeek(); if (!week || week.status !== "OPEN") return;
             returnFocusElement = elements.closeWeek; elements.closeDialogTitle.textContent = `¿Cerrar ${week.label}?`;
@@ -359,6 +369,7 @@
         function bindEvents() {
             elements.weekSelect.addEventListener("change", () => { selectedWeekId = elements.weekSelect.value || null; render(); });
             elements.openWeek.addEventListener("click", openCurrentWeek);
+            elements.newWeek.addEventListener("click", openNextWeek);
             elements.closeWeek.addEventListener("click", openCloseDialog);
             elements.reopenWeek.addEventListener("click", openReopenDialog);
             elements.userSwitch.addEventListener("click", (event) => {

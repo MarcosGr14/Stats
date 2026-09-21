@@ -105,6 +105,29 @@
         assertState(nextState);
         return { state: nextState, week, created: true };
     }
+    function openNextIsoWeek(state, timestamp = new Date().toISOString()) {
+        assertState(state);
+        const openWeek = state.weeks.find((week) => week.status === "OPEN");
+        if (openWeek) {
+            throw new WeeklyError("OPEN_WEEK_EXISTS", "Cierra la semana abierta antes de crear una nueva.");
+        }
+        if (state.weeks.length === 0) {
+            throw new WeeklyError("WEEK_NOT_FOUND", "Abre la semana actual antes de crear una nueva.");
+        }
+        const latestWeek = [...state.weeks].sort((left, right) => left.startDate.localeCompare(right.startDate)).at(-1);
+        const nextMonday = new Date(`${latestWeek.startDate}T12:00:00.000Z`);
+        nextMonday.setUTCDate(nextMonday.getUTCDate() + 7);
+        const descriptor = isoWeekForDate(nextMonday);
+        if (state.weeks.some((week) => week.id === descriptor.id)) {
+            throw new WeeklyError("WEEK_EXISTS", `${descriptor.label} ya está registrada.`);
+        }
+        const nextState = cloneState(state);
+        const week = data.createWeek({ ...descriptor, id: descriptor.id, status: "OPEN" }, timestamp);
+        nextState.weeks.push(week);
+        nextState.settings.activeWeekId = week.id;
+        assertState(nextState);
+        return { state: nextState, week, created: true };
+    }
     function closeWeek(state, weekId, timestamp = new Date().toISOString()) {
         assertState(state);
         const current = findWeek(state, weekId);
@@ -363,7 +386,7 @@
 
     namespace.weekly = Object.freeze({
         WeeklyError, PANAMA_TIME_ZONE, isoWeekForDate, formatWeekRange,
-        openCurrentIsoWeek, closeWeek, reopenWeek,
+        openCurrentIsoWeek, openNextIsoWeek, closeWeek, reopenWeek,
         findVote, findLegacyVote, upsertVote, removeVote, assignLegacyVoteCategory,
         ratingScore, standoutCountForUser, deriveMetricsFromVotes, deriveCategoryWeeklyMetrics,
         compareWeeklyMetrics, sameRankMetrics, deriveWeeklyRanking, createWeeklyPointsProvider,
