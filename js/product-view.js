@@ -114,6 +114,33 @@
             return list;
         }
 
+        function categoryRanking(record, categoryId, gender) {
+            const standing = record.resultsSnapshot.categoryStandings?.find((item) => (
+                item.categoryId === categoryId && item.gender === gender
+            ));
+            const details = element("details", "hall-ranking-details");
+            const summary = element("summary", "", "Ver ranking y puntuaciones");
+            const list = element("ol", "hall-ranking-list");
+            (standing?.entries || []).forEach((entry) => {
+                const row = element("li", "hall-ranking-row");
+                const rank = entry.eligible ? `#${entry.rank}${entry.tied ? " · Empate" : ""}` : "Provisional";
+                const person = element("div", "hall-ranking-person");
+                person.append(winnerButton(entry));
+                if (entry.groupName) person.append(element("small", "", entry.groupName));
+                row.append(
+                    element("span", "hall-ranking-rank", rank),
+                    person,
+                    element("strong", "hall-ranking-score", decimal(entry.seasonScore))
+                );
+                list.append(row);
+            });
+            if (!standing || standing.entries.length === 0) {
+                list.append(element("li", "hall-ranking-empty", "Sin participantes con puntuación."));
+            }
+            details.append(summary, list);
+            return details;
+        }
+
         function grandCard(record, gender) {
             const standing = record.resultsSnapshot.grandWinners.find((item) => item.gender === gender);
             const card = element("article", `hall-grand-card hall-grand-card--${gender}`);
@@ -133,6 +160,7 @@
                     item.categoryId === category.id && item.gender === gender
                 ));
                 row.append(element("span", "", label), winnerList(standing?.winners || [], "Sin clasificar"));
+                row.append(categoryRanking(record, category.id, gender));
                 card.append(row);
             });
             return card;

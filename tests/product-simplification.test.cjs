@@ -30,7 +30,7 @@ test("combines weekly and season results under two tabs", () => {
 
 test("provides explicit season closure and a frozen Hall of Fame", () => {
     assert.match(html, /id="open-close-season"[^>]*>Cerrar temporada/);
-    assert.match(html, /Los resultados actuales pasarán al Hall of Fame y comenzará una nueva temporada\./);
+    assert.match(html, /El ranking completo quedará guardado en el Hall of Fame y la nueva temporada comenzará sin categorías asignadas\./);
     assert.match(html, /id="hall-of-fame"/);
     assert.match(productView, /seasons\.closeCurrentSeason/);
     assert.match(productView, /resultsSnapshot\.grandWinners/);

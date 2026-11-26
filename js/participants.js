@@ -56,11 +56,12 @@
         }
     }
 
-    function assertNoActiveDuplicate(state, name, ignoredParticipantId = null) {
+    function assertNoActiveDuplicate(state, name, groupId, ignoredParticipantId = null) {
         const duplicate = state.participants.find((participant) => (
             participant.id !== ignoredParticipantId
             && participant.archivedAt === null
             && comparableName(participant.name) === comparableName(name)
+            && participant.groupId === groupId
         ));
         if (duplicate) {
             throw new ParticipantError(
@@ -98,7 +99,7 @@
         const name = assertName(input.name);
         const groupId = input.groupId || null;
         assertGroupExists(state, groupId);
-        assertNoActiveDuplicate(state, name);
+        assertNoActiveDuplicate(state, name, groupId);
 
         const participant = data.createParticipant({ ...input, name, groupId }, timestamp);
         const nextState = cloneState(state);
@@ -114,7 +115,7 @@
         const groupId = changes.groupId || null;
         assertGroupExists(state, groupId);
         if (current.archivedAt === null) {
-            assertNoActiveDuplicate(state, name, participantId);
+            assertNoActiveDuplicate(state, name, groupId, participantId);
         }
 
         const updated = data.createParticipant({
@@ -147,7 +148,7 @@
     function restoreParticipant(state, participantId, timestamp = new Date().toISOString()) {
         assertState(state);
         const current = findParticipant(state, participantId);
-        assertNoActiveDuplicate(state, current.name, participantId);
+        assertNoActiveDuplicate(state, current.name, current.groupId, participantId);
         const nextState = cloneState(state);
         const restored = nextState.participants.find((item) => item.id === participantId);
         restored.archivedAt = null;

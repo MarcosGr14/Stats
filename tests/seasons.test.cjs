@@ -7,7 +7,7 @@ const projectRoot = path.resolve(__dirname, "..");
     "constants.js", "data.js", "weekly.js", "spotlight.js", "analytics.js", "season.js", "seasons.js"
 ].forEach((file) => require(path.join(projectRoot, "js", file)));
 
-const { data, weekly, seasons } = globalThis.StatsV2;
+const { data, weekly, season, seasons } = globalThis.StatsV2;
 const stamp = "2026-08-01T12:00:00.000Z";
 
 function fixtureState() {
@@ -71,11 +71,32 @@ test("adds one current season without changing existing records", () => {
     assert.equal(data.validateState(result.state).valid, true);
 });
 
+test("backfills complete rankings to older closed-season archive records", () => {
+    const state = fixtureState();
+    const weekIds = state.weeks.map((week) => week.id);
+    const frozenWinners = [{ categoryId: "vocal", gender: "female", winners: [{ participantId: "female-one", name: "Frozen Ari", score: 91 }] }];
+    state.seasons = [data.createSeason({
+        id: "season-1", label: "TEMPORADA 1", status: "CLOSED", weekIds,
+        startWeekId: weekIds[0], endWeekId: weekIds.at(-1), closedAt: stamp,
+        resultsSnapshot: { grandWinners: [], categoryWinners: frozenWinners, highlights: [] }
+    }, stamp)];
+
+    const result = seasons.ensureCurrentSeason(state, "2026-09-01T12:00:00.000Z");
+    const archived = result.state.seasons.find((record) => record.id === "season-1");
+    assert.equal(result.changed, true);
+    assert.deepEqual(archived.resultsSnapshot.categoryWinners, frozenWinners);
+    assert.equal(archived.resultsSnapshot.categoryStandings.length, 12);
+    assert.deepEqual(archived.resultsSnapshot.categoryStandings
+        .find((standing) => standing.categoryId === "vocal" && standing.gender === "female")
+        .entries.map((entry) => entry.name), ["Ari"]);
+    assert.equal(data.validateState(result.state).valid, true);
+});
+
 test("closes a season with frozen winners and starts the next one", () => {
     let state = seasons.ensureCurrentSeason(fixtureState(), "2026-09-01T12:00:00.000Z").state;
+    const weekData = (weeks) => weeks.map(({ participantCategoryIds, updatedAt, ...week }) => week);
     const preserved = JSON.stringify({
-        participants: state.participants,
-        weeks: state.weeks,
+        weeks: weekData(state.weeks),
         votes: state.weeklyVotes,
         tags: state.tags
     });
@@ -88,16 +109,31 @@ test("closes a season with frozen winners and starts the next one", () => {
     assert.equal(result.closedSeason.resultsSnapshot.categoryWinners
         .find((standing) => standing.categoryId === "vocal" && standing.gender === "male").winners[0].name, "Min");
     assert.equal(result.closedSeason.resultsSnapshot.highlights.length, 6);
+    const femaleVocalRanking = result.closedSeason.resultsSnapshot.categoryStandings
+        .find((standing) => standing.categoryId === "vocal" && standing.gender === "female");
+    assert.deepEqual(femaleVocalRanking.entries.map((entry) => [entry.rank, entry.name, entry.seasonScore]), [
+        [1, "Ari", 100]
+    ]);
     assert.equal(result.currentSeason.id, "season-2");
     assert.equal(result.currentSeason.status, "OPEN");
     assert.deepEqual(result.currentSeason.weekIds, []);
+    assert.deepEqual(result.state.participants.map((participant) => participant.categoryIds), [[], []]);
+    assert.deepEqual(result.state.weeks[0].participantCategoryIds["female-one"], ["vocal"]);
     assert.equal(result.state.settings.currentSeasonId, "season-2");
     assert.equal(JSON.stringify({
-        participants: result.state.participants,
-        weeks: result.state.weeks,
+        weeks: weekData(result.state.weeks),
         votes: result.state.weeklyVotes,
         tags: result.state.tags
     }), preserved);
+    assert.deepEqual(result.state.participants.map(({ id, name, groupId, gender, imageId }) => (
+        { id, name, groupId, gender, imageId }
+    )), state.participants.map(({ id, name, groupId, gender, imageId }) => (
+        { id, name, groupId, gender, imageId }
+    )));
+    const historicStanding = season.deriveCategoryStanding(result.state, {
+        categoryId: "vocal", gender: "female", weekIds: result.closedSeason.weekIds
+    });
+    assert.equal(historicStanding.eligible[0].participant.name, "Ari");
     assert.equal(data.validateState(result.state).valid, true);
 });
 

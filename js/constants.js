@@ -4,7 +4,7 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.10.0-simplified",
+        APP_VERSION: "2.11.0",
         SCHEMA_VERSION: 2,
         BACKUP_FORMAT: "stats-v2-backup",
         BACKUP_FORMAT_VERSION: 1,
@@ -20,6 +20,7 @@
         WEEKLY_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-weekly-voting-backup",
         CATEGORY_VOTING_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-category-voting-backup",
         SEASON_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-seasons-backup",
+        CATALOG_MIGRATION_BACKUP_KEY: "stats:v2:state:pre-fan-choice-catalog-backup",
         LAST_EXPORT_KEY: "stats:v2:last-export",
         LEGACY_STORAGE_KEY: "rankingsApp_data",
         IMAGE_DB_NAME: "stats-v2",

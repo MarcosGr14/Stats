@@ -136,7 +136,6 @@
         if (normalized.gender && participant.gender !== normalized.gender) return false;
         if (normalized.groupId === "soloist" && participant.groupId !== null) return false;
         if (normalized.groupId && normalized.groupId !== "soloist" && participant.groupId !== normalized.groupId) return false;
-        if (normalized.categoryId && !participant.categoryIds.includes(normalized.categoryId)) return false;
         return true;
     }
 

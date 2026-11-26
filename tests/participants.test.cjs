@@ -55,11 +55,11 @@ test("reuses groups case-insensitively instead of duplicating them", () => {
     assert.equal(result.state.groups.length, 1);
 });
 
-test("rejects empty names, missing categories and unsupported gender", () => {
+test("rejects empty names and unsupported gender while allowing an unassigned participant", () => {
     const state = stateWithGroup();
 
     assert.throws(() => addParticipant(state, { name: "   " }), (error) => error.code === "EMPTY_NAME");
-    assert.throws(() => addParticipant(state, { categoryIds: [] }), /at least one category/);
+    assert.deepEqual(addParticipant(state, { categoryIds: [] }).participant.categoryIds, []);
     assert.throws(() => addParticipant(state, { gender: "other" }), /unsupported value/);
 });
 
@@ -70,6 +70,21 @@ test("rejects missing groups and exact active duplicates", () => {
     const withParticipant = addParticipant(state).state;
     assert.throws(
         () => addParticipant(withParticipant, { name: "NINGNING" }),
+        (error) => error.code === "DUPLICATE_PARTICIPANT"
+    );
+});
+
+test("allows same-name performers in different groups while preventing duplicates within a group", () => {
+    const state = stateWithGroup();
+    const first = addParticipant(state);
+    const otherGroup = participants.createGroup(first.state, "NMIXX", timestamp);
+    const second = addParticipant(otherGroup.state, { groupId: otherGroup.group.id });
+
+    assert.equal(second.state.participants.length, 2);
+    assert.equal(second.state.participants[0].groupId, state.groups[0].id);
+    assert.equal(second.state.participants[1].groupId, otherGroup.group.id);
+    assert.throws(
+        () => addParticipant(second.state, { name: "NINGNING", groupId: state.groups[0].id }),
         (error) => error.code === "DUPLICATE_PARTICIPANT"
     );
 });

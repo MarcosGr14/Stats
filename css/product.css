@@ -174,6 +174,15 @@
 .hall-category-card h3 { margin-bottom: var(--space-3); font-family: var(--font-display); }
 .hall-category-row { display: grid; grid-template-columns: 4rem 1fr; gap: var(--space-2); padding-top: var(--space-2); }
 .hall-category-row > span { color: var(--color-muted); font-size: 0.7rem; }
+.hall-ranking-details { grid-column: 1 / -1; margin-top: var(--space-1); }
+.hall-ranking-details summary { color: var(--color-soft); font-size: 0.72rem; cursor: pointer; }
+.hall-ranking-list { display: grid; gap: var(--space-2); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+.hall-ranking-row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); padding: var(--space-2); border-radius: var(--radius-sm); background: var(--color-elevated); }
+.hall-ranking-rank, .hall-ranking-person small { color: var(--color-muted); font-size: 0.68rem; }
+.hall-ranking-person { display: grid; min-width: 0; }
+.hall-ranking-person .hall-person { width: fit-content; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hall-ranking-score { font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.hall-ranking-empty { color: var(--color-muted); font-size: 0.75rem; }
 .hall-highlight-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 
 .hall-empty {

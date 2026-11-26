@@ -7,8 +7,9 @@ require(path.join(projectRoot, "js", "constants.js"));
 require(path.join(projectRoot, "js", "data.js"));
 require(path.join(projectRoot, "js", "storage.js"));
 require(path.join(projectRoot, "js", "weekly.js"));
+require(path.join(projectRoot, "js", "spotlight.js"));
 
-const { constants, data, storage, weekly } = globalThis.StatsV2;
+const { constants, data, storage, weekly, spotlight } = globalThis.StatsV2;
 const timestamp = "2026-08-31T14:00:00.000Z";
 
 function fixtureState() {
@@ -71,6 +72,25 @@ test("opens explicitly, allows one OPEN week and closes read-only", () => {
     assert.equal(closed.week.status, "CLOSED");
     assert.equal(closed.state.settings.activeWeekId, null);
     assert.throws(() => vote(closed.state, "participant-1", "rap", "p1", "good"), (error) => error.code === "WEEK_NOT_FOUND");
+});
+
+test("keeps the weekly nominee list, categories and points after season categories reset", () => {
+    let state = openWeek(fixtureState());
+    state = vote(state, "participant-2", "vocal", "p1", "good");
+    state = weekly.closeWeek(state, state.settings.activeWeekId, "2026-09-06T23:00:00.000Z").state;
+    state.participants.forEach((participant) => { participant.categoryIds = []; });
+
+    assert.equal(data.validateState(state).valid, true);
+    assert.deepEqual(weekly.categoriesForParticipant(state, "2026-W36", "participant-2"), ["vocal", "stage"]);
+    assert.deepEqual(weekly.categoriesForParticipant(state, "2026-W36", "participant-8"), ["vocal"]);
+    assert.deepEqual(weekly.filterWeeklyParticipants(state, "2026-W36", "p1", { categoryId: "vocal" })
+        .map((participant) => participant.id), ["participant-2", "participant-8"]);
+    assert.equal(weekly.deriveCategoryWeeklyMetrics(state, "2026-W36", "participant-2", "vocal").weeklyPoints, 1);
+    const ranking = spotlight.deriveSpotlightRanking(state, {
+        weekId: "2026-W36", categoryId: "vocal", gender: "male"
+    });
+    assert.deepEqual(ranking.items.map((item) => item.participant.id), ["participant-2"]);
+    assert.equal(ranking.notEvaluatedCount, 1);
 });
 
 test("opens the ISO week after the latest registered week and preserves existing data", () => {

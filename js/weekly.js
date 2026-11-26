@@ -76,9 +76,12 @@
             throw new WeeklyError("INVALID_VOTER", "El votante debe ser P1 o P2.");
         }
     }
-    function assertParticipantCategory(participant, categoryId) {
+    function assertParticipantCategory(state, weekId, participant, categoryId) {
         if (!categoryIds.has(categoryId)) throw new WeeklyError("INVALID_CATEGORY", "Selecciona una categoría válida.");
-        if (!participant.categoryIds.includes(categoryId)) {
+        const hasHistoricalVote = state.weeklyVotes.some((vote) => (
+            vote.weekId === weekId && vote.participantId === participant.id && vote.categoryId === categoryId
+        ));
+        if (!participant.categoryIds.includes(categoryId) && !hasHistoricalVote) {
             throw new WeeklyError("CATEGORY_NOT_ASSIGNED", "El participante no está asignado a esta categoría.");
         }
     }
@@ -134,6 +137,18 @@
         if (current.status === "CLOSED") throw new WeeklyError("WEEK_CLOSED", "La semana ya está cerrada.");
         const nextState = cloneState(state);
         const week = nextState.weeks.find((item) => item.id === weekId);
+        const participantCategoryIds = Object.fromEntries(nextState.participants
+            .filter((participant) => participant.categoryIds.length > 0).map((participant) => (
+                [participant.id, [...participant.categoryIds]]
+            )));
+        nextState.weeklyVotes.filter((vote) => vote.weekId === weekId && vote.categoryId)
+            .forEach((vote) => {
+                if (!participantCategoryIds[vote.participantId]) participantCategoryIds[vote.participantId] = [];
+                if (!participantCategoryIds[vote.participantId].includes(vote.categoryId)) {
+                    participantCategoryIds[vote.participantId].push(vote.categoryId);
+                }
+            });
+        week.participantCategoryIds = participantCategoryIds;
         week.status = "CLOSED";
         if (Object.prototype.hasOwnProperty.call(week, "closed")) week.closed = true;
         week.closedAt = timestamp;
@@ -179,7 +194,7 @@
         if (participant.archivedAt !== null) {
             throw new WeeklyError("PARTICIPANT_ARCHIVED", "Los participantes archivados no reciben votos nuevos.");
         }
-        assertParticipantCategory(participant, input.categoryId);
+        assertParticipantCategory(state, week.id, participant, input.categoryId);
         assertVoter(state, input.userId);
         if (!ratingById.has(input.rating)) throw new WeeklyError("INVALID_RATING", "Selecciona una valoración válida.");
         const reasonTagIds = Array.isArray(input.reasonTagIds) ? [...new Set(input.reasonTagIds)] : [];
@@ -239,7 +254,7 @@
         const week = findWeek(state, weekId);
         if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "La semana está cerrada.");
         const participant = findParticipant(state, participantId);
-        assertParticipantCategory(participant, categoryId);
+        assertParticipantCategory(state, week.id, participant, categoryId);
         assertVoter(state, userId);
         const existing = findVote(state, weekId, participantId, categoryId, userId);
         if (!existing) return { state: cloneState(state), vote: null, removed: false };
@@ -257,7 +272,7 @@
         const week = findWeek(state, existing.weekId);
         if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "Reabre la semana antes de categorizar este voto anterior.");
         const participant = findParticipant(state, existing.participantId);
-        assertParticipantCategory(participant, categoryId);
+        assertParticipantCategory(state, week.id, participant, categoryId);
         if (findVote(state, existing.weekId, existing.participantId, categoryId, existing.userId)) {
             throw new WeeklyError("CATEGORY_VOTE_EXISTS", "Esta categoría ya tiene un voto del mismo usuario en la semana.");
         }
@@ -288,7 +303,7 @@
     function deriveCategoryWeeklyMetrics(state, weekId, participantId, categoryId) {
         findWeek(state, weekId);
         const participant = findParticipant(state, participantId);
-        assertParticipantCategory(participant, categoryId);
+        assertParticipantCategory(state, weekId, participant, categoryId);
         const votes = state.weeklyVotes.filter((vote) => vote.weekId === weekId
             && vote.participantId === participantId && vote.categoryId === categoryId
             && vote.legacyUncategorized !== true);
@@ -335,7 +350,7 @@
     function createWeeklyPointsProvider(state, weekId) {
         findWeek(state, weekId);
         return (participant, categoryId) => {
-            if (!categoryId || !participant.categoryIds.includes(categoryId)) return null;
+            if (!categoryId || !categoryIds.has(categoryId)) return null;
             const metrics = deriveCategoryWeeklyMetrics(state, weekId, participant.id, categoryId);
             return metrics.votesCount > 0 ? metrics.weeklyPoints : null;
         };
@@ -353,6 +368,16 @@
         };
     }
     function comparableText(value) { return String(value || "").trim().toLocaleLowerCase("es"); }
+    function categoriesForParticipant(state, weekId, participantId) {
+        const week = findWeek(state, weekId);
+        const participant = findParticipant(state, participantId);
+        const recorded = state.weeklyVotes
+            .filter((vote) => vote.weekId === weekId && vote.participantId === participantId && vote.categoryId)
+            .map((vote) => vote.categoryId);
+        const archived = week.participantCategoryIds?.[participantId] || recorded;
+        return [...new Set(week.status === "CLOSED" ? archived : [...participant.categoryIds, ...archived, ...recorded])]
+            .filter((categoryId) => categoryIds.has(categoryId));
+    }
     function filterWeeklyParticipants(state, weekId, userId, options = {}) {
         const week = findWeek(state, weekId);
         assertVoter(state, userId);
@@ -365,7 +390,7 @@
         const historicalIds = new Set(state.weeklyVotes.filter((vote) => vote.weekId === weekId).map((vote) => vote.participantId));
         return state.participants
             .filter((participant) => participant.archivedAt === null || (week.status === "CLOSED" && historicalIds.has(participant.id)))
-            .filter((participant) => categoryId === "all" || participant.categoryIds.includes(categoryId))
+            .filter((participant) => categoryId === "all" || categoriesForParticipant(state, weekId, participant.id).includes(categoryId))
             .filter((participant) => gender === "all" || participant.gender === gender)
             .filter((participant) => groupId === "all" || (groupId === "soloist" ? participant.groupId === null : participant.groupId === groupId))
             .filter((participant) => {
@@ -390,7 +415,7 @@
         findVote, findLegacyVote, upsertVote, removeVote, assignLegacyVoteCategory,
         ratingScore, standoutCountForUser, deriveMetricsFromVotes, deriveCategoryWeeklyMetrics,
         compareWeeklyMetrics, sameRankMetrics, deriveWeeklyRanking, createWeeklyPointsProvider,
-        weeklyProgress, filterWeeklyParticipants
+        weeklyProgress, categoriesForParticipant, filterWeeklyParticipants
     });
     root.StatsV2 = namespace;
 })(globalThis);

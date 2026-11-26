@@ -74,6 +74,17 @@
             current.updatedAt = timestamp;
             changed = true;
         }
+        nextState.seasons.filter((record) => record.status === "CLOSED"
+            && record.resultsSnapshot && !Array.isArray(record.resultsSnapshot.categoryStandings))
+            .forEach((record) => {
+                const historical = season.deriveAllStandings(nextState, {
+                    includeOpen: false,
+                    weekIds: record.weekIds
+                });
+                record.resultsSnapshot.categoryStandings = snapshotCategoryStandings(historical);
+                record.updatedAt = timestamp;
+                changed = true;
+            });
         if (nextState.settings.currentSeasonId !== current.id) {
             nextState.settings.currentSeasonId = current.id;
             changed = true;
@@ -178,6 +189,39 @@
         ];
     }
 
+    function snapshotCategoryStandings(allStandings) {
+        return allStandings.standings.map((standing) => ({
+            categoryId: standing.categoryId,
+            gender: standing.gender,
+            entries: [...standing.eligible, ...standing.provisional].map((entry) => ({
+                participantId: entry.participantId,
+                name: entry.participant.name,
+                imageId: entry.participant.imageId || null,
+                groupName: entry.group?.name || "Solista",
+                seasonScore: entry.seasonScore,
+                rank: entry.rank,
+                tied: entry.tied,
+                eligible: entry.eligible,
+                weeksEvaluated: entry.weeksEvaluated,
+                wins: entry.wins,
+                topThreeAppearances: entry.topThreeAppearances,
+                averageWeeklyPoints: entry.averageWeeklyPoints,
+                standoutVotes: entry.standoutVotes
+            }))
+        }));
+    }
+
+    function snapshotWeekCategories(state, weekId) {
+        const snapshot = Object.fromEntries(state.participants.filter((participant) => participant.categoryIds.length > 0).map((participant) => (
+            [participant.id, [...participant.categoryIds]]
+        )));
+        state.weeklyVotes.filter((vote) => vote.weekId === weekId && vote.categoryId).forEach((vote) => {
+            if (!snapshot[vote.participantId]) snapshot[vote.participantId] = [];
+            if (!snapshot[vote.participantId].includes(vote.categoryId)) snapshot[vote.participantId].push(vote.categoryId);
+        });
+        return snapshot;
+    }
+
     function buildResultsSnapshot(state, weekIds) {
         const overview = season.deriveSeasonOverview(state, { includeOpen: false, weekIds });
         return {
@@ -190,6 +234,7 @@
                 gender: standing.gender,
                 winners: standing.winners.map((entry) => personSnapshot(entry, "seasonScore"))
             })),
+            categoryStandings: snapshotCategoryStandings(overview.allStandings),
             highlights: deriveHighlights(state, weekIds, false)
         };
     }
@@ -207,12 +252,23 @@
         const nextState = cloneState(ensured.state);
         const closing = currentSeason(nextState);
         closing.weekIds = sortedWeekIds(nextState, closing.weekIds);
+        closing.weekIds.forEach((weekId) => {
+            const week = nextState.weeks.find((item) => item.id === weekId);
+            if (week && !week.participantCategoryIds) {
+                week.participantCategoryIds = snapshotWeekCategories(nextState, weekId);
+                week.updatedAt = timestamp;
+            }
+        });
         closing.startWeekId = closing.weekIds[0];
         closing.endWeekId = closing.weekIds.at(-1);
         closing.status = "CLOSED";
         closing.closedAt = timestamp;
         closing.resultsSnapshot = buildResultsSnapshot(nextState, closing.weekIds);
         closing.updatedAt = timestamp;
+        nextState.participants.forEach((participant) => {
+            participant.categoryIds = [];
+            participant.updatedAt = timestamp;
+        });
         const nextNumber = nextSeasonNumber(nextState.seasons);
         const opened = createOpenSeason(nextNumber, [], timestamp);
         nextState.seasons.push(opened);

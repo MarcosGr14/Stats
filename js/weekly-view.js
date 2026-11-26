@@ -132,7 +132,8 @@
             if (legacy) heading.append(identity, createElement("span", "weekly-state weekly-state--legacy", "Voto anterior"));
             else heading.append(identity);
             const summaries = createElement("div", "weekly-category-summaries");
-            participant.categoryIds.forEach((categoryId) => summaries.append(createCategorySummary(participant, categoryId, week)));
+            weekly.categoriesForParticipant(state(), week.id, participant.id)
+                .forEach((categoryId) => summaries.append(createCategorySummary(participant, categoryId, week)));
             const footer = createElement("div", "weekly-card-footer");
             footer.append(createElement("p", "weekly-card-reasons", legacy ? "Asigna el voto anterior a la categoría correcta." : "Cada categoría se evalúa por separado."));
             const actions = createElement("div", "weekly-card-actions");
@@ -140,9 +141,14 @@
             profileAction.type = "button"; profileAction.dataset.weeklyProfileId = participant.id;
             actions.append(profileAction);
             if (week.status === "OPEN") {
-                const action = createElement("button", "button button--primary", "Evaluar categorías");
-                action.type = "button"; action.dataset.weeklyParticipantId = participant.id; action.disabled = !canWrite();
-                actions.append(action);
+                const categories = weekly.categoriesForParticipant(state(), week.id, participant.id);
+                if (categories.length) {
+                    const action = createElement("button", "button button--primary", "Evaluar categorías");
+                    action.type = "button"; action.dataset.weeklyParticipantId = participant.id; action.disabled = !canWrite();
+                    actions.append(action);
+                } else {
+                    actions.append(createElement("span", "weekly-readonly-badge", "Sin categoría asignada"));
+                }
             } else actions.append(createElement("span", "weekly-readonly-badge", "Solo consulta"));
             footer.append(actions);
             card.append(heading, summaries, footer);
@@ -239,7 +245,7 @@
         }
         function renderCategoryTabs(participant) {
             const fragment = document.createDocumentFragment();
-            participant.categoryIds.forEach((categoryId) => {
+            weekly.categoriesForParticipant(state(), currentWeek().id, participant.id).forEach((categoryId) => {
                 const vote = weekly.findVote(state(), currentWeek().id, participant.id, categoryId, activeUserId);
                 const button = createElement("button", "weekly-category-tab");
                 button.type = "button"; button.role = "tab"; button.dataset.weeklyCategoryId = categoryId;
@@ -260,7 +266,7 @@
         }
         function loadCategory(categoryId) {
             const participant = state().participants.find((item) => item.id === editingParticipantId);
-            if (!participant || !participant.categoryIds.includes(categoryId)) return;
+            if (!participant || !weekly.categoriesForParticipant(state(), currentWeek().id, participant.id).includes(categoryId)) return;
             editingCategoryId = categoryId;
             const existing = weekly.findVote(state(), currentWeek().id, participant.id, categoryId, activeUserId);
             selectedRating = existing?.rating || null; selectedReasonIds = new Set(existing?.reasonTagIds || []);
@@ -277,7 +283,8 @@
             if (!participant || participant.archivedAt !== null) return;
             editingParticipantId = participantId;
             const filteredCategory = elements.categoryFilter.value;
-            editingCategoryId = participant.categoryIds.includes(filteredCategory) ? filteredCategory : participant.categoryIds[0];
+            const availableCategories = weekly.categoriesForParticipant(state(), week.id, participant.id);
+            editingCategoryId = availableCategories.includes(filteredCategory) ? filteredCategory : availableCategories[0];
             returnFocusElement = trigger || document.activeElement;
             elements.voteKicker.textContent = `${week.label} · Votando como ${currentVoter().name} (${activeUserId.toUpperCase()})`;
             elements.voteTitle.textContent = `Evaluar a ${participant.name}`;

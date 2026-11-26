@@ -40,6 +40,9 @@
                 ids.add(vote.categoryId);
             }
         });
+        state.weeks.forEach((week) => {
+            (week.participantCategoryIds?.[participant.id] || []).forEach((categoryId) => ids.add(categoryId));
+        });
         return [...ids].sort((left, right) => (categoryIndex.get(left) ?? 99) - (categoryIndex.get(right) ?? 99));
     }
 

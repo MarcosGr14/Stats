@@ -10,6 +10,7 @@ const app = read("js", "app.js");
 const appCss = read("css", "app.css");
 const seasonView = read("js", "season-view.js");
 const weeklyView = read("js", "weekly-view.js");
+const productView = read("js", "product-view.js");
 
 test("keeps five primary destinations with contextual profiles and tags", () => {
     const navigation = html.match(/<nav class="primary-nav"[\s\S]*?<\/nav>/)?.[0] || "";
@@ -35,6 +36,13 @@ test("loads shared UI helpers before every renderer", () => {
         .forEach((asset) => assert.ok(uiIndex < html.indexOf(`js/${asset}`)));
 });
 
+test("loads and applies the additive Fan Choice catalog migration safely", () => {
+    assert.ok(html.indexOf("js/data.js") < html.indexOf("js/participant-catalog.js"));
+    assert.ok(html.indexOf("js/participant-catalog.js") < html.indexOf("js/app.js"));
+    assert.match(app, /participantCatalog\.ensureFanChoiceCatalog\(state\)/);
+    assert.match(app, /CATALOG_MIGRATION_BACKUP_KEY/);
+});
+
 test("removes the obsolete provisional Rankings directory and its dead CSS", () => {
     assert.equal(fs.existsSync(path.join(projectRoot, "js", "rankings.js")), false);
     assert.doesNotMatch(html, /js\/rankings\.js|Sin ranking|unranked-badge|ranking-toolbar|top-three-locked/);
@@ -49,6 +57,15 @@ test("keeps Rankings read-only and derived from the Season source", () => {
     assert.doesNotMatch(seasonView, /localStorage|sessionStorage|indexedDB|storage\.(?:save|set)/);
 });
 
+test("archives every seasonal category ranking and makes the next season's nominations explicit", () => {
+    assert.match(read("js", "seasons.js"), /categoryStandings/);
+    assert.match(productView, /resultsSnapshot\.categoryStandings\?\.find/);
+    assert.match(productView, /Ver ranking y puntuaciones/);
+    assert.match(html, /Categorías de esta temporada <span>\(opcional\)<\/span>/);
+    assert.match(html, /la nueva temporada comenzará sin categorías asignadas/);
+    assert.match(weeklyView, /Sin categoría asignada/);
+});
+
 test("removes obsolete visible English copy without renaming domain identifiers", () => {
     const visibleSources = `${html}\n${weeklyView}\n${seasonView}`;
     ["Unavailable", "0 evaluated", "Grand Score", "Standout rate", "Vista previa LIVE"]
@@ -60,6 +77,6 @@ test("removes obsolete visible English copy without renaming domain identifiers"
 test("keeps the schema stable while simplifying the product", () => {
     assert.doesNotMatch(read("js", "ui.js"), /localStorage|sessionStorage|indexedDB|storage/);
     assert.doesNotMatch(seasonView, /cache|memo/i);
-    assert.match(read("js", "constants.js"), /APP_VERSION: "2\.10\.0-simplified"/);
+    assert.match(read("js", "constants.js"), /APP_VERSION: "2\.11\.0"/);
     assert.match(read("js", "constants.js"), /SCHEMA_VERSION: 2/);
 });

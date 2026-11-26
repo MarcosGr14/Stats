@@ -110,9 +110,6 @@
 
     function createParticipant(input, timestamp = nowIso()) {
         const categories = uniqueStrings(input.categoryIds || [], "categoryIds");
-        if (categories.length === 0) {
-            throw new TypeError("categoryIds requires at least one category.");
-        }
         if (categories.some((id) => !categoryIds.has(id))) {
             throw new TypeError("categoryIds contains an unsupported category.");
         }
@@ -184,6 +181,9 @@
             createdAt: input.createdAt || timestamp,
             updatedAt: timestamp
         };
+        if (isRecord(input.participantCategoryIds)) {
+            week.participantCategoryIds = JSON.parse(JSON.stringify(input.participantCategoryIds));
+        }
         if (!isValidIsoWeekRange(week)) {
             throw new TypeError("startDate and endDate must match the ISO Monday-Sunday week id.");
         }
@@ -368,7 +368,6 @@
                     errors.push(`${path} has an unsupported gender.`);
                 }
                 if (!Array.isArray(participant.categoryIds)
-                    || participant.categoryIds.length === 0
                     || participant.categoryIds.some((id) => !categoryIds.has(id))
                     || new Set(participant.categoryIds).size !== participant.categoryIds.length) {
                     errors.push(`${path} has invalid categoryIds.`);
@@ -440,6 +439,19 @@
                     if (!weekStatuses.has(week.status)) errors.push(`${path}.status must be OPEN or CLOSED.`);
                     requireEntityText(week, "openedAt", path, errors);
                     requireNullableText(week, "closedAt", path, errors);
+                    if (week.participantCategoryIds !== undefined && week.participantCategoryIds !== null) {
+                        if (!isRecord(week.participantCategoryIds)) {
+                            errors.push(`${path}.participantCategoryIds must be null or an object.`);
+                        } else {
+                            Object.entries(week.participantCategoryIds).forEach(([participantId, categories]) => {
+                                if (!participantId.trim() || !Array.isArray(categories)
+                                    || categories.some((id) => !categoryIds.has(id))
+                                    || new Set(categories).size !== categories.length) {
+                                    errors.push(`${path}.participantCategoryIds contains an invalid participant/category entry.`);
+                                }
+                            });
+                        }
+                    }
                     if (hasCategoryVoting) {
                         requireNullableText(week, "reopenedAt", path, errors);
                         if (!Number.isInteger(week.reopenCount) || week.reopenCount < 0) {
@@ -525,6 +537,14 @@
                 ? state.settings.voters.map((item) => item && item.id)
                 : []);
 
+            state.weeks.forEach((week, index) => {
+                if (!isRecord(week?.participantCategoryIds)) return;
+                Object.keys(week.participantCategoryIds).forEach((participantId) => {
+                    if (!participantIds.has(participantId)) {
+                        errors.push(`weeks[${index}].participantCategoryIds references a missing participant.`);
+                    }
+                });
+            });
             state.participants.forEach((participant, index) => {
                 if (participant && participant.groupId !== null && !groupIds.has(participant.groupId)) {
                     errors.push(`participants[${index}].groupId references a missing group.`);
@@ -551,12 +571,6 @@
                     reasonTagIds.forEach((tagId) => {
                         if (!tagIds.has(tagId)) errors.push(`weeklyVotes[${index}] references a missing tag.`);
                     });
-                }
-                if (hasCategoryVoting && vote.legacyUncategorized !== true && participantIds.has(vote.participantId)) {
-                    const participant = state.participants.find((item) => item && item.id === vote.participantId);
-                    if (!participant || !participant.categoryIds.includes(vote.categoryId)) {
-                        errors.push(`weeklyVotes[${index}].categoryId is not assigned to its participant.`);
-                    }
                 }
             });
             if (state.settings.activeWeekId !== null && !weekIds.has(state.settings.activeWeekId)) {

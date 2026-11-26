@@ -41,8 +41,23 @@
             votesBySelection.get(key).push(vote);
         });
         const candidatesByCategoryGender = new Map();
+        const categoriesByParticipant = new Map(state.participants.map((participant) => (
+            [participant.id, new Set(participant.categoryIds)]
+        )));
+        state.weeklyVotes.forEach((vote) => {
+            if (vote.legacyUncategorized === true || !vote.categoryId) return;
+            categoriesByParticipant.get(vote.participantId)?.add(vote.categoryId);
+        });
+        state.weeks.forEach((week) => {
+            Object.entries(week.participantCategoryIds || {}).forEach(([participantId, categoryIds]) => {
+                const participantCategories = categoriesByParticipant.get(participantId);
+                if (participantCategories && Array.isArray(categoryIds)) {
+                    categoryIds.forEach((categoryId) => participantCategories.add(categoryId));
+                }
+            });
+        });
         state.participants.forEach((participant) => {
-            participant.categoryIds.forEach((categoryId) => {
+            (categoriesByParticipant.get(participant.id) || new Set()).forEach((categoryId) => {
                 const key = categoryGenderKey(categoryId, participant.gender);
                 if (!candidatesByCategoryGender.has(key)) candidatesByCategoryGender.set(key, []);
                 candidatesByCategoryGender.get(key).push(participant);
@@ -112,7 +127,15 @@
         const { weekId, categoryId, gender } = options || {};
         const week = assertSelection(state, weekId, categoryId, gender);
         const context = preparedContext || createDerivationContext(state);
-        const candidates = context.candidatesByCategoryGender.get(categoryGenderKey(categoryId, gender)) || [];
+        const candidates = (context.candidatesByCategoryGender.get(categoryGenderKey(categoryId, gender)) || [])
+            .filter((participant) => {
+                const snapshot = week.participantCategoryIds;
+                const snapshotContainsParticipant = snapshot && Object.prototype.hasOwnProperty.call(snapshot, participant.id);
+                const snapshotCategories = snapshotContainsParticipant ? snapshot[participant.id] : null;
+                const hasVote = context.votesBySelection.has(selectionKey(weekId, categoryId, participant.id));
+                if (snapshotContainsParticipant) return snapshotCategories.includes(categoryId) || hasVote;
+                return participant.categoryIds.includes(categoryId) || hasVote;
+            });
         const items = candidates.map((participant) => {
             const votes = context.votesBySelection.get(selectionKey(weekId, categoryId, participant.id)) || [];
             if (votes.length === 0) return null;
@@ -176,8 +199,15 @@
         if (!participant) throw new TypeError("Participant history requires an existing participant.");
         const context = createDerivationContext(state);
         const entries = [];
+        const categories = new Set(state.weeklyVotes
+            .filter((vote) => vote.participantId === participantId && vote.categoryId)
+            .map((vote) => vote.categoryId));
+        participant.categoryIds.forEach((categoryId) => categories.add(categoryId));
         state.weeks.forEach((week) => {
-            participant.categoryIds.forEach((categoryId) => {
+            (week.participantCategoryIds?.[participantId] || []).forEach((categoryId) => categories.add(categoryId));
+        });
+        state.weeks.forEach((week) => {
+            categories.forEach((categoryId) => {
                 const ranking = deriveSpotlightRanking(state, {
                     weekId: week.id, categoryId, gender: participant.gender
                 }, context);

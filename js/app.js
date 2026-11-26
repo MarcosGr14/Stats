@@ -6,6 +6,7 @@
     const data = namespace && namespace.data;
     const storage = namespace && namespace.storage;
     const participantService = namespace && namespace.participants;
+    const participantCatalog = namespace && namespace.participantCatalog;
     const tagService = namespace && namespace.tags;
     const ui = namespace && namespace.ui;
     const weeklyService = namespace && namespace.weekly;
@@ -93,6 +94,7 @@
             "weekly-migrated": "Datos preservados · Votación semanal lista",
             "category-voting-migrated": "Datos preservados · Votos por categoría listos",
             "seasons-migrated": "Datos preservados · temporadas listas",
+            "catalog-migrated": `Catálogo actualizado · ${result.catalogAddedCount || 0} participantes nuevos`,
             invalid: "Datos V2 inválidos · edición bloqueada",
             unavailable: "Almacenamiento no disponible · edición bloqueada"
         };
@@ -244,7 +246,11 @@
         );
 
         const badges = createElement("div", "category-badges");
-        participant.categoryIds.forEach((categoryId) => badges.append(createCategoryBadge(categoryId)));
+        if (participant.categoryIds.length) {
+            participant.categoryIds.forEach((categoryId) => badges.append(createCategoryBadge(categoryId)));
+        } else {
+            badges.append(createElement("span", "participant-category-empty", "Sin categoría esta temporada"));
+        }
         body.append(badges);
 
         const activeTags = tagService.activeTagsForParticipant(state, participant.id).map((item) => item.tag);
@@ -810,11 +816,6 @@
             elements.genderError.textContent = "Selecciona Mujer u Hombre.";
             valid = false;
         }
-        if (categoryIds.length === 0) {
-            elements.categoriesError.textContent = "Selecciona al menos una categoría.";
-            valid = false;
-        }
-
         if (!valid) showFormError("Revisa los campos marcados antes de guardar.");
         return {
             valid,
@@ -1283,7 +1284,7 @@
     }
 
     function initialize() {
-        if (!constants || !ui || !data || !storage || !participantService || !tagService
+        if (!constants || !ui || !data || !storage || !participantService || !participantCatalog || !tagService
             || !weeklyService || !weeklyMigration || !weeklyViewService || !spotlightService
             || !spotlightViewService || !profileHistoryService || !profileViewService
             || !seasonService || !seasonsService || !seasonViewService || !productViewService
@@ -1338,6 +1339,15 @@
                         constants.SEASON_MIGRATION_BACKUP_KEY
                     );
                     result.status = "seasons-migrated";
+                }
+                const catalogUpgrade = participantCatalog.ensureFanChoiceCatalog(state);
+                if (catalogUpgrade.changed) {
+                    state = storage.saveWithNamedBackup(
+                        catalogUpgrade.state,
+                        constants.CATALOG_MIGRATION_BACKUP_KEY
+                    );
+                    result.status = "catalog-migrated";
+                    result.catalogAddedCount = catalogUpgrade.addedParticipants;
                 }
             } catch (error) {
                 writable = false;
