@@ -9,6 +9,7 @@ La aplicación reúne en un solo lugar a los participantes, sus nominaciones por
 ## Funciones del producto
 
 - Catálogo Fan Choice con 242 participantes: 235 integrantes de 39 grupos y siete solistas, organizados por género y grupo.
+- Retratos WebP para los 242 perfiles del catálogo, con sus fuentes registradas por imagen.
 - Fichas de participantes con búsqueda, filtros, grupos, imágenes, tags, archivo y perfil histórico.
 - Nominación independiente por temporada: cada participante puede quedar sin categoría hasta que se decida en cuáles competirá.
 - Votación semanal por categoría para P1 y P2, con Standout, Impressed, Good y Normal; también admite dejar una categoría sin evaluar.
@@ -34,7 +35,7 @@ Los rankings semanales ordenan por puntos, cantidad de votos y Standouts. Los em
 
 ## Datos y privacidad
 
-Stats funciona sin cuenta ni servidor de aplicación. El estado del catálogo, temporadas y votaciones se guarda localmente en el navegador; las imágenes se guardan en el almacenamiento local del navegador. Los datos permanecen en ese dispositivo y no se sincronizan automáticamente entre navegadores o equipos. La sincronización del repositorio de GitHub corresponde al código del producto, no a los datos personales de la aplicación.
+Stats funciona sin cuenta ni servidor de aplicación. El estado del catálogo, temporadas y votaciones se guarda localmente en el navegador; las fotos personalizadas se guardan en su almacenamiento local. Los retratos predeterminados del catálogo forman parte de los recursos del producto y tienen sus páginas de origen registradas junto a los archivos. Los datos personales no se sincronizan automáticamente entre navegadores o equipos. La sincronización del repositorio de GitHub corresponde al código y sus recursos, no a los datos personales de la aplicación.
 
 La función de backup permite exportar e importar el estado y las imágenes en un archivo JSON. Antes de restaurar, la aplicación valida el contenido y permite revisar el reemplazo.
 

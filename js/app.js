@@ -94,7 +94,7 @@
             "weekly-migrated": "Datos preservados · Votación semanal lista",
             "category-voting-migrated": "Datos preservados · Votos por categoría listos",
             "seasons-migrated": "Datos preservados · temporadas listas",
-            "catalog-migrated": `Catálogo actualizado · ${result.catalogAddedCount || 0} participantes nuevos`,
+            "catalog-migrated": "Catálogo actualizado · Fotos de perfil disponibles",
             invalid: "Datos V2 inválidos · edición bloqueada",
             unavailable: "Almacenamiento no disponible · edición bloqueada"
         };
@@ -151,22 +151,33 @@
         cardObjectUrls = [];
     }
 
-    async function loadCardImage(imageId, image, fallback) {
+    async function loadCardImage(participant, image, fallback) {
         try {
-            const record = await imageStorage.getImage(imageId);
-            if (!record || !record.blob || !image.isConnected) return;
-            const url = URL.createObjectURL(record.blob);
-            if (!image.isConnected) {
-                URL.revokeObjectURL(url);
+            const record = participant.imageId ? await imageStorage.getImage(participant.imageId) : null;
+            if (record?.blob && image.isConnected) {
+                const url = URL.createObjectURL(record.blob);
+                if (!image.isConnected) {
+                    URL.revokeObjectURL(url);
+                    return;
+                }
+                cardObjectUrls.push(url);
+                image.src = url;
+            } else if (participant.catalogPhotoUrl) {
+                image.src = participant.catalogPhotoUrl;
+            } else {
                 return;
             }
-            cardObjectUrls.push(url);
-            image.src = url;
             image.hidden = false;
             fallback.hidden = true;
         } catch (error) {
-            image.hidden = true;
-            fallback.hidden = false;
+            if (participant.catalogPhotoUrl) {
+                image.src = participant.catalogPhotoUrl;
+                image.hidden = false;
+                fallback.hidden = true;
+            } else {
+                image.hidden = true;
+                fallback.hidden = false;
+            }
         }
     }
 
@@ -237,7 +248,7 @@
         if (participant.archivedAt !== null) {
             photo.append(createElement("span", "archived-badge", "Archivado"));
         }
-        if (participant.imageId) loadCardImage(participant.imageId, image, fallback);
+        if (participant.imageId || participant.catalogPhotoUrl) loadCardImage(participant, image, fallback);
 
         const body = createElement("div", "participant-card-body");
         body.append(
@@ -1347,7 +1358,6 @@
                         constants.CATALOG_MIGRATION_BACKUP_KEY
                     );
                     result.status = "catalog-migrated";
-                    result.catalogAddedCount = catalogUpgrade.addedParticipants;
                 }
             } catch (error) {
                 writable = false;

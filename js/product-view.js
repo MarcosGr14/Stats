@@ -101,9 +101,16 @@
         }
 
         function winnerButton(person) {
-            const button = element("button", "hall-person", person.name);
+            const button = element("button", "hall-person");
             button.type = "button";
             button.dataset.hallParticipantId = person.participantId;
+            if (person.catalogPhotoUrl) {
+                const image = element("img", "hall-person-photo");
+                image.src = person.catalogPhotoUrl;
+                image.alt = "";
+                button.append(image);
+            }
+            button.append(document.createTextNode(person.name));
             return button;
         }
 

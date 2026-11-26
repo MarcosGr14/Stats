@@ -95,8 +95,10 @@
             wrapper.append(image, fallback);
             const generation = renderGeneration;
             imageUrl(participant.imageId).then((url) => {
-                if (!url || generation !== renderGeneration || !image.isConnected) return;
-                image.src = url;
+                if (generation !== renderGeneration || !image.isConnected) return;
+                if (url) image.src = url;
+                else if (participant.catalogPhotoUrl) image.src = participant.catalogPhotoUrl;
+                else return;
                 image.hidden = false;
                 fallback.hidden = true;
             });

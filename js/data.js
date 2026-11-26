@@ -120,6 +120,7 @@
             groupId: input.groupId || null,
             gender: requireChoice(input.gender, constants.GENDERS, "gender"),
             imageId: input.imageId || null,
+            catalogPhotoUrl: input.catalogPhotoUrl || null,
             categoryIds: categories,
             archivedAt: input.archivedAt || null,
             createdAt: input.createdAt || timestamp,
@@ -362,6 +363,7 @@
                 requireEntityText(participant, "name", path, errors);
                 requireNullableText(participant, "groupId", path, errors);
                 requireNullableText(participant, "imageId", path, errors);
+                if (participant.catalogPhotoUrl !== undefined) requireNullableText(participant, "catalogPhotoUrl", path, errors);
                 requireNullableText(participant, "archivedAt", path, errors);
                 validateTimestamps(participant, path, errors);
                 if (!constants.GENDERS.includes(participant.gender)) {

@@ -5,7 +5,7 @@
     const data = namespace.data;
     if (!data) throw new Error("Stats V2 data must load before the participant catalog.");
 
-    const CATALOG_VERSION = 1;
+    const CATALOG_VERSION = 2;
     const GROUPS = Object.freeze([
         ["aespa", "female", "Karina|Giselle|Winter|Ningning"],
         ["Alice Syndrome", "female", "Taira|Awon|Sebeen|Jeongmin"],
@@ -62,6 +62,16 @@
             .toLocaleLowerCase("en").replace(/[^a-z0-9]/g, "");
     }
     function slug(value) { return comparable(value) || "person"; }
+    function photoSlug(value) {
+        const aliases = { "D.O.": "d-o", "I.N.": "in", "I.M.": "im", "O.de": "o-de", "B.I": "b-i" };
+        return aliases[value] || String(value).normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+            .toLocaleLowerCase("en").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    }
+    function catalogPhotoUrl(entry) {
+        const groupAliases = { "&TEAM": "and-team", "i-dle": "idle", "NCT 127": "nct-127", "TOMORROW X TOGETHER (TXT)": "txt" };
+        const group = entry.group ? (groupAliases[entry.group] || photoSlug(entry.group)) : "solista";
+        return `assets/participants/${group}-${photoSlug(entry.name)}.webp`;
+    }
     function cloneState(state) { return JSON.parse(JSON.stringify(state)); }
     function groupKeys(name) {
         const key = comparable(name);
@@ -133,10 +143,15 @@
             const existing = findExistingParticipant(nextState, entry, uniqueNameCounts);
             if (existing) {
                 const expectedGroupId = group?.id || null;
+                const expectedPhotoUrl = catalogPhotoUrl(entry);
                 if (uniqueNameCounts.get(comparable(entry.name)) === 1 && existing.groupId !== expectedGroupId) {
                     existing.groupId = expectedGroupId;
                     existing.updatedAt = timestamp;
                     reassignedParticipants += 1;
+                }
+                if (existing.catalogPhotoUrl !== expectedPhotoUrl) {
+                    existing.catalogPhotoUrl = expectedPhotoUrl;
+                    existing.updatedAt = timestamp;
                 }
                 return;
             }
@@ -148,7 +163,8 @@
                 name: entry.name,
                 groupId: group?.id || null,
                 gender: entry.gender,
-                categoryIds: []
+                categoryIds: [],
+                catalogPhotoUrl: catalogPhotoUrl(entry)
             }, timestamp);
             nextState.participants.push(participant);
             participantIds.add(participantId);
@@ -162,6 +178,7 @@
     namespace.participantCatalog = Object.freeze({
         CATALOG_VERSION,
         entries,
+        catalogPhotoUrl,
         ensureFanChoiceCatalog
     });
     root.StatsV2 = namespace;

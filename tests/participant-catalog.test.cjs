@@ -1,5 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const path = require("node:path");
 
 const projectRoot = path.resolve(__dirname, "..");
@@ -30,6 +31,25 @@ test("contains the supplied Fan Choice catalog once per performer and group", ()
     assert.equal(participantCatalog.entries.filter((entry) => entry.name === "B.I").length, 1);
 });
 
+test("has an attributed WebP portrait for every catalog participant", () => {
+    const assetsDir = path.join(projectRoot, "assets", "participants");
+    const sources = JSON.parse(fs.readFileSync(path.join(assetsDir, "sources.json"), "utf8"));
+    const sourceByFile = new Map(sources.photos.map((photo) => [photo.file, photo]));
+
+    assert.equal(sources.photos.length, participantCatalog.entries.length);
+    participantCatalog.entries.forEach((entry) => {
+        const photoUrl = participantCatalog.catalogPhotoUrl(entry);
+        const file = path.basename(photoUrl);
+        assert.equal(photoUrl.startsWith("assets/participants/"), true);
+        assert.equal(fs.existsSync(path.join(assetsDir, file)), true, `${entry.name} has a portrait file`);
+        const header = fs.readFileSync(path.join(assetsDir, file)).subarray(0, 12);
+        assert.equal(header.subarray(0, 4).toString("ascii"), "RIFF");
+        assert.equal(header.subarray(8, 12).toString("ascii"), "WEBP");
+        assert.ok(sourceByFile.has(file), `${entry.name} has a photo source`);
+        assert.match(sourceByFile.get(file).source, /^https:\/\//);
+    });
+});
+
 test("adds only missing catalog groups and participants without changing existing identities", () => {
     const state = data.createEmptyState(stamp);
     state.groups.push(data.createGroup({ id: "group-aespa", name: "AESPA" }, stamp));
@@ -53,6 +73,8 @@ test("adds only missing catalog groups and participants without changing existin
     assert.equal(result.addedGroups, 36);
     assert.equal(result.state.participants.find((item) => item.name === "KARINA").id, "existing-karina");
     assert.equal(result.state.participants.find((item) => item.name === "KARINA").imageId, "karina-image");
+    assert.equal(result.state.participants.find((item) => item.name === "KARINA").catalogPhotoUrl,
+        "assets/participants/aespa-karina.webp");
     assert.equal(result.state.participants.find((item) => item.name === "Soobin").id, "existing-soobin");
     assert.equal(result.state.participants.find((item) => item.id === "existing-bi").groupId, null);
     assert.equal(result.state.groups.find((item) => item.id === "group-txt").name, "TOMORROW X TOGETHER (TXT)");

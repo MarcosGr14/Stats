@@ -67,16 +67,23 @@
             elements.photoImage.alt = `Foto de ${participant.name}`;
             elements.photoFallback.hidden = false;
             elements.photoFallback.textContent = initials(participant.name);
-            if (!participant.imageId) return;
             try {
-                const record = await imageStorage.getImage(participant.imageId);
-                if (!record?.blob || participant.id !== participantId) return;
-                photoUrl = URL.createObjectURL(record.blob);
-                elements.photoImage.src = photoUrl;
+                const record = participant.imageId ? await imageStorage.getImage(participant.imageId) : null;
+                if (participant.id !== participantId) return;
+                if (record?.blob) {
+                    photoUrl = URL.createObjectURL(record.blob);
+                    elements.photoImage.src = photoUrl;
+                } else if (participant.catalogPhotoUrl) {
+                    elements.photoImage.src = participant.catalogPhotoUrl;
+                } else return;
                 elements.photoImage.hidden = false;
                 elements.photoFallback.hidden = true;
             } catch (_) {
-                // Identity and history remain available when the local image database is unavailable.
+                if (participant.catalogPhotoUrl && participant.id === participantId) {
+                    elements.photoImage.src = participant.catalogPhotoUrl;
+                    elements.photoImage.hidden = false;
+                    elements.photoFallback.hidden = true;
+                }
             }
         }
 

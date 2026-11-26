@@ -77,6 +77,6 @@ test("removes obsolete visible English copy without renaming domain identifiers"
 test("keeps the schema stable while simplifying the product", () => {
     assert.doesNotMatch(read("js", "ui.js"), /localStorage|sessionStorage|indexedDB|storage/);
     assert.doesNotMatch(seasonView, /cache|memo/i);
-    assert.match(read("js", "constants.js"), /APP_VERSION: "2\.11\.0"/);
+    assert.match(read("js", "constants.js"), /APP_VERSION: "2\.12\.0"/);
     assert.match(read("js", "constants.js"), /SCHEMA_VERSION: 2/);
 });

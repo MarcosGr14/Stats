@@ -54,18 +54,24 @@
             imageUrls = [];
         }
 
-        async function loadPhoto(imageId, image, fallback) {
-            if (!imageId) return;
+        async function loadPhoto(participant, image, fallback) {
             try {
-                const record = await imageStorage.getImage(imageId);
-                if (!record?.blob || !image.isConnected) return;
-                const url = URL.createObjectURL(record.blob);
-                imageUrls.push(url);
-                image.src = url;
+                const record = participant.imageId ? await imageStorage.getImage(participant.imageId) : null;
+                if (!image.isConnected) return;
+                if (record?.blob) {
+                    const url = URL.createObjectURL(record.blob);
+                    imageUrls.push(url);
+                    image.src = url;
+                } else if (participant.catalogPhotoUrl) image.src = participant.catalogPhotoUrl;
+                else return;
                 image.hidden = false;
                 fallback.hidden = true;
             } catch (_) {
-                // Results remain usable when local image storage is unavailable.
+                if (participant.catalogPhotoUrl && image.isConnected) {
+                    image.src = participant.catalogPhotoUrl;
+                    image.hidden = false;
+                    fallback.hidden = true;
+                }
             }
         }
 
@@ -76,7 +82,7 @@
             image.hidden = true;
             const fallback = element("span", "", initials(participant.name));
             photo.append(image, fallback);
-            if (participant.imageId) loadPhoto(participant.imageId, image, fallback);
+            if (participant.imageId || participant.catalogPhotoUrl) loadPhoto(participant, image, fallback);
             return photo;
         }
 

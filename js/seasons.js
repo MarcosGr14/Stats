@@ -125,6 +125,7 @@
             participantId: entry.participantId,
             name: entry.participant.name,
             imageId: entry.participant.imageId || null,
+            catalogPhotoUrl: entry.participant.catalogPhotoUrl || null,
             groupName: entry.group?.name || "Solista",
             score: entry[scoreField]
         };
@@ -197,6 +198,7 @@
                 participantId: entry.participantId,
                 name: entry.participant.name,
                 imageId: entry.participant.imageId || null,
+                catalogPhotoUrl: entry.participant.catalogPhotoUrl || null,
                 groupName: entry.group?.name || "Solista",
                 seasonScore: entry.seasonScore,
                 rank: entry.rank,

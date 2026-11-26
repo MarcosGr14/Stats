@@ -148,6 +148,9 @@
 
 .hall-winner-list { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .hall-person {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
     padding: 0;
     border: 0;
     border-bottom: 1px solid var(--color-border-strong);
@@ -180,6 +183,7 @@
 .hall-ranking-row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); padding: var(--space-2); border-radius: var(--radius-sm); background: var(--color-elevated); }
 .hall-ranking-rank, .hall-ranking-person small { color: var(--color-muted); font-size: 0.68rem; }
 .hall-ranking-person { display: grid; min-width: 0; }
+.hall-person-photo { width: 1.5rem; height: 1.5rem; flex: 0 0 auto; border-radius: 50%; object-fit: cover; }
 .hall-ranking-person .hall-person { width: fit-content; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hall-ranking-score { font-size: 0.78rem; font-variant-numeric: tabular-nums; }
 .hall-ranking-empty { color: var(--color-muted); font-size: 0.75rem; }

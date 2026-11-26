@@ -4,7 +4,7 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.11.0",
+        APP_VERSION: "2.12.0",
         SCHEMA_VERSION: 2,
         BACKUP_FORMAT: "stats-v2-backup",
         BACKUP_FORMAT_VERSION: 1,
