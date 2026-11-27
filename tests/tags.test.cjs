@@ -58,11 +58,11 @@ test("loads the predefined catalog once with stable unique ids", () => {
     const first = tags.ensurePredefinedCatalog(phaseOneState(), timestamp);
     const second = tags.ensurePredefinedCatalog(first.state, "2026-09-01T00:00:00.000Z");
 
-    assert.equal(first.addedCount, 84);
-    assert.equal(new Set(first.state.tags.map((tag) => tag.id)).size, 84);
+    assert.equal(first.addedCount, 98);
+    assert.equal(new Set(first.state.tags.map((tag) => tag.id)).size, 98);
     assert.equal(first.state.tags.every((tag) => tag.predefined), true);
     assert.equal(second.changed, false);
-    assert.equal(second.state.tags.length, 84);
+    assert.equal(second.state.tags.length, 98);
 });
 
 test("migrates Phase 1 additively without changing participants, groups or image ids", () => {
@@ -136,7 +136,7 @@ test("rejects empty custom names, invalid types and invalid categories", () => {
         (error) => error.code === "INVALID_TYPE"
     );
     assert.throws(
-        () => tags.createCustomTag(state, { name: "Test", categoryId: "visual", type: "neutral" }),
+        () => tags.createCustomTag(state, { name: "Test", categoryId: "unsupported", type: "neutral" }),
         (error) => error.code === "INVALID_CATEGORY"
     );
 });

@@ -149,18 +149,54 @@
         const categoryId = options.categoryId;
         const gender = options.gender;
         validateStandingSelection(categoryId, gender);
-        const periodOptions = normalizedPeriodOptions(options);
-        const derived = analytics.deriveParticipantCategoryMetrics(state, { ...periodOptions, categoryId, gender });
-        return standingFromRows(derived.rows, derived.scope, categoryId, gender);
+        return findStanding(deriveAllStandings(state, options), categoryId, gender);
+    }
+
+    function rowsAtClassificationEntry(state, rows, selectedWeekIds) {
+        const selected = new Set(selectedWeekIds);
+        const targetSeason = state.seasons?.find((item) => (item.weekIds || []).some((id) => selected.has(id))) || null;
+        const archivedClassifications = targetSeason?.resultsSnapshot?.categoryClassifications || {};
+        const current = state.seasons?.find((item) => item.id === state.settings.currentSeasonId && item.status === "OPEN")
+            || state.seasons?.find((item) => item.status === "OPEN") || null;
+        const records = targetSeason?.status === "CLOSED" ? archivedClassifications : current?.categoryClassifications || {};
+        return rows.map((row) => {
+            const key = JSON.stringify([row.participantId, row.categoryId]);
+            const classification = records[key];
+            let activeWeekIds;
+            if (classification) {
+                activeWeekIds = new Set((classification.periods || []).flatMap((period) => period.weekIds));
+            } else {
+                // Archived weekly snapshots and old category assignments remain the historical source of truth.
+                activeWeekIds = new Set(selectedWeekIds.filter((weekId) => {
+                    const week = state.weeks.find((item) => item.id === weekId);
+                    return week?.participantCategoryIds?.[row.participantId]?.includes(row.categoryId)
+                        || row.participant.categoryIds.includes(row.categoryId);
+                }));
+            }
+            const filteredRecords = row.records.filter((record) => activeWeekIds.has(record.week.id));
+            if (!filteredRecords.length) return null;
+            const points = filteredRecords.map((record) => record.metrics.weeklyPoints);
+            return {
+                ...row,
+                records: filteredRecords,
+                evaluatedWeeks: filteredRecords.length,
+                wins: filteredRecords.filter((record) => record.rank === 1).length,
+                topThreeAppearances: filteredRecords.filter((record) => record.rank <= 3).length,
+                standoutVotes: filteredRecords.reduce((total, record) => total
+                    + record.votes.filter((vote) => vote.rating === "standout").length, 0),
+                averageWeeklyPoints: points.reduce((total, value) => total + value, 0) / points.length
+            };
+        }).filter(Boolean);
     }
 
     function deriveAllStandings(state, options = {}) {
         const periodOptions = normalizedPeriodOptions(options);
         const derived = analytics.deriveParticipantCategoryMetrics(state, periodOptions);
+        const rows = rowsAtClassificationEntry(state, derived.rows, derived.scope.weekIds);
         const standings = [];
         constants.CATEGORIES.forEach((category) => {
             constants.GENDERS.forEach((gender) => {
-                standings.push(standingFromRows(derived.rows, derived.scope, category.id, gender));
+                standings.push(standingFromRows(rows, derived.scope, category.id, gender));
             });
         });
         return Object.freeze({

@@ -185,6 +185,7 @@
         if (isRecord(input.participantCategoryIds)) {
             week.participantCategoryIds = JSON.parse(JSON.stringify(input.participantCategoryIds));
         }
+        if (Array.isArray(input.nominations)) week.nominations = JSON.parse(JSON.stringify(input.nominations));
         if (!isValidIsoWeekRange(week)) {
             throw new TypeError("startDate and endDate must match the ISO Monday-Sunday week id.");
         }
@@ -203,6 +204,10 @@
             endWeekId: input.endWeekId || (status === "CLOSED" ? weekIds.at(-1) || null : null),
             closedAt: input.closedAt || null,
             resultsSnapshot: input.resultsSnapshot || null,
+            classificationCriteria: input.classificationCriteria || Object.fromEntries(
+                constants.CATEGORIES.map((category) => [category.id, { ...constants.CLASSIFICATION_DEFAULTS }])
+            ),
+            categoryClassifications: input.categoryClassifications || {},
             createdAt: input.createdAt || timestamp,
             updatedAt: timestamp
         };
@@ -219,6 +224,8 @@
             rating,
             reasonTagIds: uniqueStrings(input.reasonTagIds || input.selectedTagIds || [], "reasonTagIds"),
             note: typeof input.note === "string" ? input.note.trim() : "",
+            sourceType: input.sourceType || "",
+            sourceUrl: typeof input.sourceUrl === "string" ? input.sourceUrl.trim() : "",
             createdAt: input.createdAt || timestamp,
             updatedAt: timestamp
         };
@@ -342,6 +349,41 @@
                 if (season.resultsSnapshot !== null && !isRecord(season.resultsSnapshot)) {
                     errors.push(`${path}.resultsSnapshot must be null or an object.`);
                 }
+                if (season.classificationCriteria !== undefined) {
+                    if (!isRecord(season.classificationCriteria)) errors.push(`${path}.classificationCriteria must be an object.`);
+                    else constants.CATEGORIES.forEach(({ id }) => {
+                        const criteria = season.classificationCriteria[id];
+                        if (!isRecord(criteria) || !Number.isInteger(criteria.minimumWeeks)
+                            || criteria.minimumWeeks < 1 || criteria.minimumWeeks > 52
+                            || !Number.isFinite(criteria.minimumAveragePoints)
+                            || criteria.minimumAveragePoints < 0 || criteria.minimumAveragePoints > 6) {
+                            errors.push(`${path}.classificationCriteria.${id} is invalid.`);
+                        }
+                    });
+                }
+                if (season.categoryClassifications !== undefined) {
+                    if (!isRecord(season.categoryClassifications)) errors.push(`${path}.categoryClassifications must be an object.`);
+                    else Object.entries(season.categoryClassifications).forEach(([key, record]) => {
+                        if (!key.trim() || !isRecord(record)
+                            || !["ready", "classified", "paused"].includes(record.status)
+                            || !Array.isArray(record.confirmedBy)
+                            || record.confirmedBy.some((id) => !constants.VOTER_IDS.includes(id))
+                            || new Set(record.confirmedBy).size !== record.confirmedBy.length
+                            || (record.requestedStatus !== undefined && record.requestedStatus !== null
+                                && !["classified", "paused"].includes(record.requestedStatus))
+                            || (record.reviewPeriod !== undefined && record.reviewPeriod !== null && typeof record.reviewPeriod !== "string")
+                            || (record.lastReviewedPeriod !== undefined && record.lastReviewedPeriod !== null && typeof record.lastReviewedPeriod !== "string")
+                            || (record.pausedAfterDate !== undefined && record.pausedAfterDate !== null
+                                && (typeof record.pausedAfterDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record.pausedAfterDate)))
+                            || (record.periods !== undefined && (!Array.isArray(record.periods)
+                                || record.periods.some((period) => !isRecord(period) || !Array.isArray(period.weekIds)
+                                    || period.weekIds.some((weekId) => typeof weekId !== "string")
+                                    || new Set(period.weekIds).size !== period.weekIds.length)))
+                            || typeof record.updatedAt !== "string") {
+                            errors.push(`${path}.categoryClassifications contains an invalid entry.`);
+                        }
+                    });
+                }
                 if (season.status === "OPEN") {
                     openSeasonCount += 1;
                     if (season.closedAt !== null || season.endWeekId !== null || season.resultsSnapshot !== null) {
@@ -454,6 +496,15 @@
                             });
                         }
                     }
+                    if (week.nominations !== undefined && (!Array.isArray(week.nominations)
+                        || week.nominations.some((item) => !isRecord(item)
+                            || typeof item.participantId !== "string" || !item.participantId.trim()
+                            || !categoryIds.has(item.categoryId) || !Array.isArray(item.voterIds)
+                            || item.voterIds.some((id) => !constants.VOTER_IDS.includes(id))
+                            || new Set(item.voterIds).size !== item.voterIds.length)
+                        || new Set(week.nominations.map((item) => `${item.participantId}\u0000${item.categoryId}`)).size !== week.nominations.length)) {
+                        errors.push(`${path}.nominations is invalid.`);
+                    }
                     if (hasCategoryVoting) {
                         requireNullableText(week, "reopenedAt", path, errors);
                         if (!Number.isInteger(week.reopenCount) || week.reopenCount < 0) {
@@ -500,6 +551,14 @@
                 if (hasWeeklyVoting && typeof vote.note === "string"
                     && vote.note.length > constants.MAX_WEEKLY_NOTE_LENGTH) {
                     errors.push(`${path}.note exceeds the allowed length.`);
+                }
+                if (vote.sourceType !== undefined && vote.sourceType !== ""
+                    && !constants.EVIDENCE_TYPES.some((item) => item.id === vote.sourceType)) {
+                    errors.push(`${path}.sourceType is unsupported.`);
+                }
+                if (vote.sourceUrl !== undefined && (typeof vote.sourceUrl !== "string"
+                    || vote.sourceUrl.length > constants.MAX_WEEKLY_SOURCE_URL_LENGTH)) {
+                    errors.push(`${path}.sourceUrl is invalid.`);
                 }
                 let relationshipKey = `${vote.weekId}\u0000${vote.participantId}\u0000${vote.userId}`;
                 if (hasCategoryVoting) {

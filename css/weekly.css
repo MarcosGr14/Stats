@@ -158,3 +158,13 @@
     .weekly-vote-actions > span { display: none; }
     .weekly-vote-actions .button { width: 100%; }
 }
+.weekly-discovery-toggle { display:flex; align-items:center; gap:.65rem; margin-block:.85rem; color:var(--text-muted); font-size:.875rem; }
+.weekly-discovery-toggle input { width:1.05rem; height:1.05rem; accent-color:var(--volt); }
+.weekly-nomination-badge { display:inline-flex; margin:.15rem .25rem .25rem 0; padding:.3rem .5rem; border:1px solid var(--line); border-radius:999px; background:var(--surface-1); color:var(--text); font-size:.75rem; }
+.weekly-recurring-tags { display:flex; flex-wrap:wrap; gap:.35rem; padding-top:.65rem; border-top:1px solid var(--line); }
+.weekly-recurring-tags .micro-label { flex-basis:100%; margin:0; }
+.weekly-recurring-tag { padding:.25rem .45rem; border-radius:999px; background:var(--surface-1); color:var(--text-muted); font-size:.75rem; }
+.weekly-source-link { color:var(--text); font-size:.8rem; font-weight:600; }
+.weekly-disagreement { display:block; margin-top:.3rem; color:var(--warning); font-size:.75rem; font-weight:700; }
+.weekly-evidence-fields { display:grid; grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr); gap:.85rem; margin-top:1rem; }
+@media (max-width:640px) { .weekly-evidence-fields { grid-template-columns:1fr; } }

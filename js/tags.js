@@ -56,6 +56,18 @@
         "Low Stage Energy", "Limited Expressions", "Camera Awareness Issues", "Inconsistent Presence",
         "Low Confidence"
     ]);
+    addDefinitions("visual", "strength", [
+        "Camera Presence", "Photogenic", "Styling Impact", "Editorial Presence", "Concept Fit", "Expressive Range"
+    ]);
+    addDefinitions("visual", "weakness", [
+        "Limited Camera Expression", "Inconsistent Concept Fit", "Limited Styling Range"
+    ]);
+    addDefinitions("all-rounder", "strength", [
+        "Balanced Skill Profile", "Cross-Category Versatility", "Consistent Across Stages"
+    ]);
+    addDefinitions("all-rounder", "weakness", [
+        "Uneven Skill Profile", "Limited Category Range"
+    ]);
     addDefinitions("general", "neutral", [
         "All-Rounder", "Ace", "Fast Improvement", "Consistent", "Standout Performer", "Reliable Live",
         "Great Chemistry", "Concept Chameleon"

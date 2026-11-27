@@ -65,6 +65,17 @@
             nextState.seasons.push(current);
             changed = true;
         }
+        const defaultCriteria = Object.fromEntries(constants.CATEGORIES.map(({ id }) => (
+            [id, { ...constants.CLASSIFICATION_DEFAULTS }]
+        )));
+        if (!current.classificationCriteria) {
+            current.classificationCriteria = defaultCriteria;
+            changed = true;
+        }
+        if (!current.categoryClassifications) {
+            current.categoryClassifications = {};
+            changed = true;
+        }
         const assigned = new Set(nextState.seasons.flatMap((item) => item.weekIds || []));
         const missing = sortedWeekIds(nextState, nextState.weeks.map((week) => week.id).filter((weekId) => !assigned.has(weekId)));
         if (missing.length > 0) {
@@ -110,6 +121,15 @@
         current.weekIds.push(weekId);
         current.weekIds = sortedWeekIds(nextState, current.weekIds);
         current.startWeekId = current.weekIds[0];
+        Object.entries(current.categoryClassifications || {}).forEach(([key, record]) => {
+            if (record.status !== "classified" || record.requestedStatus === "paused") return;
+            const periods = record.periods || [];
+            const active = periods.at(-1);
+            if (!active) return;
+            if (!active.weekIds.includes(weekId)) active.weekIds.push(weekId);
+            record.periods = periods;
+            record.updatedAt = timestamp;
+        });
         current.updatedAt = timestamp;
         assertState(nextState);
         return nextState;
@@ -226,6 +246,7 @@
 
     function buildResultsSnapshot(state, weekIds) {
         const overview = season.deriveSeasonOverview(state, { includeOpen: false, weekIds });
+        const record = currentSeason(state);
         return {
             grandWinners: overview.grandStandings.genders.map((standing) => ({
                 gender: standing.gender,
@@ -237,6 +258,8 @@
                 winners: standing.winners.map((entry) => personSnapshot(entry, "seasonScore"))
             })),
             categoryStandings: snapshotCategoryStandings(overview.allStandings),
+            categoryClassifications: record ? JSON.parse(JSON.stringify(record.categoryClassifications || {})) : {},
+            classificationCriteria: record ? JSON.parse(JSON.stringify(record.classificationCriteria || {})) : {},
             highlights: deriveHighlights(state, weekIds, false)
         };
     }

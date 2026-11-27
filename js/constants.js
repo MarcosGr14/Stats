@@ -4,7 +4,7 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.12.0",
+        APP_VERSION: "2.14.0",
         SCHEMA_VERSION: 2,
         BACKUP_FORMAT: "stats-v2-backup",
         BACKUP_FORMAT_VERSION: 1,
@@ -12,7 +12,9 @@
         MAX_TAG_NAME_LENGTH: 60,
         MAX_WEEKLY_REASON_TAGS: 3,
         MAX_WEEKLY_NOTE_LENGTH: 500,
+        MAX_WEEKLY_SOURCE_URL_LENGTH: 500,
         MAX_WEEKLY_STANDOUTS: 5,
+        CLASSIFICATION_DEFAULTS: Object.freeze({ minimumWeeks: 3, minimumAveragePoints: 4.2 }),
         MAX_IMAGE_BYTES: 5 * 1024 * 1024,
         IMAGE_MIME_TYPES: Object.freeze(["image/jpeg", "image/png", "image/webp"]),
         STORAGE_KEY: "stats:v2:state",
@@ -41,6 +43,8 @@
             Object.freeze({ id: "rap", label: "Rap" }),
             Object.freeze({ id: "dance", label: "Baile" }),
             Object.freeze({ id: "stage", label: "Escenario" }),
+            Object.freeze({ id: "visual", label: "Visual" }),
+            Object.freeze({ id: "all-rounder", label: "Integral" }),
             Object.freeze({ id: "general", label: "General" })
         ]),
         TAG_TYPE_LABELS: Object.freeze({
@@ -56,6 +60,14 @@
             Object.freeze({ id: "impressed", score: 2, label: "Impresionó" }),
             Object.freeze({ id: "good", score: 1, label: "Bien" }),
             Object.freeze({ id: "normal", score: 0, label: "Normal" })
+        ]),
+        EVIDENCE_TYPES: Object.freeze([
+            Object.freeze({ id: "performance", label: "Presentación" }),
+            Object.freeze({ id: "fancam", label: "Fancam" }),
+            Object.freeze({ id: "fashion", label: "Moda / editorial" }),
+            Object.freeze({ id: "interview", label: "Entrevista" }),
+            Object.freeze({ id: "variety", label: "Variedades" }),
+            Object.freeze({ id: "other", label: "Otra evidencia" })
         ])
     };
 

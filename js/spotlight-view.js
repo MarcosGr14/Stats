@@ -78,6 +78,10 @@
         function createPhoto(participant) {
             const photo = element("div", "spotlight-photo");
             const image = element("img");
+            image.width = 96;
+            image.height = 96;
+            image.loading = "lazy";
+            image.decoding = "async";
             image.alt = `Foto de ${participant.name}`;
             image.hidden = true;
             const fallback = element("span", "", initials(participant.name));

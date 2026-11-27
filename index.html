@@ -1,44 +1,53 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-type="software">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Stats V2: administra participantes y registra votaciones semanales P1/P2 con datos locales.">
-    <meta name="theme-color" content="#0B0B0F">
+    <meta name="theme-color" content="#0E0E12">
+    <meta name="page-type" content="software">
+    <meta name="site-kind" content="software">
     <title>Participantes · Stats V2</title>
     <link rel="icon" type="image/png" href="assets/favicon.png">
-    <link rel="stylesheet" href="css/global.css?v=2.12.0">
-    <link rel="stylesheet" href="css/components.css?v=2.12.0">
-    <link rel="stylesheet" href="css/app.css?v=2.12.0">
-    <link rel="stylesheet" href="css/weekly.css?v=2.12.0">
-    <link rel="stylesheet" href="css/spotlight.css?v=2.12.0">
-    <link rel="stylesheet" href="css/profile.css?v=2.12.0">
-    <link rel="stylesheet" href="css/season.css?v=2.12.0">
-    <link rel="stylesheet" href="css/backup.css?v=2.12.0">
-    <link rel="stylesheet" href="css/product.css?v=2.12.0">
-    <script src="js/constants.js?v=2.12.0" defer></script>
-    <script src="js/ui.js?v=2.12.0" defer></script>
-    <script src="js/data.js?v=2.12.0" defer></script>
-    <script src="js/participant-catalog.js?v=2.12.0" defer></script>
-    <script src="js/storage.js?v=2.12.0" defer></script>
-    <script src="js/weekly-migration.js?v=2.12.0" defer></script>
-    <script src="js/weekly.js?v=2.12.0" defer></script>
-    <script src="js/spotlight.js?v=2.12.0" defer></script>
-    <script src="js/profile-history.js?v=2.12.0" defer></script>
-    <script src="js/analytics.js?v=2.12.0" defer></script>
-    <script src="js/season.js?v=2.12.0" defer></script>
-    <script src="js/seasons.js?v=2.12.0" defer></script>
-    <script src="js/participants.js?v=2.12.0" defer></script>
-    <script src="js/tags.js?v=2.12.0" defer></script>
-    <script src="js/image-storage.js?v=2.12.0" defer></script>
-    <script src="js/backup.js?v=2.12.0" defer></script>
-    <script src="js/backup-view.js?v=2.12.0" defer></script>
-    <script src="js/weekly-view.js?v=2.12.0" defer></script>
-    <script src="js/spotlight-view.js?v=2.12.0" defer></script>
-    <script src="js/profile-view.js?v=2.12.0" defer></script>
-    <script src="js/season-view.js?v=2.12.0" defer></script>
-    <script src="js/product-view.js?v=2.12.0" defer></script>
-    <script src="js/app.js?v=2.12.0" defer></script>
+    <script src="js/theme-init.js?v=2.14.0"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css?v=2.14.0">
+    <link rel="stylesheet" href="css/components.css?v=2.14.0">
+    <link rel="stylesheet" href="css/app.css?v=2.14.0">
+    <link rel="stylesheet" href="css/weekly.css?v=2.14.0">
+    <link rel="stylesheet" href="css/spotlight.css?v=2.14.0">
+    <link rel="stylesheet" href="css/profile.css?v=2.14.0">
+    <link rel="stylesheet" href="css/season.css?v=2.14.0">
+    <link rel="stylesheet" href="css/backup.css?v=2.14.0">
+    <link rel="stylesheet" href="css/product.css?v=2.14.0">
+    <link rel="stylesheet" href="css/tinta-volt.css?v=2.14.0">
+    <script src="js/constants.js?v=2.14.0" defer></script>
+    <script src="js/theme.js?v=2.14.0" defer></script>
+    <script src="js/ui.js?v=2.14.0" defer></script>
+    <script src="js/data.js?v=2.14.0" defer></script>
+    <script src="js/participant-catalog.js?v=2.14.0" defer></script>
+    <script src="js/storage.js?v=2.14.0" defer></script>
+    <script src="js/weekly-migration.js?v=2.14.0" defer></script>
+    <script src="js/weekly.js?v=2.14.0" defer></script>
+    <script src="js/spotlight.js?v=2.14.0" defer></script>
+    <script src="js/profile-history.js?v=2.14.0" defer></script>
+    <script src="js/analytics.js?v=2.14.0" defer></script>
+    <script src="js/season.js?v=2.14.0" defer></script>
+    <script src="js/seasons.js?v=2.14.0" defer></script>
+    <script src="js/classifications.js?v=2.14.0" defer></script>
+    <script src="js/participants.js?v=2.14.0" defer></script>
+    <script src="js/tags.js?v=2.14.0" defer></script>
+    <script src="js/image-storage.js?v=2.14.0" defer></script>
+    <script src="js/backup.js?v=2.14.0" defer></script>
+    <script src="js/backup-view.js?v=2.14.0" defer></script>
+    <script src="js/weekly-view.js?v=2.14.0" defer></script>
+    <script src="js/spotlight-view.js?v=2.14.0" defer></script>
+    <script src="js/profile-view.js?v=2.14.0" defer></script>
+    <script src="js/season-view.js?v=2.14.0" defer></script>
+    <script src="js/product-view.js?v=2.14.0" defer></script>
+    <script src="js/app.js?v=2.14.0" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -60,6 +69,11 @@
                 <a id="nav-hall-of-fame" href="#hall-of-fame">Hall of Fame</a>
                 <a id="nav-data" href="#data">Datos</a>
             </nav>
+
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar a tema claro" title="Cambiar a tema claro">
+                <span class="theme-toggle-icon" aria-hidden="true">☼</span>
+                <span class="theme-toggle-label">Modo claro</span>
+            </button>
 
             <div class="build-status" title="Estado de la app">
                 <span class="status-dot" aria-hidden="true"></span>
@@ -175,7 +189,7 @@
 
                 <header class="profile-hero">
                     <div class="profile-photo" id="profile-photo">
-                        <img id="profile-photo-image" alt="" hidden>
+                        <img id="profile-photo-image" width="320" height="320" loading="lazy" decoding="async" alt="" hidden>
                         <span id="profile-photo-fallback" aria-hidden="true">ST</span>
                     </div>
                     <div class="profile-identity">
@@ -364,6 +378,11 @@
                         </label>
                         <button class="button button--quiet" id="reset-weekly-filters" type="button">Limpiar</button>
                     </section>
+
+                    <label class="weekly-discovery-toggle" for="weekly-show-catalog">
+                        <input id="weekly-show-catalog" type="checkbox">
+                        <span>Mostrar catálogo completo para descubrir nuevos talentos</span>
+                    </label>
 
                     <div class="weekly-results-heading">
                         <p id="weekly-results-summary">0 participantes</p>
@@ -719,6 +738,23 @@
                         </div>
                     </div>
 
+                    <section class="classification-review" aria-labelledby="classification-review-title">
+                        <header class="classification-review-heading">
+                            <div><p class="micro-label">Descubrimiento y progreso</p><h3 id="classification-review-title">En observación</h3></div>
+                            <p id="classification-review-summary">Las evaluaciones semanales todavía no clasifican automáticamente.</p>
+                        </header>
+                        <div class="classification-candidate-list" id="classification-candidate-list"></div>
+                        <p class="season-empty" id="classification-candidate-empty" hidden>Aún no hay evidencia en esta categoría. Evalúen actuaciones semanales para iniciar la observación.</p>
+                        <details class="classification-criteria-details">
+                            <summary>Ajustar criterios de clasificación</summary>
+                            <form id="classification-criteria-form" class="classification-criteria-form">
+                                <div id="classification-criteria-fields"></div>
+                                <p>Una semana cuenta cuando P1 y P2 han votado. Los tags destacados resumen los motivos usados en esas semanas.</p>
+                                <button class="button button--secondary" type="submit">Guardar criterios</button>
+                            </form>
+                        </details>
+                    </section>
+
                     <div class="season-standing-heading">
                         <div>
                             <p class="micro-label" id="season-standing-kicker">Vocal · Mujeres</p>
@@ -772,6 +808,21 @@
                         <h1 id="data-safety-title">Datos</h1>
                     </div>
                 </header>
+
+                <section class="appearance-settings" aria-labelledby="appearance-title">
+                    <div>
+                        <h2 id="appearance-title">Apariencia</h2>
+                        <p>Elige un tema. Automático sigue la preferencia de tu dispositivo.</p>
+                    </div>
+                    <label class="select-control" for="theme-select">
+                        <span>Tema de color</span>
+                        <select id="theme-select" name="theme">
+                            <option value="auto">Automático</option>
+                            <option value="light">Claro</option>
+                            <option value="dark">Oscuro</option>
+                        </select>
+                    </label>
+                </section>
 
                 <div class="data-safety-grid">
                     <article class="data-card">
@@ -845,7 +896,7 @@
             <div class="participant-form-layout">
                 <div class="photo-field">
                     <div class="photo-preview" id="photo-preview">
-                        <img id="photo-preview-image" alt="Vista previa de la foto" hidden>
+                        <img id="photo-preview-image" width="320" height="320" decoding="async" alt="Vista previa de la foto" hidden>
                         <span id="photo-preview-fallback" aria-hidden="true">ST</span>
                     </div>
                     <label class="button button--secondary file-button" for="participant-photo">Elegir imagen</label>
@@ -892,15 +943,15 @@
                     </fieldset>
 
                     <fieldset class="choice-fieldset category-fieldset">
-                        <legend>Categorías de esta temporada <span>(opcional)</span></legend>
-                        <p class="field-help">Asigna las categorías cuando decidas en cuáles compite cada participante. Al cerrar la temporada, la siguiente empieza sin asignaciones.</p>
+                        <legend>Categorías clasificadas esta temporada</legend>
+                        <p class="field-help">Se desbloquean al cumplir los criterios y recibir confirmación de P1 y P2 en una revisión trimestral. Las evaluaciones semanales se pueden hacer en cualquier categoría.</p>
                         <div class="category-options">
-                            <label class="category-option category-option--vocal"><input type="checkbox" name="categories" value="vocal"><span>Vocal</span></label>
-                            <label class="category-option category-option--rap"><input type="checkbox" name="categories" value="rap"><span>Rap</span></label>
-                            <label class="category-option category-option--dance"><input type="checkbox" name="categories" value="dance"><span>Baile</span></label>
-                            <label class="category-option category-option--stage"><input type="checkbox" name="categories" value="stage"><span>Escenario</span></label>
-                            <label class="category-option category-option--visual"><input type="checkbox" name="categories" value="visual"><span>Visual</span></label>
-                            <label class="category-option category-option--all-rounder"><input type="checkbox" name="categories" value="all-rounder"><span>Integral</span></label>
+                            <label class="category-option category-option--vocal"><input type="checkbox" name="categories" value="vocal" disabled><span>Vocal</span></label>
+                            <label class="category-option category-option--rap"><input type="checkbox" name="categories" value="rap" disabled><span>Rap</span></label>
+                            <label class="category-option category-option--dance"><input type="checkbox" name="categories" value="dance" disabled><span>Baile</span></label>
+                            <label class="category-option category-option--stage"><input type="checkbox" name="categories" value="stage" disabled><span>Escenario</span></label>
+                            <label class="category-option category-option--visual"><input type="checkbox" name="categories" value="visual" disabled><span>Visual</span></label>
+                            <label class="category-option category-option--all-rounder"><input type="checkbox" name="categories" value="all-rounder" disabled><span>Integral</span></label>
                         </div>
                         <small class="field-error" id="categories-error"></small>
                     </fieldset>
@@ -971,6 +1022,8 @@
                             <option value="rap">Rap</option>
                             <option value="dance">Baile</option>
                             <option value="stage">Escenario</option>
+                            <option value="visual">Visual</option>
+                            <option value="all-rounder">Integral</option>
                             <option value="general">General</option>
                         </select>
                     </label>
@@ -1009,6 +1062,8 @@
                                 <option value="rap">Rap</option>
                                 <option value="dance">Baile</option>
                                 <option value="stage">Escenario</option>
+                                <option value="visual">Visual</option>
+                                <option value="all-rounder">Integral</option>
                                 <option value="general">General</option>
                             </select>
                         </label>
@@ -1096,6 +1151,24 @@
                     </label>
                     <div class="weekly-reason-list" id="weekly-reason-list"></div>
                 </section>
+                <div class="weekly-evidence-fields">
+                    <label class="field" for="weekly-source-type">
+                        <span>Tipo de evidencia</span>
+                        <select id="weekly-source-type">
+                            <option value="">Sin especificar</option>
+                            <option value="performance">Presentación</option>
+                            <option value="fancam">Fancam</option>
+                            <option value="fashion">Moda / editorial</option>
+                            <option value="interview">Entrevista</option>
+                            <option value="variety">Variedades</option>
+                            <option value="other">Otra evidencia</option>
+                        </select>
+                    </label>
+                    <label class="field" for="weekly-source-url">
+                        <span>Enlace de referencia</span>
+                        <input id="weekly-source-url" type="url" maxlength="500" placeholder="https://…" autocomplete="url">
+                    </label>
+                </div>
                 <label class="field weekly-note" for="weekly-note">
                     <span>Nota opcional</span>
                     <textarea id="weekly-note" maxlength="500" rows="4" placeholder="¿Qué destacó esta semana?"></textarea>

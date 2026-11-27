@@ -241,6 +241,10 @@
 
         const photo = createElement("div", "card-photo");
         const image = createElement("img");
+        image.width = 320;
+        image.height = 320;
+        image.loading = "lazy";
+        image.decoding = "async";
         image.alt = `Foto de ${participant.name}`;
         image.hidden = true;
         const fallback = createElement("span", "card-photo-fallback", initials(participant.name));
@@ -784,10 +788,12 @@
             if (gender) gender.checked = true;
             elements.form.querySelectorAll('input[name="categories"]').forEach((checkbox) => {
                 checkbox.checked = participant.categoryIds.includes(checkbox.value);
+                checkbox.disabled = true;
             });
             elements.removePhoto.hidden = !participant.imageId;
             showPhotoFallback(participant.name);
         } else {
+            elements.form.querySelectorAll('input[name="categories"]').forEach((checkbox) => { checkbox.disabled = true; });
             elements.removePhoto.hidden = true;
             showPhotoFallback("ST");
         }
@@ -812,8 +818,8 @@
         clearFormErrors();
         const name = elements.name.value.trim();
         const gender = elements.form.querySelector('input[name="gender"]:checked')?.value || "";
-        const categoryIds = [...elements.form.querySelectorAll('input[name="categories"]:checked')]
-            .map((checkbox) => checkbox.value);
+        const existingParticipant = findParticipant(elements.participantId.value);
+        const categoryIds = existingParticipant ? [...existingParticipant.categoryIds] : [];
         let valid = true;
 
         if (!name) {
@@ -1386,6 +1392,9 @@
         });
         seasonController = seasonViewService.createController({
             getState: () => state,
+            commitState,
+            canWrite: () => writable,
+            notify: showToast,
             viewParticipant: openParticipantProfile,
             getImage: imageStorage.getImage
         });

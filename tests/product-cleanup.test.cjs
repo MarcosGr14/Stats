@@ -61,9 +61,9 @@ test("archives every seasonal category ranking and makes the next season's nomin
     assert.match(read("js", "seasons.js"), /categoryStandings/);
     assert.match(productView, /resultsSnapshot\.categoryStandings\?\.find/);
     assert.match(productView, /Ver ranking y puntuaciones/);
-    assert.match(html, /Categorías de esta temporada <span>\(opcional\)<\/span>/);
-    assert.match(html, /la nueva temporada comenzará sin categorías asignadas/);
-    assert.match(weeklyView, /Sin categoría asignada/);
+    assert.match(html, /Categorías clasificadas esta temporada/);
+    assert.match(html, /confirmación de P1 y P2 en una revisión trimestral/);
+    assert.match(weeklyView, /weekly-show-catalog/);
 });
 
 test("removes obsolete visible English copy without renaming domain identifiers", () => {
@@ -77,6 +77,6 @@ test("removes obsolete visible English copy without renaming domain identifiers"
 test("keeps the schema stable while simplifying the product", () => {
     assert.doesNotMatch(read("js", "ui.js"), /localStorage|sessionStorage|indexedDB|storage/);
     assert.doesNotMatch(seasonView, /cache|memo/i);
-    assert.match(read("js", "constants.js"), /APP_VERSION: "2\.12\.0"/);
+    assert.match(read("js", "constants.js"), /APP_VERSION: "2\.14\.0"/);
     assert.match(read("js", "constants.js"), /SCHEMA_VERSION: 2/);
 });

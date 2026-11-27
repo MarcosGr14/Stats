@@ -29,6 +29,7 @@
             search: byId("weekly-search"), categoryFilter: byId("weekly-category-filter"),
             genderFilter: byId("weekly-gender-filter"), groupFilter: byId("weekly-group-filter"),
             evaluationFilter: byId("weekly-evaluation-filter"), resetFilters: byId("reset-weekly-filters"),
+            showCatalog: byId("weekly-show-catalog"),
             resultsSummary: byId("weekly-results-summary"), readonlyCopy: byId("weekly-readonly-copy"),
             grid: byId("weekly-grid"), noResults: byId("weekly-no-results"),
             legacyWarning: byId("weekly-legacy-warning"), legacyWarningCopy: byId("weekly-legacy-warning-copy"),
@@ -39,6 +40,7 @@
             ratingOptions: [...document.querySelectorAll("[data-weekly-rating]")],
             selectedReasons: byId("weekly-selected-reasons"), reasonCount: byId("weekly-reason-count"),
             reasonSearch: byId("weekly-reason-search"), reasonList: byId("weekly-reason-list"),
+            sourceType: byId("weekly-source-type"), sourceUrl: byId("weekly-source-url"),
             note: byId("weekly-note"), noteCount: byId("weekly-note-count"),
             removeVote: byId("remove-weekly-vote"), saveVote: byId("save-weekly-vote"),
             closeVote: byId("close-weekly-vote"), cancelVote: byId("cancel-weekly-vote"),
@@ -58,6 +60,7 @@
         let editingCategoryId = null;
         let selectedRating = null;
         let selectedReasonIds = new Set();
+        let showCatalog = false;
         let returnFocusElement = null;
 
         function currentWeek() { return state().weeks.find((week) => week.id === selectedWeekId) || null; }
@@ -119,8 +122,16 @@
             const row = createElement("div", "weekly-category-summary");
             const identity = createElement("div", "weekly-category-summary__identity");
             identity.append(createCategoryBadge(categoryId), createElement("span", `weekly-state weekly-state--${vote?.rating || "none"}`, ratingLabel(vote?.rating)));
-            const points = createElement("span", "weekly-category-points", metrics.votesCount ? `${metrics.weeklyPoints} pts · ${metrics.votersCount}/2` : "Sin puntaje");
+            const otherVoteExists = state().weeklyVotes.some((item) => item.weekId === week.id
+                && item.participantId === participant.id && item.categoryId === categoryId && item.userId !== activeUserId);
+            const pointsText = week.status === "OPEN"
+                ? vote ? "Tu voto guardado" : otherVoteExists ? "Tu voto pendiente" : "Sin evaluar"
+                : metrics.votesCount ? `${metrics.weeklyPoints} pts · ${metrics.votersCount}/2` : "Sin puntaje";
+            const points = createElement("span", "weekly-category-points", pointsText);
             row.append(identity, points);
+            if (week.status === "CLOSED" && metrics.ratingDifference !== null && metrics.ratingDifference >= 3) {
+                row.append(createElement("span", "weekly-disagreement", "Diferencia alta · revisar"));
+            }
             return row;
         }
         function createVoteCard(participant, week) {
@@ -132,15 +143,66 @@
             if (legacy) heading.append(identity, createElement("span", "weekly-state weekly-state--legacy", "Voto anterior"));
             else heading.append(identity);
             const summaries = createElement("div", "weekly-category-summaries");
-            weekly.categoriesForParticipant(state(), week.id, participant.id)
+            const nominationItems = (week.nominations || []).filter((item) => item.participantId === participant.id
+                && (elements.categoryFilter.value === "all" || item.categoryId === elements.categoryFilter.value));
+            nominationItems.forEach((item) => {
+                const label = createElement("span", "weekly-nomination-badge",
+                    `Nominado en ${categoryLabel(item.categoryId)}${item.voterIds.length > 1 ? " · P1 + P2" : ` · ${item.voterIds[0]?.toUpperCase() || ""}`}`);
+                summaries.append(label);
+            });
+            const evaluatedCategories = [...new Set(state().weeklyVotes
+                .filter((vote) => vote.weekId === week.id && vote.participantId === participant.id && vote.categoryId)
+                .map((vote) => vote.categoryId))];
+            evaluatedCategories
                 .forEach((categoryId) => summaries.append(createCategorySummary(participant, categoryId, week)));
+            const relevantVotes = state().weeklyVotes.filter((vote) => vote.weekId === week.id
+                && vote.participantId === participant.id && vote.categoryId
+                && (elements.categoryFilter.value === "all" || vote.categoryId === elements.categoryFilter.value));
+            const reasonCounts = new Map();
+            relevantVotes.forEach((vote) => (vote.reasonTagIds || []).forEach((tagId) => {
+                reasonCounts.set(tagId, (reasonCounts.get(tagId) || 0) + 1);
+            }));
+            const recurringReasons = [...reasonCounts].sort((left, right) => right[1] - left[1]).slice(0, 3);
+            if (recurringReasons.length) {
+                const tags = createElement("div", "weekly-recurring-tags");
+                tags.append(createElement("span", "micro-label", "Tags de esta jornada"));
+                recurringReasons.forEach(([tagId, count]) => {
+                    const tag = state().tags.find((item) => item.id === tagId);
+                    if (tag) tags.append(createElement("span", "weekly-recurring-tag", `${tag.name}${count > 1 ? ` · ${count}/2` : ""}`));
+                });
+                summaries.append(tags);
+            }
+            const reference = relevantVotes.find((vote) => vote.sourceUrl);
+            if (reference) {
+                const link = createElement("a", "weekly-source-link", `${reference.sourceType
+                    ? constants.EVIDENCE_TYPES.find((item) => item.id === reference.sourceType)?.label || "Evidencia" : "Ver evidencia"} ↗`);
+                link.href = reference.sourceUrl;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.setAttribute("aria-label", `Abrir evidencia de ${participant.name} en una pestaña nueva`);
+                summaries.append(link);
+            }
             const footer = createElement("div", "weekly-card-footer");
-            footer.append(createElement("p", "weekly-card-reasons", legacy ? "Asigna el voto anterior a la categoría correcta." : "Cada categoría se evalúa por separado."));
+            footer.append(createElement("p", "weekly-card-reasons", legacy ? "Asigna el voto anterior a la categoría correcta."
+                : evaluatedCategories.length ? "Etiquetas y notas explican el desempeño de esta semana."
+                    : "En observación · aún puedes descubrir su categoría."));
             const actions = createElement("div", "weekly-card-actions");
             const profileAction = createElement("button", "button button--quiet", "Ver perfil");
             profileAction.type = "button"; profileAction.dataset.weeklyProfileId = participant.id;
             actions.append(profileAction);
             if (week.status === "OPEN") {
+                if (elements.categoryFilter.value !== "all") {
+                    const existingNomination = weekly.nominationFor(state(), week.id, participant.id, elements.categoryFilter.value);
+                    const nominatedByCurrent = existingNomination?.voterIds.includes(activeUserId) || false;
+                    const nominationButton = createElement("button", nominatedByCurrent ? "button button--quiet" : "button button--secondary",
+                        nominatedByCurrent ? `Quitar nominación ${activeUserId.toUpperCase()}` : `Nominar en ${categoryLabel(elements.categoryFilter.value)}`);
+                    nominationButton.type = "button";
+                    nominationButton.dataset.weeklyNominateParticipant = participant.id;
+                    nominationButton.dataset.weeklyNominateCategory = elements.categoryFilter.value;
+                    nominationButton.dataset.weeklyNominateValue = String(!nominatedByCurrent);
+                    nominationButton.disabled = !canWrite();
+                    actions.append(nominationButton);
+                }
                 const categories = weekly.categoriesForParticipant(state(), week.id, participant.id);
                 if (categories.length) {
                     const action = createElement("button", "button button--primary", "Evaluar categorías");
@@ -157,7 +219,7 @@
         function currentFilters() {
             return { query: elements.search.value, categoryId: elements.categoryFilter.value,
                 gender: elements.genderFilter.value, groupId: elements.groupFilter.value,
-                evaluation: elements.evaluationFilter.value };
+                evaluation: elements.evaluationFilter.value, nomineesOnly: !showCatalog && currentWeek()?.status === "OPEN" };
         }
         function renderCards(week) {
             const participants = weekly.filterWeeklyParticipants(state(), week.id, activeUserId, currentFilters());
@@ -166,6 +228,9 @@
             elements.grid.replaceChildren(fragment);
             elements.resultsSummary.textContent = `${participants.length} participante${participants.length === 1 ? "" : "s"}`;
             elements.noResults.hidden = participants.length > 0;
+            elements.noResults.querySelector("h2").textContent = !showCatalog && week.status === "OPEN"
+                ? "Aún no hay nominados en esta categoría"
+                : "No hay participantes con estos filtros";
         }
         function renderProgress(week) {
             const progress = weekly.weeklyProgress(state(), week.id, activeUserId);
@@ -271,6 +336,8 @@
             const existing = weekly.findVote(state(), currentWeek().id, participant.id, categoryId, activeUserId);
             selectedRating = existing?.rating || null; selectedReasonIds = new Set(existing?.reasonTagIds || []);
             elements.note.value = existing?.note || ""; elements.noteCount.textContent = elements.note.value.length;
+            elements.sourceType.value = existing?.sourceType || "";
+            elements.sourceUrl.value = existing?.sourceUrl || "";
             elements.removeVote.hidden = !existing; elements.saveVote.textContent = existing ? "Guardar cambios" : "Guardar evaluación";
             elements.ratingCategory.textContent = categoryLabel(categoryId);
             elements.reasonSearch.value = ""; showVoteError(); syncRatingButtons();
@@ -305,7 +372,8 @@
                 const result = weekly.upsertVote(state(), {
                     weekId: week.id, participantId: editingParticipantId, categoryId: editingCategoryId,
                     userId: activeUserId, rating: selectedRating,
-                    reasonTagIds: [...selectedReasonIds], note: elements.note.value
+                    reasonTagIds: [...selectedReasonIds], note: elements.note.value,
+                    sourceType: elements.sourceType.value, sourceUrl: elements.sourceUrl.value
                 });
                 const participantName = state().participants.find((participant) => participant.id === editingParticipantId)?.name;
                 commitState(result.state); loadCategory(editingCategoryId);
@@ -389,10 +457,23 @@
             [elements.categoryFilter, elements.genderFilter, elements.groupFilter, elements.evaluationFilter]
                 .forEach((control) => control.addEventListener("change", render));
             elements.resetFilters.addEventListener("click", resetFilters);
+            elements.showCatalog.addEventListener("change", () => { showCatalog = elements.showCatalog.checked; render(); });
             elements.grid.addEventListener("click", (event) => {
                 const profileButton = event.target.closest("button[data-weekly-profile-id]");
                 if (profileButton) {
                     viewParticipant(profileButton.dataset.weeklyProfileId);
+                    return;
+                }
+                const nomination = event.target.closest("button[data-weekly-nominate-participant]");
+                if (nomination) {
+                    try {
+                        const result = weekly.setNomination(state(), currentWeek().id,
+                            nomination.dataset.weeklyNominateParticipant, nomination.dataset.weeklyNominateCategory,
+                            activeUserId, nomination.dataset.weeklyNominateValue === "true");
+                        commitState(result.state);
+                        notify(result.nominated ? `Nominación de ${categoryLabel(nomination.dataset.weeklyNominateCategory)} guardada para ${currentVoter().name}.`
+                            : `Nominación retirada para ${currentVoter().name}.`);
+                    } catch (error) { notify(error.message, "error"); }
                     return;
                 }
                 const button = event.target.closest("button[data-weekly-participant-id]");

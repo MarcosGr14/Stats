@@ -5,9 +5,10 @@
     const constants = namespace.constants;
     const season = namespace.season;
     const seasons = namespace.seasons;
+    const classifications = namespace.classifications;
     const ui = namespace.ui;
 
-    if (!constants || !season || !seasons || !ui) {
+    if (!constants || !season || !seasons || !classifications || !ui) {
         throw new Error("Stats V2 constants, UI helpers and Season Standings must load before the Season view.");
     }
 
@@ -28,6 +29,9 @@
 
     function createController(options) {
         const getState = options.getState;
+        const commitState = options.commitState;
+        const canWrite = options.canWrite || (() => true);
+        const notify = options.notify || (() => {});
         const viewParticipant = options.viewParticipant;
         const getImage = options.getImage || null;
         let activeView = "season";
@@ -62,6 +66,11 @@
             provisionalList: byId("season-provisional-list"),
             seasonRenderTime: byId("season-render-time"),
             rankingsRenderTime: byId("rankings-render-time"),
+            classificationList: byId("classification-candidate-list"),
+            classificationEmpty: byId("classification-candidate-empty"),
+            classificationSummary: byId("classification-review-summary"),
+            classificationCriteriaForm: byId("classification-criteria-form"),
+            classificationCriteriaFields: byId("classification-criteria-fields"),
             dialog: byId("season-breakdown-dialog"),
             breakdownContent: byId("season-breakdown-content")
         };
@@ -88,6 +97,10 @@
         function avatar(participant, modifier = "") {
             const wrapper = element("span", `season-avatar ${modifier}`.trim());
             const image = element("img");
+            image.width = 96;
+            image.height = 96;
+            image.loading = "lazy";
+            image.decoding = "async";
             image.alt = `Foto de ${participant.name}`;
             image.hidden = true;
             const fallback = element("span", "season-avatar-fallback", initials(participant.name));
@@ -307,6 +320,84 @@
                 : emptyState("Sin provisionales", "No hay evaluaciones por debajo del mínimo en esta selección."));
         }
 
+        function renderClassificationReview(model) {
+            const state = getState();
+            const current = classifications.currentSeason(state);
+            const observed = classifications.categoryCandidates(state, model.categoryId, model.gender);
+            const candidates = observed.filter((item) => item.evidence.meetsEvidence || item.status === "classified");
+            const readyCount = candidates.filter((item) => item.evidence.ready && item.status !== "classified").length;
+            const waitingCount = candidates.filter((item) => item.evidence.meetsEvidence && !item.evidence.reviewOpen
+                && item.status !== "classified").length;
+            const observingCount = observed.length - candidates.length;
+            elements.classificationSummary.textContent = `${readyCount} listo${readyCount === 1 ? "" : "s"} para revisión · ${waitingCount} esperan el próximo cierre trimestral · ${observingCount} en observación acumulando evidencia.`;
+            elements.classificationEmpty.hidden = candidates.length > 0;
+            const fragment = document.createDocumentFragment();
+            candidates.forEach((candidate) => {
+                const card = element("article", "classification-candidate");
+                const heading = element("div", "classification-candidate__heading");
+                const identity = element("div");
+                identity.append(element("strong", "", candidate.participant.name), element("span", "", candidate.participant.groupId
+                    ? state.groups.find((group) => group.id === candidate.participant.groupId)?.name || "Grupo desconocido" : "Solista"));
+                const statusText = candidate.status === "classified" ? "Clasificado"
+                    : candidate.status === "paused" ? "En pausa"
+                        : candidate.evidence.ready ? "Listo para revisión"
+                            : candidate.evidence.meetsEvidence ? "Revisión trimestral pendiente" : "En observación";
+                heading.append(identity, element("span", `classification-state classification-state--${candidate.status}`, statusText));
+                card.append(heading);
+                const evidence = element("p", "classification-candidate__evidence",
+                    `${candidate.evidence.weeksEvaluated}/${candidate.evidence.minimumWeeks} semanas completas · promedio ${decimal(candidate.evidence.averagePoints, 1)}/6 · mínimo ${decimal(candidate.evidence.minimumAveragePoints, 1)}`);
+                card.append(evidence);
+                if (candidate.evidence.reviewPeriod && candidate.status !== "classified") {
+                    card.append(element("p", "classification-review-progress", `Periodo de revisión abierto: ${candidate.evidence.reviewPeriod}`));
+                }
+                if (candidate.evidence.topTags.length) {
+                    const tags = element("div", "classification-candidate__tags");
+                    tags.append(element("span", "micro-label", "Motivos recurrentes"));
+                    candidate.evidence.topTags.forEach(({ tag, count }) => tags.append(element("span", "tag-chip", `${tag.name} · ${count}`)));
+                    card.append(tags);
+                }
+                const review = candidate.requestedStatus;
+                if (review) card.append(element("p", "classification-review-progress",
+                    `${review === "paused" ? "Pausa" : "Clasificación"} en revisión · ${candidate.confirmedBy.length}/2 votos: ${candidate.confirmedBy.map((id) => id.toUpperCase()).join(", ") || "ninguno"}`));
+                const actions = element("div", "classification-candidate__actions");
+                const action = candidate.status === "classified" ? "paused" : "classified";
+                const eligibleForAction = action === "paused" ? candidate.evidence.reviewOpen : candidate.evidence.ready;
+                constants.VOTER_IDS.forEach((voterId) => {
+                    const button = element("button", "button button--secondary",
+                        candidate.confirmedBy.includes(voterId) && review === action
+                            ? `${voterId.toUpperCase()} · confirmado` : `${action === "paused" ? "Pausar" : "Confirmar"} ${voterId.toUpperCase()}`);
+                    button.type = "button";
+                    button.dataset.classificationParticipant = candidate.participant.id;
+                    button.dataset.classificationVoter = voterId;
+                    button.dataset.classificationAction = action;
+                    button.disabled = !canWrite() || !eligibleForAction
+                        || (candidate.confirmedBy.includes(voterId) && review === action);
+                    actions.append(button);
+                });
+                card.append(actions);
+                fragment.append(card);
+            });
+            elements.classificationList.replaceChildren(fragment);
+
+            const fields = document.createDocumentFragment();
+            constants.CATEGORIES.forEach(({ id, label }) => {
+                const criteria = classifications.criteriaFor(state, id);
+                const row = element("div", "classification-criteria-row");
+                row.append(element("strong", "", categoryLabel(id)));
+                const weeksLabel = element("label", "", "Semanas completas");
+                const weeks = element("input"); weeks.type = "number"; weeks.min = "1"; weeks.max = "52"; weeks.step = "1";
+                weeks.name = `${id}-weeks`; weeks.value = criteria.minimumWeeks; weeks.required = true;
+                weeks.disabled = !canWrite(); weeksLabel.append(weeks);
+                const pointsLabel = element("label", "", "Promedio mínimo / 6");
+                const points = element("input"); points.type = "number"; points.min = "0"; points.max = "6"; points.step = "0.1";
+                points.name = `${id}-points`; points.value = criteria.minimumAveragePoints; points.required = true;
+                points.disabled = !canWrite(); pointsLabel.append(points);
+                row.append(weeksLabel, pointsLabel); fields.append(row);
+            });
+            elements.classificationCriteriaFields.replaceChildren(fields);
+            elements.classificationCriteriaForm.querySelector("button[type=submit]").disabled = !canWrite() || !current;
+        }
+
         function breakdownMetric(label, value, weight, contribution) {
             const row = element("div", "season-breakdown-metric");
             const heading = element("div", "season-breakdown-metric-heading");
@@ -415,6 +506,7 @@
             });
             currentModel = createViewModel(getState(), { includeOpen, categoryId, gender });
             renderStanding(currentModel);
+            renderClassificationReview(currentModel);
             if (focus) elements.categoryTabs.find((tab) => tab.dataset.seasonCategory === categoryId)?.focus();
         }
 
@@ -424,6 +516,7 @@
             elements.genderButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.seasonGender === gender)));
             currentModel = createViewModel(getState(), { includeOpen, categoryId, gender });
             renderStanding(currentModel);
+            renderClassificationReview(currentModel);
         }
 
         function render() {
@@ -438,6 +531,7 @@
                     liveStatus: elements.rankingsLiveStatus
                 });
                 renderStanding(currentModel);
+                renderClassificationReview(currentModel);
             } else {
                 renderMode(currentModel, {
                     mode: elements.seasonMode,
@@ -490,6 +584,34 @@
 
         elements.seasonView.addEventListener("click", handleViewClick);
         elements.rankingsView.addEventListener("click", handleViewClick);
+        elements.classificationList.addEventListener("click", (event) => {
+            const button = event.target.closest("button[data-classification-participant]");
+            if (!button || !canWrite()) return;
+            try {
+                const result = classifications.reviewClassification(getState(), button.dataset.classificationParticipant,
+                    categoryId, button.dataset.classificationVoter, button.dataset.classificationAction);
+                commitState(result.state);
+                notify(result.completed
+                    ? button.dataset.classificationAction === "paused" ? "Clasificación pausada; se conservó todo su historial." : "Clasificación confirmada por P1 y P2."
+                    : `Revisión guardada para ${button.dataset.classificationVoter.toUpperCase()}; falta la otra confirmación.`);
+            } catch (error) { notify(error.message, "error"); }
+        });
+        elements.classificationCriteriaForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            if (!canWrite()) return;
+            try {
+                const form = new FormData(elements.classificationCriteriaForm);
+                let next = getState();
+                constants.CATEGORIES.forEach(({ id }) => {
+                    next = classifications.updateCriteria(next, id, {
+                        minimumWeeks: form.get(`${id}-weeks`),
+                        minimumAveragePoints: form.get(`${id}-points`)
+                    });
+                });
+                commitState(next);
+                notify("Criterios de clasificación guardados por categoría.");
+            } catch (error) { notify(error.message, "error"); }
+        });
 
         return Object.freeze({
             activate(viewId = "season") {

@@ -19,7 +19,7 @@ test("loads the shared Season source before its view and the application", () =>
     assert.ok(html.indexOf("js/seasons.js") < html.indexOf("js/season-view.js"));
     assert.ok(html.indexOf("js/season.js") < html.indexOf("js/season-view.js"));
     assert.ok(html.indexOf("js/season-view.js") < html.indexOf("js/app.js"));
-    assert.match(html, /js\/app\.js\?v=2\.12\.0/);
+    assert.match(html, /js\/app\.js\?v=2\.14\.0/);
     assert.match(html, /id="nav-results" href="#results"/);
     assert.match(html, /data-results-tab="season"/);
     assert.match(app, /seasonController = seasonViewService\.createController/);

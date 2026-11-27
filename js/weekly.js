@@ -78,12 +78,7 @@
     }
     function assertParticipantCategory(state, weekId, participant, categoryId) {
         if (!categoryIds.has(categoryId)) throw new WeeklyError("INVALID_CATEGORY", "Selecciona una categoría válida.");
-        const hasHistoricalVote = state.weeklyVotes.some((vote) => (
-            vote.weekId === weekId && vote.participantId === participant.id && vote.categoryId === categoryId
-        ));
-        if (!participant.categoryIds.includes(categoryId) && !hasHistoricalVote) {
-            throw new WeeklyError("CATEGORY_NOT_ASSIGNED", "El participante no está asignado a esta categoría.");
-        }
+        // Weekly evaluation is open to discovery; classification is a separate season process.
     }
 
     function openCurrentIsoWeek(state, value = new Date(), timestamp = new Date().toISOString()) {
@@ -212,7 +207,24 @@
         if (note.length > constants.MAX_WEEKLY_NOTE_LENGTH) {
             throw new WeeklyError("NOTE_TOO_LONG", `La nota admite hasta ${constants.MAX_WEEKLY_NOTE_LENGTH} caracteres.`);
         }
-        return { reasonTagIds, note };
+        const sourceType = typeof input.sourceType === "string" ? input.sourceType : "";
+        if (sourceType && !constants.EVIDENCE_TYPES.some((item) => item.id === sourceType)) {
+            throw new WeeklyError("INVALID_SOURCE_TYPE", "Selecciona un tipo de evidencia válido.");
+        }
+        const sourceUrl = typeof input.sourceUrl === "string" ? input.sourceUrl.trim() : "";
+        if (sourceUrl) {
+            if (sourceUrl.length > constants.MAX_WEEKLY_SOURCE_URL_LENGTH) {
+                throw new WeeklyError("SOURCE_URL_TOO_LONG", `El enlace admite hasta ${constants.MAX_WEEKLY_SOURCE_URL_LENGTH} caracteres.`);
+            }
+            let parsed;
+            try { parsed = new URL(sourceUrl); } catch (_) {
+                throw new WeeklyError("INVALID_SOURCE_URL", "Escribe un enlace válido con https:// o http://.");
+            }
+            if (!["https:", "http:"].includes(parsed.protocol) || !parsed.hostname || parsed.username || parsed.password) {
+                throw new WeeklyError("INVALID_SOURCE_URL", "El enlace debe usar https:// o http:// y no incluir credenciales.");
+            }
+        }
+        return { reasonTagIds, note, sourceType, sourceUrl };
     }
     function standoutCountForUser(state, weekId, userId, ignoredVoteId = null) {
         return state.weeklyVotes.filter((vote) => vote.weekId === weekId && vote.userId === userId
@@ -233,7 +245,8 @@
             vote = nextState.weeklyVotes.find((item) => item.id === existing.id);
             Object.assign(vote, {
                 rating: input.rating, reasonTagIds: normalized.reasonTagIds,
-                note: normalized.note, updatedAt: timestamp
+                note: normalized.note, sourceType: normalized.sourceType, sourceUrl: normalized.sourceUrl,
+                updatedAt: timestamp
             });
             if (Object.prototype.hasOwnProperty.call(vote, "selectedTagIds")) {
                 vote.selectedTagIds = [...normalized.reasonTagIds];
@@ -242,7 +255,8 @@
             vote = data.createWeeklyVote({
                 weekId: input.weekId, participantId: input.participantId, categoryId: input.categoryId,
                 userId: input.userId, rating: input.rating,
-                reasonTagIds: normalized.reasonTagIds, note: normalized.note
+                reasonTagIds: normalized.reasonTagIds, note: normalized.note,
+                sourceType: normalized.sourceType, sourceUrl: normalized.sourceUrl
             }, timestamp);
             nextState.weeklyVotes.push(vote);
         }
@@ -375,8 +389,38 @@
             .filter((vote) => vote.weekId === weekId && vote.participantId === participantId && vote.categoryId)
             .map((vote) => vote.categoryId);
         const archived = week.participantCategoryIds?.[participantId] || recorded;
-        return [...new Set(week.status === "CLOSED" ? archived : [...participant.categoryIds, ...archived, ...recorded])]
+        return [...new Set(week.status === "CLOSED" ? archived : constants.CATEGORIES.map((category) => category.id))]
             .filter((categoryId) => categoryIds.has(categoryId));
+    }
+    function nominationFor(state, weekId, participantId, categoryId) {
+        const week = findWeek(state, weekId);
+        return (week.nominations || []).find((item) => item.participantId === participantId && item.categoryId === categoryId) || null;
+    }
+    function setNomination(state, weekId, participantId, categoryId, userId, nominated = true, timestamp = new Date().toISOString()) {
+        assertState(state);
+        const week = findWeek(state, weekId);
+        if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "La semana está cerrada.");
+        const participant = findParticipant(state, participantId);
+        if (participant.archivedAt !== null) throw new WeeklyError("PARTICIPANT_ARCHIVED", "Restaura al participante para nominarlo.");
+        assertVoter(state, userId);
+        if (!categoryIds.has(categoryId)) throw new WeeklyError("INVALID_CATEGORY", "Selecciona una categoría para nominar.");
+        const next = cloneState(state);
+        const targetWeek = findWeek(next, weekId);
+        if (!Array.isArray(targetWeek.nominations)) targetWeek.nominations = [];
+        let item = targetWeek.nominations.find((entry) => entry.participantId === participantId && entry.categoryId === categoryId);
+        if (nominated) {
+            if (!item) {
+                item = { participantId, categoryId, voterIds: [] };
+                targetWeek.nominations.push(item);
+            }
+            if (!item.voterIds.includes(userId)) item.voterIds.push(userId);
+        } else if (item) {
+            item.voterIds = item.voterIds.filter((id) => id !== userId);
+            if (!item.voterIds.length) targetWeek.nominations = targetWeek.nominations.filter((entry) => entry !== item);
+        }
+        targetWeek.updatedAt = timestamp;
+        assertState(next);
+        return { state: next, nomination: nominationFor(next, weekId, participantId, categoryId), nominated };
     }
     function filterWeeklyParticipants(state, weekId, userId, options = {}) {
         const week = findWeek(state, weekId);
@@ -386,10 +430,15 @@
         const gender = options.gender || "all";
         const groupId = options.groupId || "all";
         const evaluation = options.evaluation || "all";
+        const nomineesOnly = options.nomineesOnly === true;
         const groupsById = new Map(state.groups.map((group) => [group.id, group.name]));
         const historicalIds = new Set(state.weeklyVotes.filter((vote) => vote.weekId === weekId).map((vote) => vote.participantId));
+        const nominatedIds = new Set((week.nominations || []).filter((item) => (
+            categoryId === "all" || item.categoryId === categoryId
+        )).map((item) => item.participantId));
         return state.participants
             .filter((participant) => participant.archivedAt === null || (week.status === "CLOSED" && historicalIds.has(participant.id)))
+            .filter((participant) => !nomineesOnly || nominatedIds.has(participant.id))
             .filter((participant) => categoryId === "all" || categoriesForParticipant(state, weekId, participant.id).includes(categoryId))
             .filter((participant) => gender === "all" || participant.gender === gender)
             .filter((participant) => groupId === "all" || (groupId === "soloist" ? participant.groupId === null : participant.groupId === groupId))
@@ -415,7 +464,7 @@
         findVote, findLegacyVote, upsertVote, removeVote, assignLegacyVoteCategory,
         ratingScore, standoutCountForUser, deriveMetricsFromVotes, deriveCategoryWeeklyMetrics,
         compareWeeklyMetrics, sameRankMetrics, deriveWeeklyRanking, createWeeklyPointsProvider,
-        weeklyProgress, categoriesForParticipant, filterWeeklyParticipants
+        weeklyProgress, categoriesForParticipant, nominationFor, setNomination, filterWeeklyParticipants
     });
     root.StatsV2 = namespace;
 })(globalThis);

@@ -106,6 +106,10 @@
             button.dataset.hallParticipantId = person.participantId;
             if (person.catalogPhotoUrl) {
                 const image = element("img", "hall-person-photo");
+                image.width = 32;
+                image.height = 32;
+                image.loading = "lazy";
+                image.decoding = "async";
                 image.src = person.catalogPhotoUrl;
                 image.alt = "";
                 button.append(image);

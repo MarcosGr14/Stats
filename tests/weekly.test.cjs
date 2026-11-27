@@ -199,10 +199,34 @@ test("upserts only the matching category and preserves identity", () => {
     assert.equal(weekly.findVote(updated.state, "2026-W36", "participant-1", "dance", "p1").rating, "impressed");
 });
 
-test("rejects unsupported and unassigned categories", () => {
+test("rejects unsupported categories and allows open weekly discovery in unassigned categories", () => {
     const state = openWeek(fixtureState());
     assert.throws(() => vote(state, "participant-1", "unknown", "p1", "good"), (error) => error.code === "INVALID_CATEGORY");
-    assert.throws(() => vote(state, "participant-2", "rap", "p1", "good"), (error) => error.code === "CATEGORY_NOT_ASSIGNED");
+    const discovery = vote(state, "participant-2", "rap", "p1", "good");
+    assert.equal(weekly.findVote(discovery, state.settings.activeWeekId, "participant-2", "rap", "p1").rating, "good");
+});
+
+test("weekly nominations form a compact shared shortlist per category", () => {
+    let state = openWeek(fixtureState());
+    state = weekly.setNomination(state, state.settings.activeWeekId, "participant-2", "rap", "p1", true, timestamp).state;
+    assert.equal(weekly.nominationFor(state, state.settings.activeWeekId, "participant-2", "rap").voterIds.length, 1);
+    assert.deepEqual(weekly.filterWeeklyParticipants(state, state.settings.activeWeekId, "p1", {
+        categoryId: "rap", nomineesOnly: true
+    }).map((item) => item.id), ["participant-2"]);
+    state = weekly.setNomination(state, state.settings.activeWeekId, "participant-2", "rap", "p2", true, timestamp).state;
+    assert.deepEqual(weekly.nominationFor(state, state.settings.activeWeekId, "participant-2", "rap").voterIds, ["p1", "p2"]);
+    state = weekly.setNomination(state, state.settings.activeWeekId, "participant-2", "rap", "p1", false, timestamp).state;
+    assert.deepEqual(weekly.nominationFor(state, state.settings.activeWeekId, "participant-2", "rap").voterIds, ["p2"]);
+});
+
+test("stores source type and validates safe HTTP reference links with weekly votes", () => {
+    let state = openWeek(fixtureState());
+    const input = { weekId: state.settings.activeWeekId, participantId: "participant-2", categoryId: "visual",
+        userId: "p1", rating: "impressed", sourceType: "fashion", sourceUrl: "https://example.com/editorial" };
+    state = weekly.upsertVote(state, input, timestamp).state;
+    assert.equal(weekly.findVote(state, input.weekId, input.participantId, input.categoryId, input.userId).sourceType, "fashion");
+    assert.throws(() => weekly.upsertVote(state, { ...input, sourceUrl: "javascript:alert(1)" }, timestamp),
+        (error) => error.code === "INVALID_SOURCE_URL");
 });
 
 test("Not evaluated and Normal are independent per category", () => {
