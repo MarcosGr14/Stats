@@ -11,6 +11,8 @@ La aplicación reúne en un solo lugar a los participantes, sus nominaciones por
 - Catálogo Fan Choice con 242 participantes: 235 integrantes de 39 grupos y siete solistas, organizados por género y grupo.
 - Retratos WebP para los 242 perfiles del catálogo, con sus fuentes registradas por imagen.
 - Temas claro y oscuro, con opción automática según el dispositivo.
+- Identidad visual Stats aplicada al encabezado, favicon e iconos de instalación.
+- Aplicación PWA instalable en móvil y escritorio, con interfaz y recursos estáticos disponibles tras la primera carga, incluso sin conexión.
 - Fichas de participantes con búsqueda, filtros, grupos, imágenes, tags, archivo y perfil histórico.
 - Nominación independiente por temporada: cada participante puede quedar sin categoría hasta que se decida en cuáles competirá.
 - Lista semanal breve de nominados compartida por categoría, más acceso opcional al catálogo completo para descubrir nuevos talentos.
@@ -40,12 +42,12 @@ Los rankings semanales ordenan por puntos y usan como segundo criterio configura
 
 ## Datos y privacidad
 
-Stats funciona sin cuenta ni servidor de aplicación. P1 y P2 son confirmaciones separadas en la misma instancia local, no identidades autenticadas. El estado del catálogo, temporadas y votaciones se guarda localmente en el navegador; las fotos personalizadas se guardan en su almacenamiento local. Los retratos predeterminados del catálogo forman parte de los recursos del producto y tienen sus páginas de origen registradas junto a los archivos. Los datos personales no se sincronizan automáticamente entre navegadores o equipos. La sincronización del repositorio de GitHub corresponde al código y sus recursos, no a los datos personales de la aplicación.
+Stats funciona sin cuenta ni servidor de aplicación. P1 y P2 son confirmaciones separadas en la misma instancia local, no identidades autenticadas. El estado del catálogo, temporadas y votaciones se guarda localmente en el navegador; las fotos personalizadas se guardan en su almacenamiento local. La PWA almacena en caché la interfaz y recursos estáticos, nunca las solicitudes de datos de la temporada; los registros locales siguen en los almacenes del navegador. Los retratos predeterminados del catálogo forman parte de los recursos del producto y tienen sus páginas de origen registradas junto a los archivos. Los datos personales no se sincronizan automáticamente entre navegadores o equipos. La sincronización del repositorio de GitHub corresponde al código y sus recursos, no a los datos personales de la aplicación.
 
 La función de backup permite exportar e importar el estado y las imágenes en un archivo JSON. Antes de restaurar, la aplicación valida el contenido y permite revisar el reemplazo.
 
 ## Tecnología
 
-La interfaz utiliza HTML semántico, CSS adaptable y JavaScript nativo del navegador. Usa `localStorage` para el estado estructurado y las preferencias visuales, `IndexedDB` para fotos personalizadas, Web Crypto para comprobar la integridad de los backups y las APIs de archivos del navegador para exportar e importar datos. Las tipografías de marca son Unbounded y Onest; la aplicación no requiere framework ni backend.
+La interfaz utiliza HTML semántico, CSS adaptable y JavaScript nativo del navegador. Usa `localStorage` para el estado estructurado y las preferencias visuales, `IndexedDB` para fotos personalizadas, Web Crypto para comprobar la integridad de los backups, las APIs de archivos del navegador para exportar e importar datos, y Service Worker más Web App Manifest para instalación y uso sin conexión. Las tipografías de marca son Unbounded y Onest; la aplicación no requiere framework ni backend.
 
 La interfaz está en español, se adapta a móvil y escritorio y contempla navegación por teclado, etiquetas accesibles, estados vacíos y movimiento reducido.

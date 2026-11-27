@@ -5,49 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Stats V2: administra participantes y registra votaciones semanales P1/P2 con datos locales.">
     <meta name="theme-color" content="#0E0E12">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Stats">
     <meta name="page-type" content="software">
     <meta name="site-kind" content="software">
     <title>Participantes · Stats V2</title>
-    <link rel="icon" type="image/png" href="assets/favicon.png">
-    <script src="js/theme-init.js?v=2.15.0"></script>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/brand/pwa-192.png">
+    <link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png">
+    <script src="js/theme-init.js?v=2.16.0"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/global.css?v=2.15.0">
-    <link rel="stylesheet" href="css/components.css?v=2.15.0">
-    <link rel="stylesheet" href="css/app.css?v=2.15.0">
-    <link rel="stylesheet" href="css/weekly.css?v=2.15.0">
-    <link rel="stylesheet" href="css/spotlight.css?v=2.15.0">
-    <link rel="stylesheet" href="css/profile.css?v=2.15.0">
-    <link rel="stylesheet" href="css/season.css?v=2.15.0">
-    <link rel="stylesheet" href="css/backup.css?v=2.15.0">
-    <link rel="stylesheet" href="css/product.css?v=2.15.0">
-    <link rel="stylesheet" href="css/tinta-volt.css?v=2.15.0">
-    <script src="js/constants.js?v=2.15.0" defer></script>
-    <script src="js/theme.js?v=2.15.0" defer></script>
-    <script src="js/ui.js?v=2.15.0" defer></script>
-    <script src="js/data.js?v=2.15.0" defer></script>
-    <script src="js/participant-catalog.js?v=2.15.0" defer></script>
-    <script src="js/storage.js?v=2.15.0" defer></script>
-    <script src="js/weekly-migration.js?v=2.15.0" defer></script>
-    <script src="js/weekly.js?v=2.15.0" defer></script>
-    <script src="js/spotlight.js?v=2.15.0" defer></script>
-    <script src="js/profile-history.js?v=2.15.0" defer></script>
-    <script src="js/analytics.js?v=2.15.0" defer></script>
-    <script src="js/season.js?v=2.15.0" defer></script>
-    <script src="js/seasons.js?v=2.15.0" defer></script>
-    <script src="js/classifications.js?v=2.15.0" defer></script>
-    <script src="js/participants.js?v=2.15.0" defer></script>
-    <script src="js/tags.js?v=2.15.0" defer></script>
-    <script src="js/image-storage.js?v=2.15.0" defer></script>
-    <script src="js/backup.js?v=2.15.0" defer></script>
-    <script src="js/backup-view.js?v=2.15.0" defer></script>
-    <script src="js/weekly-view.js?v=2.15.0" defer></script>
-    <script src="js/spotlight-view.js?v=2.15.0" defer></script>
-    <script src="js/profile-view.js?v=2.15.0" defer></script>
-    <script src="js/season-view.js?v=2.15.0" defer></script>
-    <script src="js/product-view.js?v=2.15.0" defer></script>
-    <script src="js/app.js?v=2.15.0" defer></script>
+    <link rel="stylesheet" href="css/global.css?v=2.16.0">
+    <link rel="stylesheet" href="css/components.css?v=2.16.0">
+    <link rel="stylesheet" href="css/app.css?v=2.16.0">
+    <link rel="stylesheet" href="css/weekly.css?v=2.16.0">
+    <link rel="stylesheet" href="css/spotlight.css?v=2.16.0">
+    <link rel="stylesheet" href="css/profile.css?v=2.16.0">
+    <link rel="stylesheet" href="css/season.css?v=2.16.0">
+    <link rel="stylesheet" href="css/backup.css?v=2.16.0">
+    <link rel="stylesheet" href="css/product.css?v=2.16.0">
+    <link rel="stylesheet" href="css/tinta-volt.css?v=2.16.0">
+    <script src="js/constants.js?v=2.16.0" defer></script>
+    <script src="js/theme.js?v=2.16.0" defer></script>
+    <script src="js/ui.js?v=2.16.0" defer></script>
+    <script src="js/data.js?v=2.16.0" defer></script>
+    <script src="js/participant-catalog.js?v=2.16.0" defer></script>
+    <script src="js/storage.js?v=2.16.0" defer></script>
+    <script src="js/weekly-migration.js?v=2.16.0" defer></script>
+    <script src="js/weekly.js?v=2.16.0" defer></script>
+    <script src="js/spotlight.js?v=2.16.0" defer></script>
+    <script src="js/profile-history.js?v=2.16.0" defer></script>
+    <script src="js/analytics.js?v=2.16.0" defer></script>
+    <script src="js/season.js?v=2.16.0" defer></script>
+    <script src="js/seasons.js?v=2.16.0" defer></script>
+    <script src="js/classifications.js?v=2.16.0" defer></script>
+    <script src="js/participants.js?v=2.16.0" defer></script>
+    <script src="js/tags.js?v=2.16.0" defer></script>
+    <script src="js/image-storage.js?v=2.16.0" defer></script>
+    <script src="js/backup.js?v=2.16.0" defer></script>
+    <script src="js/backup-view.js?v=2.16.0" defer></script>
+    <script src="js/weekly-view.js?v=2.16.0" defer></script>
+    <script src="js/spotlight-view.js?v=2.16.0" defer></script>
+    <script src="js/profile-view.js?v=2.16.0" defer></script>
+    <script src="js/season-view.js?v=2.16.0" defer></script>
+    <script src="js/product-view.js?v=2.16.0" defer></script>
+    <script src="js/app.js?v=2.16.0" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -55,9 +61,8 @@
     <div class="site-shell">
         <header class="topbar">
             <a class="brand" href="#participants" aria-label="Stats V2, participantes">
-                <span class="brand-mark" aria-hidden="true">S</span>
                 <span class="brand-copy">
-                    <strong>STATS</strong>
+                    <img class="brand-logo" src="assets/brand/stats-wordmark.png" alt="" width="896" height="290">
                     <small>Seguimiento personal</small>
                 </span>
             </a>
@@ -1301,5 +1306,6 @@
     </dialog>
 
     <div class="app-toast" id="app-toast" role="status" aria-live="polite" hidden></div>
+    <script src="js/pwa.js?v=2.16.0" defer></script>
 </body>
 </html>

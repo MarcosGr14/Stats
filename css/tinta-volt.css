@@ -34,17 +34,9 @@ button, input, select, textarea { font-family: var(--font-body); }
 }
 
 .brand { gap: 0.75rem; }
-.brand-mark {
-    width: 2.5rem;
-    height: 2.5rem;
-    border: 0;
-    border-radius: var(--radius-squircle);
-    background: var(--volt);
-    color: var(--ink);
-    font-family: var(--font-display);
-    font-size: 1rem;
-    font-weight: 700;
-}
+.brand-logo { display: block; width: clamp(6.25rem, 9vw, 7.5rem); height: auto; }
+.brand-copy { gap: 0.28rem; padding: 0.3rem 0.4rem; border-radius: var(--radius-sm); background: var(--ink); }
+.brand-copy small { color: #a3a2b3; }
 
 .brand-copy strong {
     font-family: var(--font-display);
@@ -474,7 +466,7 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1
 @media (max-width: 640px) {
     .site-shell { padding-inline: 1rem; }
     .topbar { gap: 0.5rem; min-height: 4rem; }
-    .brand-mark { width: 2.25rem; height: 2.25rem; }
+    .brand-logo { width: 6rem; }
     .build-status { font-size: 0.75rem; }
     .theme-toggle { min-width: 2.5rem; padding-inline: 0.65rem; }
     .theme-toggle-label { display: none; }
