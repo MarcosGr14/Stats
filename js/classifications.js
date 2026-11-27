@@ -22,7 +22,7 @@
 
     function criteriaFor(state, categoryId) {
         const season = currentSeason(state);
-        return season?.classificationCriteria?.[categoryId] || { ...constants.CLASSIFICATION_DEFAULTS };
+        return { ...constants.CLASSIFICATION_DEFAULTS, ...(season?.classificationCriteria?.[categoryId] || {}) };
     }
 
     function currentReviewPeriod(state) {
@@ -57,7 +57,8 @@
                 && !vote.legacyUncategorized);
             const voterIds = new Set(votes.map((vote) => vote.userId));
             if (!constants.VOTER_IDS.every((id) => voterIds.has(id))) return [];
-            return [{ weekId: week.id, points: votes.reduce((sum, vote) => sum + (ratingScores.get(vote.rating) || 0), 0) }];
+            return [{ weekId: week.id, points: votes.reduce((sum, vote) => sum + (ratingScores.get(vote.rating) || 0), 0),
+                evidenceTypes: votes.map((vote) => vote.sourceType).filter(Boolean) }];
         });
         const averagePoints = completed.length
             ? completed.reduce((sum, week) => sum + week.points, 0) / completed.length : 0;
@@ -72,14 +73,18 @@
             .slice(0, 3).map(([tagId, count]) => ({ tag: tagsById.get(tagId), count }))
             .filter((item) => item.tag);
         const criteria = criteriaFor(state, categoryId);
+        const evidenceTypes = [...new Set(completed.flatMap((week) => week.evidenceTypes))];
         const reviewPeriod = currentReviewPeriod(state);
         const reviewOpen = Boolean(reviewPeriod && record?.lastReviewedPeriod !== reviewPeriod);
-        const meetsEvidence = completed.length >= criteria.minimumWeeks && averagePoints >= criteria.minimumAveragePoints;
+        const meetsEvidence = completed.length >= criteria.minimumWeeks && averagePoints >= criteria.minimumAveragePoints
+            && evidenceTypes.length >= criteria.minimumEvidenceTypes;
         return {
             weeksEvaluated: completed.length,
             averagePoints,
             minimumWeeks: criteria.minimumWeeks,
             minimumAveragePoints: criteria.minimumAveragePoints,
+            evidenceTypes,
+            minimumEvidenceTypes: criteria.minimumEvidenceTypes,
             meetsEvidence,
             reviewPeriod,
             reviewOpen,
@@ -96,7 +101,8 @@
         let status = record?.status || (participant.categoryIds.includes(categoryId) ? "classified" : "observation");
         if (status === "ready" && !evidence.ready) status = "observation";
         if (status === "observation" && evidence.ready) status = "ready";
-        return { participant, categoryId, status, confirmedBy: record?.confirmedBy || [], requestedStatus: record?.requestedStatus || null, evidence };
+        return { participant, categoryId, status, confirmedBy: record?.confirmedBy || [],
+            requestedStatus: record?.requestedStatus || null, classifiedPeriod: record?.lastReviewedPeriod || null, evidence };
     }
 
     function categoryCandidates(state, categoryId, gender = "all") {
@@ -116,14 +122,16 @@
         }
         const minimumWeeks = Number(input.minimumWeeks);
         const minimumAveragePoints = Number(input.minimumAveragePoints);
+        const minimumEvidenceTypes = Number(input.minimumEvidenceTypes);
         if (!Number.isInteger(minimumWeeks) || minimumWeeks < 1 || minimumWeeks > 52
-            || !Number.isFinite(minimumAveragePoints) || minimumAveragePoints < 0 || minimumAveragePoints > 6) {
-            throw new ClassificationError("INVALID_CRITERIA", "Usa de 1 a 52 semanas y un promedio entre 0 y 6 puntos.");
+            || !Number.isFinite(minimumAveragePoints) || minimumAveragePoints < 0 || minimumAveragePoints > 6
+            || !Number.isInteger(minimumEvidenceTypes) || minimumEvidenceTypes < 1 || minimumEvidenceTypes > constants.EVIDENCE_TYPES.length) {
+            throw new ClassificationError("INVALID_CRITERIA", "Usa 1–52 semanas, promedio 0–6 y 1–6 tipos de evidencia.");
         }
         const next = cloneState(state);
         const season = currentSeason(next);
         if (!season) throw new ClassificationError("SEASON_NOT_FOUND", "No hay una temporada abierta.");
-        season.classificationCriteria[categoryId] = { minimumWeeks, minimumAveragePoints };
+        season.classificationCriteria[categoryId] = { minimumWeeks, minimumAveragePoints, minimumEvidenceTypes };
         season.updatedAt = timestamp;
         const validation = data.validateState(next);
         if (!validation.valid) throw new ClassificationError("INVALID_STATE", validation.errors.join(" "));

@@ -339,6 +339,11 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1
 .profile-header-metrics span { color: var(--text-muted); font-size: 0.75rem; font-weight: 500; letter-spacing: 0; text-transform: none; }
 .profile-category-chip { border-color: var(--line); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text); font-size: 0.75rem; font-weight: 500; letter-spacing: 0; }
 .profile-category-chip[data-category] { --chip-color: var(--line); }
+.profile-classification-statuses { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+.profile-classification-status { padding: 0.3rem 0.5rem; border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.75rem; }
+.profile-classification-status--classified { border-color: var(--success); color: var(--text); }
+.profile-classification-status--ready { border-color: var(--volt); color: var(--text); }
+.profile-classification-status--paused { border-color: var(--warning); color: var(--text); }
 .profile-trend-bar { box-shadow: none; }
 
 .spotlight-title-row h1 { margin-bottom: 0.25rem; }
@@ -386,7 +391,8 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1
 .classification-criteria-details > summary { color: var(--text); font-weight: 600; cursor: pointer; }
 .classification-criteria-form { display: grid; gap: 0.85rem; padding-top: 1rem; }
 .classification-criteria-form > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
-.classification-criteria-row { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; gap: 0.6rem; padding: 0.75rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); }
+.classification-criteria-row { display: grid; grid-template-columns: minmax(7rem, .7fr) minmax(12rem, 1.5fr) repeat(3, minmax(7rem, 1fr)); align-items: center; gap: 0.6rem; padding: 0.75rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); }
+.classification-rubric { margin: 0; color: var(--text-muted); font-size: .75rem; }
 .classification-criteria-row > strong { color: var(--text); font-size: 0.875rem; }
 .classification-criteria-row label { display: grid; gap: 0.35rem; color: var(--text-muted); font-size: 0.75rem; }
 .classification-criteria-row input { width: 100%; min-width: 0; min-height: 2.35rem; padding: 0.4rem 0.55rem; border: 1px solid var(--line-strong); border-radius: var(--radius-xs); background: var(--surface-1); color: var(--text); }
@@ -398,6 +404,9 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1
 .season-table th { font-size: 0.75rem; }
 
 .weekly-card { padding: clamp(1rem, 2.5vw, 1.5rem); }
+.weekly-rubric { grid-column: 1 / -1; margin: -0.25rem 0 0; color: var(--text-muted); font-size: 0.875rem; }
+.spotlight-recap-honour { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .4rem; margin: .45rem 0 0; padding-top: .4rem; border-top: 1px solid var(--line); color: var(--text-muted); font-size: .75rem; }
+.spotlight-recap-honour button { color: var(--text); font: inherit; font-weight: 700; text-align: right; }
 .weekly-category-tab, .weekly-rating, .weekly-user-button, .weekly-reason-option, .weekly-selected-reason {
     border-color: var(--line);
     border-radius: var(--radius-md);
@@ -481,7 +490,7 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1
     .classification-review-heading { flex-direction: column; }
     .classification-candidate-list, .classification-criteria-form > div { grid-template-columns: 1fr; }
     .classification-criteria-row { grid-template-columns: 1fr 1fr; }
-    .classification-criteria-row > strong { grid-column: 1 / -1; }
+    .classification-criteria-row > strong, .classification-rubric { grid-column: 1 / -1; }
     .manager-header, .results-header, .hall-header { align-items: flex-start; flex-direction: column; }
     .manager-header > .button { width: 100%; }
     .title-row h1, .results-header h1, .hall-header h1, .spotlight-title-row h1 { font-size: clamp(2rem, 9vw, 3rem); }

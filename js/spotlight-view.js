@@ -208,7 +208,7 @@
                 button.dataset.spotlightRecapCategory = category.id;
                 button.append(element("span", "", "→"));
                 card.append(button);
-                results.forEach(({ gender, winners, evaluatedCount }) => {
+                results.forEach(({ gender, winners, evaluatedCount, debutOfWeek, mostImproved, disagreements }) => {
                     const line = element("div", "spotlight-recap-result");
                     line.append(element("span", "", genderLabel(gender)));
                     if (winners.length > 0) {
@@ -224,6 +224,30 @@
                         line.append(element("strong", "", evaluatedCount > 0 ? "Sin ganador" : "Sin resultados"));
                     }
                     card.append(line);
+                    if (debutOfWeek) {
+                        const debut = element("p", "spotlight-recap-honour");
+                        debut.append(element("span", "", "Debut"));
+                        const debutButton = element("button", "", debutOfWeek.participant.name);
+                        debutButton.type = "button"; debutButton.dataset.spotlightParticipantId = debutOfWeek.participant.id;
+                        debut.append(debutButton); card.append(debut);
+                    }
+                    mostImproved.forEach((entry) => {
+                        const improved = element("p", "spotlight-recap-honour");
+                        improved.append(element("span", "", "Mayor mejora"));
+                        const improvedButton = element("button", "", `${entry.participant.name} · +${entry.delta} pts`);
+                        improvedButton.type = "button"; improvedButton.dataset.spotlightParticipantId = entry.participant.id;
+                        improved.append(improvedButton); card.append(improved);
+                    });
+                    if (disagreements.length) {
+                        const review = element("p", "spotlight-recap-honour");
+                        review.append(element("span", "", `Desacuerdos · ${disagreements.length}`));
+                        disagreements.forEach((entry) => {
+                            const button = element("button", "", entry.participant.name);
+                            button.type = "button"; button.dataset.spotlightParticipantId = entry.participant.id;
+                            review.append(button);
+                        });
+                        card.append(review);
+                    }
                 });
                 fragment.append(card);
             });

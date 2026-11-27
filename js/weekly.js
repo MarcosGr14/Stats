@@ -130,6 +130,9 @@
         assertState(state);
         const current = findWeek(state, weekId);
         if (current.status === "CLOSED") throw new WeeklyError("WEEK_CLOSED", "La semana ya está cerrada.");
+        if (!constants.VOTER_IDS.every((id) => current.sealedVoterIds?.includes(id))) {
+            throw new WeeklyError("BALLOTS_PENDING", "P1 y P2 deben entregar sus evaluaciones antes de cerrar la semana.");
+        }
         const nextState = cloneState(state);
         const week = nextState.weeks.find((item) => item.id === weekId);
         const participantCategoryIds = Object.fromEntries(nextState.participants
@@ -163,6 +166,7 @@
         const nextState = cloneState(state);
         const week = nextState.weeks.find((item) => item.id === weekId);
         week.status = "OPEN";
+        week.sealedVoterIds = [];
         if (Object.prototype.hasOwnProperty.call(week, "closed")) week.closed = false;
         week.reopenedAt = timestamp;
         week.reopenCount = (week.reopenCount || 0) + 1;
@@ -185,6 +189,7 @@
     function normalizeVoteInput(state, input) {
         const week = findWeek(state, input.weekId);
         if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "La semana está cerrada.");
+        if (week.sealedVoterIds?.includes(input.userId)) throw new WeeklyError("BALLOT_SEALED", "Esta evaluación ya se entregó y quedó bloqueada.");
         const participant = findParticipant(state, input.participantId);
         if (participant.archivedAt !== null) {
             throw new WeeklyError("PARTICIPANT_ARCHIVED", "Los participantes archivados no reciben votos nuevos.");
@@ -267,6 +272,7 @@
         assertState(state);
         const week = findWeek(state, weekId);
         if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "La semana está cerrada.");
+        if (week.sealedVoterIds?.includes(userId)) throw new WeeklyError("BALLOT_SEALED", "Esta evaluación ya se entregó y quedó bloqueada.");
         const participant = findParticipant(state, participantId);
         assertParticipantCategory(state, week.id, participant, categoryId);
         assertVoter(state, userId);
@@ -277,6 +283,20 @@
         assertState(nextState);
         return { state: nextState, vote: { ...existing }, removed: true };
     }
+
+    function sealBallot(state, weekId, userId, timestamp = new Date().toISOString()) {
+        assertState(state);
+        const week = findWeek(state, weekId);
+        if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "La semana no está abierta.");
+        assertVoter(state, userId);
+        if (week.sealedVoterIds?.includes(userId)) throw new WeeklyError("BALLOT_ALREADY_SEALED", "Esta evaluación ya fue entregada.");
+        const next = cloneState(state);
+        const target = next.weeks.find((item) => item.id === weekId);
+        target.sealedVoterIds = [...(target.sealedVoterIds || []), userId];
+        target.updatedAt = timestamp;
+        assertState(next);
+        return { state: next, sealedVoterIds: target.sealedVoterIds };
+    }
     function assignLegacyVoteCategory(state, voteId, categoryId, timestamp = new Date().toISOString()) {
         assertState(state);
         const existing = state.weeklyVotes.find((vote) => vote.id === voteId);
@@ -285,6 +305,7 @@
         }
         const week = findWeek(state, existing.weekId);
         if (week.status !== "OPEN") throw new WeeklyError("WEEK_CLOSED", "Reabre la semana antes de categorizar este voto anterior.");
+        if (week.sealedVoterIds?.includes(existing.userId)) throw new WeeklyError("BALLOT_SEALED", "Esta evaluación ya se entregó y quedó bloqueada.");
         const participant = findParticipant(state, existing.participantId);
         assertParticipantCategory(state, week.id, participant, categoryId);
         if (findVote(state, existing.weekId, existing.participantId, categoryId, existing.userId)) {
@@ -323,10 +344,12 @@
             && vote.legacyUncategorized !== true);
         return deriveMetricsFromVotes(votes, { participantId, categoryId, weekId });
     }
-    function compareWeeklyMetrics(left, right) {
+    function compareWeeklyMetrics(left, right, priority = "voters") {
+        const secondary = priority === "standouts" ? "standoutCount" : "votersCount";
+        const tertiary = secondary === "votersCount" ? "standoutCount" : "votersCount";
         return right.weeklyPoints - left.weeklyPoints
-            || right.votersCount - left.votersCount
-            || right.standoutCount - left.standoutCount;
+            || right[secondary] - left[secondary]
+            || right[tertiary] - left[tertiary];
     }
     function sameRankMetrics(left, right) {
         return left.weeklyPoints === right.weeklyPoints
@@ -349,7 +372,7 @@
             metrics: deriveMetricsFromVotes(votes, { participantId, categoryId, weekId }),
             rank: null, tied: false
         })).filter((item) => item.participant);
-        items.sort((left, right) => compareWeeklyMetrics(left.metrics, right.metrics)
+        items.sort((left, right) => compareWeeklyMetrics(left.metrics, right.metrics, state.settings.weeklyTieBreakPriority)
             || left.participant.name.localeCompare(right.participant.name, "es", { sensitivity: "base" }));
         items.forEach((item, index) => {
             item.rank = index > 0 && sameRankMetrics(item.metrics, items[index - 1].metrics)
@@ -380,6 +403,15 @@
             standoutsRemaining: constants.MAX_WEEKLY_STANDOUTS - standoutsUsed,
             standoutLimitReached: standoutsUsed >= constants.MAX_WEEKLY_STANDOUTS
         };
+    }
+    function updateTieBreakPriority(state, priority, timestamp = new Date().toISOString()) {
+        assertState(state);
+        if (!["voters", "standouts"].includes(priority)) throw new WeeklyError("INVALID_TIEBREAK", "Selecciona una regla de desempate válida.");
+        const next = cloneState(state);
+        next.settings.weeklyTieBreakPriority = priority;
+        next.meta.updatedAt = timestamp;
+        assertState(next);
+        return next;
     }
     function comparableText(value) { return String(value || "").trim().toLocaleLowerCase("es"); }
     function categoriesForParticipant(state, weekId, participantId) {
@@ -461,9 +493,9 @@
     namespace.weekly = Object.freeze({
         WeeklyError, PANAMA_TIME_ZONE, isoWeekForDate, formatWeekRange,
         openCurrentIsoWeek, openNextIsoWeek, closeWeek, reopenWeek,
-        findVote, findLegacyVote, upsertVote, removeVote, assignLegacyVoteCategory,
+        findVote, findLegacyVote, upsertVote, removeVote, sealBallot, assignLegacyVoteCategory,
         ratingScore, standoutCountForUser, deriveMetricsFromVotes, deriveCategoryWeeklyMetrics,
-        compareWeeklyMetrics, sameRankMetrics, deriveWeeklyRanking, createWeeklyPointsProvider,
+        compareWeeklyMetrics, sameRankMetrics, deriveWeeklyRanking, updateTieBreakPriority, createWeeklyPointsProvider,
         weeklyProgress, categoriesForParticipant, nominationFor, setNomination, filterWeeklyParticipants
     });
     root.StatsV2 = namespace;

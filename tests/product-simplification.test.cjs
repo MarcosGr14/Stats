@@ -19,10 +19,12 @@ test("exposes only the five requested primary views", () => {
         .forEach((id) => assert.doesNotMatch(navigation, new RegExp(`id="${id}"`)));
 });
 
-test("combines weekly and season results under two tabs", () => {
+test("separates weekly, classification and season results under three tabs", () => {
     assert.match(html, /data-results-tab="week">Semana/);
+    assert.match(html, /data-results-tab="classification">Clasificación/);
     assert.match(html, /data-results-tab="season">Temporada/);
     assert.match(productView, /activateSpotlight\(\)/);
+    assert.match(productView, /activateClassification\(\)/);
     assert.match(productView, /activateSeason\(\)/);
     assert.match(app, /seasonController\.activate\("season"\)/);
     assert.match(app, /seasonController\.activate\("rankings"\)/);

@@ -22,7 +22,8 @@ function fixture() {
     state.weeks.slice(0, 3).forEach((week) => constants.VOTER_IDS.forEach((userId, index) => {
         state.weeklyVotes.push(data.createWeeklyVote({ id: `${week.id}-${userId}`, weekId: week.id,
             participantId: "dino", categoryId: "dance", userId,
-            rating: index === 0 ? "standout" : "impressed" }, timestamp));
+            rating: index === 0 ? "standout" : "impressed",
+            sourceType: week.id === "2026-W11" ? "performance" : "fancam" }, timestamp));
     }));
     return state;
 }
@@ -32,6 +33,7 @@ test("classification requires three complete weeks, the average threshold and bo
     const evidence = classifications.evidenceFor(state, "dino", "dance");
     assert.equal(evidence.weeksEvaluated, 3);
     assert.equal(evidence.averagePoints, 5);
+    assert.deepEqual(evidence.evidenceTypes, ["performance", "fancam"]);
     assert.equal(evidence.reviewPeriod, "2026-03-31");
     assert.equal(evidence.ready, true);
     const first = classifications.reviewClassification(state, "dino", "dance", "p1");
@@ -50,8 +52,9 @@ test("classification requires three complete weeks, the average threshold and bo
 
 test("criteria are editable but bounded per category", () => {
     const state = fixture();
-    const updated = classifications.updateCriteria(state, "dance", { minimumWeeks: 4, minimumAveragePoints: 4.5 });
-    assert.deepEqual(classifications.criteriaFor(updated, "dance"), { minimumWeeks: 4, minimumAveragePoints: 4.5 });
+    const updated = classifications.updateCriteria(state, "dance", { minimumWeeks: 4, minimumAveragePoints: 4.5, minimumEvidenceTypes: 3 });
+    assert.deepEqual(classifications.criteriaFor(updated, "dance"), { minimumWeeks: 4, minimumAveragePoints: 4.5, minimumEvidenceTypes: 3 });
+    assert.equal(classifications.evidenceFor(updated, "dino", "dance").meetsEvidence, false);
     assert.throws(() => classifications.updateCriteria(state, "dance", { minimumWeeks: 0, minimumAveragePoints: 8 }),
         (error) => error.code === "INVALID_CRITERIA");
 });

@@ -100,6 +100,7 @@
             settings: {
                 activeWeekId: null,
                 currentSeasonId: null,
+                weeklyTieBreakPriority: "voters",
                 voters: [
                     { id: "p1", name: "P1" },
                     { id: "p2", name: "P2" }
@@ -179,6 +180,7 @@
             closedAt: input.closedAt || null,
             reopenedAt: input.reopenedAt || null,
             reopenCount: Number.isInteger(input.reopenCount) ? input.reopenCount : 0,
+            sealedVoterIds: Array.isArray(input.sealedVoterIds) ? [...input.sealedVoterIds] : [],
             createdAt: input.createdAt || timestamp,
             updatedAt: timestamp
         };
@@ -316,6 +318,10 @@
             if (state.settings.activeWeekId !== null && typeof state.settings.activeWeekId !== "string") {
                 errors.push("settings.activeWeekId must be null or a string.");
             }
+            if (state.settings.weeklyTieBreakPriority !== undefined
+                && !["voters", "standouts"].includes(state.settings.weeklyTieBreakPriority)) {
+                errors.push("settings.weeklyTieBreakPriority must be voters or standouts.");
+            }
             if (state.settings.currentSeasonId !== undefined
                 && state.settings.currentSeasonId !== null
                 && typeof state.settings.currentSeasonId !== "string") {
@@ -356,7 +362,10 @@
                         if (!isRecord(criteria) || !Number.isInteger(criteria.minimumWeeks)
                             || criteria.minimumWeeks < 1 || criteria.minimumWeeks > 52
                             || !Number.isFinite(criteria.minimumAveragePoints)
-                            || criteria.minimumAveragePoints < 0 || criteria.minimumAveragePoints > 6) {
+                            || criteria.minimumAveragePoints < 0 || criteria.minimumAveragePoints > 6
+                            || (criteria.minimumEvidenceTypes !== undefined
+                                && (!Number.isInteger(criteria.minimumEvidenceTypes) || criteria.minimumEvidenceTypes < 1
+                                    || criteria.minimumEvidenceTypes > constants.EVIDENCE_TYPES.length))) {
                             errors.push(`${path}.classificationCriteria.${id} is invalid.`);
                         }
                     });
@@ -506,6 +515,11 @@
                         errors.push(`${path}.nominations is invalid.`);
                     }
                     if (hasCategoryVoting) {
+                        if (!Array.isArray(week.sealedVoterIds || [])
+                            || (week.sealedVoterIds || []).some((id) => !constants.VOTER_IDS.includes(id))
+                            || new Set(week.sealedVoterIds || []).size !== (week.sealedVoterIds || []).length) {
+                            errors.push(`${path}.sealedVoterIds must contain unique voter ids.`);
+                        }
                         requireNullableText(week, "reopenedAt", path, errors);
                         if (!Number.isInteger(week.reopenCount) || week.reopenCount < 0) {
                             errors.push(`${path}.reopenCount must be a non-negative integer.`);

@@ -4,7 +4,7 @@
     const namespace = root.StatsV2 || {};
 
     const constants = {
-        APP_VERSION: "2.14.0",
+        APP_VERSION: "2.15.0",
         SCHEMA_VERSION: 2,
         BACKUP_FORMAT: "stats-v2-backup",
         BACKUP_FORMAT_VERSION: 1,
@@ -14,7 +14,15 @@
         MAX_WEEKLY_NOTE_LENGTH: 500,
         MAX_WEEKLY_SOURCE_URL_LENGTH: 500,
         MAX_WEEKLY_STANDOUTS: 5,
-        CLASSIFICATION_DEFAULTS: Object.freeze({ minimumWeeks: 3, minimumAveragePoints: 4.2 }),
+        CLASSIFICATION_DEFAULTS: Object.freeze({ minimumWeeks: 3, minimumAveragePoints: 4.2, minimumEvidenceTypes: 2 }),
+        CATEGORY_RUBRICS: Object.freeze({
+            vocal: "Estabilidad, control, tono y expresión.",
+            rap: "Ritmo y flow, dicción, entrega y adaptación.",
+            dance: "Precisión, musicalidad, control corporal y ejecución.",
+            stage: "Energía, conexión, consistencia y manejo del público.",
+            visual: "Presencia en cámara, estilismo, expresividad e impacto editorial.",
+            "all-rounder": "Equilibrio y versatilidad demostrada entre disciplinas; no mide popularidad."
+        }),
         MAX_IMAGE_BYTES: 5 * 1024 * 1024,
         IMAGE_MIME_TYPES: Object.freeze(["image/jpeg", "image/png", "image/webp"]),
         STORAGE_KEY: "stats:v2:state",

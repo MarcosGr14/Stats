@@ -45,6 +45,9 @@ function vote(state, participantId, categoryId, userId, rating, reasonTagIds = [
         weekId: state.settings.activeWeekId, participantId, categoryId, userId, rating, reasonTagIds, note
     }, timestamp).state;
 }
+function sealBoth(state, weekId) {
+    return constants.VOTER_IDS.reduce((current, voterId) => weekly.sealBallot(current, weekId, voterId, timestamp).state, state);
+}
 
 class MemoryStorage {
     constructor() { this.values = new Map(); }
@@ -68,7 +71,7 @@ test("opens explicitly, allows one OPEN week and closes read-only", () => {
     assert.equal(opened.state.weeks.length, 1);
     assert.equal(weekly.openCurrentIsoWeek(opened.state, timestamp, timestamp).created, false);
     assert.throws(() => weekly.openCurrentIsoWeek(opened.state, "2026-09-07T14:00:00.000Z"), (error) => error.code === "OPEN_WEEK_EXISTS");
-    const closed = weekly.closeWeek(opened.state, opened.week.id, "2026-09-06T23:00:00.000Z");
+    const closed = weekly.closeWeek(sealBoth(opened.state, opened.week.id), opened.week.id, "2026-09-06T23:00:00.000Z");
     assert.equal(closed.week.status, "CLOSED");
     assert.equal(closed.state.settings.activeWeekId, null);
     assert.throws(() => vote(closed.state, "participant-1", "rap", "p1", "good"), (error) => error.code === "WEEK_NOT_FOUND");
@@ -77,7 +80,7 @@ test("opens explicitly, allows one OPEN week and closes read-only", () => {
 test("keeps the weekly nominee list, categories and points after season categories reset", () => {
     let state = openWeek(fixtureState());
     state = vote(state, "participant-2", "vocal", "p1", "good");
-    state = weekly.closeWeek(state, state.settings.activeWeekId, "2026-09-06T23:00:00.000Z").state;
+    state = weekly.closeWeek(sealBoth(state, state.settings.activeWeekId), state.settings.activeWeekId, "2026-09-06T23:00:00.000Z").state;
     state.participants.forEach((participant) => { participant.categoryIds = []; });
 
     assert.equal(data.validateState(state).valid, true);
@@ -96,7 +99,7 @@ test("keeps the weekly nominee list, categories and points after season categori
 test("opens the ISO week after the latest registered week and preserves existing data", () => {
     let state = openWeek(fixtureState(), "2026-12-21T14:00:00.000Z");
     state = vote(state, "participant-1", "rap", "p1", "good", ["tag-rap"], "Preserve me");
-    state = weekly.closeWeek(state, "2026-W52", "2026-12-27T23:00:00.000Z").state;
+    state = weekly.closeWeek(sealBoth(state, "2026-W52"), "2026-W52", "2026-12-27T23:00:00.000Z").state;
     const preserved = JSON.stringify({
         weeks: state.weeks, votes: state.weeklyVotes, participants: state.participants,
         tags: state.tags, groups: state.groups, assignments: state.participantTagAssignments
@@ -105,7 +108,7 @@ test("opens the ISO week after the latest registered week and preserves existing
     assert.deepEqual(result.week, {
         id: "2026-W53", label: "W53", startDate: "2026-12-28", endDate: "2027-01-03",
         status: "OPEN", openedAt: "2026-12-28T14:00:00.000Z", closedAt: null,
-        reopenedAt: null, reopenCount: 0, createdAt: "2026-12-28T14:00:00.000Z",
+        reopenedAt: null, reopenCount: 0, sealedVoterIds: [], createdAt: "2026-12-28T14:00:00.000Z",
         updatedAt: "2026-12-28T14:00:00.000Z"
     });
     assert.equal(result.state.settings.activeWeekId, "2026-W53");
@@ -119,7 +122,7 @@ test("opens the ISO week after the latest registered week and preserves existing
 
 test("new week crosses the ISO year correctly and rejects another while one is OPEN", () => {
     let state = openWeek(fixtureState(), "2026-12-28T14:00:00.000Z");
-    state = weekly.closeWeek(state, "2026-W53", "2027-01-03T23:00:00.000Z").state;
+    state = weekly.closeWeek(sealBoth(state, "2026-W53"), "2026-W53", "2027-01-03T23:00:00.000Z").state;
     const result = weekly.openNextIsoWeek(state, "2027-01-04T14:00:00.000Z");
     assert.equal(result.week.id, "2027-W01");
     assert.equal(result.week.startDate, "2027-01-04");
@@ -136,14 +139,14 @@ test("reopens only CLOSED weeks with an explicit audit trail and can close again
     let state = openWeek(fixtureState());
     state = vote(state, "participant-1", "rap", "p1", "standout", ["tag-rap"], "Historic");
     const voteSnapshot = JSON.stringify(state.weeklyVotes);
-    state = weekly.closeWeek(state, state.settings.activeWeekId, "2026-09-01T10:00:00.000Z").state;
+    state = weekly.closeWeek(sealBoth(state, state.settings.activeWeekId), state.settings.activeWeekId, "2026-09-01T10:00:00.000Z").state;
     const reopened = weekly.reopenWeek(state, "2026-W36", "2026-09-02T10:00:00.000Z");
     assert.equal(reopened.week.status, "OPEN");
     assert.equal(reopened.week.closedAt, "2026-09-01T10:00:00.000Z");
     assert.equal(reopened.week.reopenedAt, "2026-09-02T10:00:00.000Z");
     assert.equal(reopened.week.reopenCount, 1);
     assert.equal(JSON.stringify(reopened.state.weeklyVotes), voteSnapshot);
-    const reclosed = weekly.closeWeek(reopened.state, "2026-W36", "2026-09-03T10:00:00.000Z");
+    const reclosed = weekly.closeWeek(sealBoth(reopened.state, "2026-W36"), "2026-W36", "2026-09-03T10:00:00.000Z");
     assert.equal(reclosed.week.status, "CLOSED");
     assert.equal(reclosed.week.closedAt, "2026-09-03T10:00:00.000Z");
     assert.equal(reclosed.week.reopenCount, 1);
@@ -153,7 +156,7 @@ test("reload preserves reopened state, audit fields and vote IDs", () => {
     let state = openWeek(fixtureState());
     state = vote(state, "participant-1", "rap", "p1", "good");
     const voteId = state.weeklyVotes[0].id;
-    state = weekly.closeWeek(state, "2026-W36", "2026-09-01T10:00:00.000Z").state;
+    state = weekly.closeWeek(sealBoth(state, "2026-W36"), "2026-W36", "2026-09-01T10:00:00.000Z").state;
     state = weekly.reopenWeek(state, "2026-W36", "2026-09-02T10:00:00.000Z").state;
     const memory = new MemoryStorage();
     storage.save(state, memory, "2026-09-02T10:00:00.000Z");
@@ -167,7 +170,7 @@ test("reload preserves reopened state, audit fields and vote IDs", () => {
 test("rejects reopening OPEN and reopening while another week is OPEN", () => {
     let state = openWeek(fixtureState(), "2026-08-24T14:00:00.000Z");
     assert.throws(() => weekly.reopenWeek(state, "2026-W35"), (error) => error.code === "WEEK_OPEN");
-    state = weekly.closeWeek(state, "2026-W35", timestamp).state;
+    state = weekly.closeWeek(sealBoth(state, "2026-W35"), "2026-W35", timestamp).state;
     state = openWeek(state, timestamp);
     assert.throws(() => weekly.reopenWeek(state, "2026-W35"), (error) => error.code === "OPEN_WEEK_EXISTS");
 });
@@ -181,6 +184,24 @@ test("stores independent category votes for the same participant and user", () =
     assert.deepEqual(state.weeklyVotes.map((item) => item.categoryId), ["rap", "dance", "stage"]);
     assert.equal(weekly.findVote(state, "2026-W36", "participant-1", "rap", "p1").note, "Strong verse");
     assert.equal(weekly.findVote(state, "2026-W36", "participant-1", "dance", "p1").note, "Clean break");
+});
+
+test("seals each voter's weekly ballot independently and protects submitted votes", () => {
+    let state = openWeek(fixtureState());
+    state = vote(state, "participant-1", "rap", "p1", "good");
+    const first = weekly.sealBallot(state, state.settings.activeWeekId, "p1", timestamp);
+    assert.deepEqual(first.sealedVoterIds, ["p1"]);
+    assert.throws(() => weekly.upsertVote(first.state, {
+        weekId: state.settings.activeWeekId, participantId: "participant-1", categoryId: "rap", userId: "p1", rating: "standout"
+    }, timestamp), (error) => error.code === "BALLOT_SEALED");
+    const second = weekly.sealBallot(first.state, state.settings.activeWeekId, "p2", timestamp);
+    assert.deepEqual(second.sealedVoterIds, ["p1", "p2"]);
+    assert.equal(data.validateState(second.state).valid, true);
+    assert.throws(() => weekly.closeWeek(first.state, state.settings.activeWeekId, timestamp),
+        (error) => error.code === "BALLOTS_PENDING");
+    const closed = weekly.closeWeek(second.state, state.settings.activeWeekId, timestamp);
+    const reopened = weekly.reopenWeek(closed.state, state.settings.activeWeekId, timestamp);
+    assert.deepEqual(reopened.week.sealedVoterIds, []);
 });
 
 test("upserts only the matching category and preserves identity", () => {
@@ -279,7 +300,7 @@ test("a new week resets the global Standout limit", () => {
     let state = openWeek(fixtureState(), "2026-08-24T14:00:00.000Z");
     [["participant-1", "rap"], ["participant-1", "dance"], ["participant-2", "vocal"], ["participant-3", "dance"], ["participant-4", "stage"]]
         .forEach(([participantId, categoryId]) => { state = vote(state, participantId, categoryId, "p1", "standout"); });
-    state = weekly.closeWeek(state, "2026-W35", timestamp).state;
+    state = weekly.closeWeek(sealBoth(state, "2026-W35"), "2026-W35", timestamp).state;
     state = openWeek(state, timestamp);
     assert.equal(weekly.weeklyProgress(state, "2026-W36", "p1").standoutsUsed, 0);
 });
@@ -304,6 +325,19 @@ test("ranks one category by points, voters and Standouts with competition ties",
     const ranking = weekly.deriveWeeklyRanking(state, "2026-W36", "rap");
     assert.deepEqual(ranking.map((item) => item.rank), [1, 1]);
     assert.equal(ranking.every((item) => item.tied), true);
+});
+
+test("allows a user-selected secondary weekly tiebreak while preserving the total tie", () => {
+    let state = openWeek(fixtureState());
+    state = vote(state, "participant-1", "rap", "p1", "standout");
+    state = vote(state, "participant-7", "rap", "p1", "good");
+    state = vote(state, "participant-7", "rap", "p2", "impressed");
+    assert.deepEqual(weekly.deriveWeeklyRanking(state, state.settings.activeWeekId, "rap").slice(0, 2)
+        .map((item) => item.participant.id), ["participant-7", "participant-1"]);
+    state = weekly.updateTieBreakPriority(state, "standouts", timestamp);
+    assert.deepEqual(weekly.deriveWeeklyRanking(state, state.settings.activeWeekId, "rap").slice(0, 2)
+        .map((item) => item.participant.id), ["participant-1", "participant-7"]);
+    assert.throws(() => weekly.updateTieBreakPriority(state, "unsupported"), (error) => error.code === "INVALID_TIEBREAK");
 });
 
 test("weekly points provider requires category and leaves Rankings unwired", () => {

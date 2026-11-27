@@ -147,7 +147,7 @@ test("uses weekly reasonTagIds only for top reasons and Most Praised Skill", () 
 test("switches LIVE to OFFICIAL on close and back to LIVE on reopen", () => {
     let state = fixtureState();
     addVote(state, "participant-a", "vocal", "p1", "good");
-    state = weekly.closeWeek(state, "2026-W36", timestamp).state;
+    state = weekly.closeWeek(weekly.sealBallot(weekly.sealBallot(state, "2026-W36", "p1", timestamp).state, "2026-W36", "p2", timestamp).state, "2026-W36", timestamp).state;
     assert.equal(spotlight.deriveSpotlightRanking(state, {
         weekId: "2026-W36", categoryId: "vocal", gender: "female"
     }).mode, "OFFICIAL");
@@ -180,4 +180,18 @@ test("derives overview and participant history without mutating persistent data 
     assert.equal(JSON.stringify(state), snapshot);
     assert.equal(indexedDbTouched, false);
     delete globalThis.indexedDB;
+});
+
+test("weekly recap identifies first category debut and largest prior-week improvement", () => {
+    const state = fixtureState();
+    const previousWeek = data.createWeek({ id: "2026-W35", label: "W35", startDate: "2026-08-24",
+        endDate: "2026-08-30", status: "CLOSED", closedAt: timestamp }, timestamp);
+    state.weeks.push(previousWeek);
+    state.weeklyVotes.push(data.createWeeklyVote({ id: "prior-1", weekId: previousWeek.id,
+        participantId: "participant-a", categoryId: "vocal", userId: "p1", rating: "good" }, timestamp));
+    addCoreScenario(state);
+    const recap = spotlight.deriveWeeklyOverview(state, "2026-W36").categories[0].results.find((item) => item.gender === "female");
+    assert.equal(recap.debutOfWeek.participant.id, "participant-b");
+    assert.equal(recap.mostImproved[0].participant.id, "participant-a");
+    assert.equal(recap.mostImproved[0].delta, 5);
 });

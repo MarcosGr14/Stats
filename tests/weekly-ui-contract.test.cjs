@@ -21,6 +21,9 @@ test("exposes Weekly navigation and explicit week creation without automatic ope
 
 test("weekly voting controls communicate category, user, rating, removal and reopen accessibly", () => {
     assert.match(html, /id="weekly-user-switch" role="group" aria-label="Votante actual"/);
+    assert.match(html, /id="seal-weekly-ballot"/);
+    assert.match(view, /sealedVoterIds/);
+    assert.match(view, /elements\.closeWeek\.disabled = !canWrite\(\) \|\| !constants\.VOTER_IDS\.every/);
     assert.equal((html.match(/data-weekly-rating=/g) || []).length, 4);
     assert.equal((html.match(/aria-pressed="false"/g) || []).length >= 4, true);
     assert.match(html, /Quitar evaluación/);

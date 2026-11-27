@@ -28,6 +28,7 @@
             spotlight: byId("spotlight"),
             season: byId("season"),
             rankings: byId("rankings"),
+            classification: byId("classification-view"),
             seasonBar: byId("current-season-bar"),
             seasonLabel: byId("current-season-label"),
             seasonPeriod: byId("current-season-period"),
@@ -76,19 +77,25 @@
         }
 
         function selectResultsTab(tab, focus = false) {
-            resultsTab = tab === "season" ? "season" : "week";
+            resultsTab = ["classification", "season"].includes(tab) ? tab : "week";
             elements.resultsTabs.forEach((button) => {
                 const selected = button.dataset.resultsTab === resultsTab;
                 button.setAttribute("aria-selected", String(selected));
                 button.tabIndex = selected ? 0 : -1;
             });
+            const showWeek = resultsTab === "week";
+            const showClassification = resultsTab === "classification";
             const showSeason = resultsTab === "season";
-            elements.spotlight.hidden = showSeason;
+            elements.spotlight.hidden = !showWeek;
+            elements.classification.hidden = !showClassification;
             elements.season.hidden = !showSeason;
             elements.rankings.hidden = !showSeason;
             elements.seasonBar.hidden = !showSeason;
             elements.seasonHighlights.hidden = !showSeason;
-            if (showSeason) {
+            if (showClassification) {
+                renderCurrentSeason();
+                options.activateClassification();
+            } else if (showSeason) {
                 renderCurrentSeason();
                 activateSeason();
             } else activateSpotlight();
@@ -249,6 +256,7 @@
             hideResultPanels() {
                 elements.results.hidden = true;
                 elements.spotlight.hidden = true;
+                elements.classification.hidden = true;
                 elements.season.hidden = true;
                 elements.rankings.hidden = true;
             }

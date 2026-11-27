@@ -4,10 +4,11 @@
     const namespace = root.StatsV2 || {};
     const constants = namespace.constants;
     const profileHistory = namespace.profileHistory;
+    const classifications = namespace.classifications;
     const imageStorage = namespace.imageStorage;
     const ui = namespace.ui;
 
-    if (!constants || !profileHistory || !imageStorage || !ui) {
+    if (!constants || !profileHistory || !classifications || !imageStorage || !ui) {
         throw new Error("Stats V2 profile history, UI helpers and image storage must load before participant profiles.");
     }
 
@@ -34,6 +35,7 @@
             group: document.getElementById("profile-group"),
             gender: document.getElementById("profile-gender"),
             categoryChips: document.getElementById("profile-category-chips"),
+            classificationStatuses: document.getElementById("profile-classification-statuses"),
             wins: document.getElementById("profile-wins"),
             topThree: document.getElementById("profile-top-three"),
             weeks: document.getElementById("profile-weeks"),
@@ -103,6 +105,21 @@
             const chips = document.createDocumentFragment();
             profile.categoryIds.forEach((categoryId) => chips.append(categoryChip(categoryId)));
             elements.categoryChips.replaceChildren(chips);
+            const statusFragment = document.createDocumentFragment();
+            constants.CATEGORIES.forEach(({ id, label }) => {
+                const assessment = classifications.assessmentFor(getState(), participant.id, id);
+                const criteria = classifications.criteriaFor(getState(), id);
+                const statusLabel = assessment.status === "classified"
+                    ? `Clasificado${assessment.classifiedPeriod ? ` desde ${assessment.classifiedPeriod}` : ""}`
+                    : assessment.status === "paused" ? "En pausa"
+                        : assessment.evidence.ready ? "Listo para revisión"
+                            : `${assessment.evidence.weeksEvaluated}/${criteria.minimumWeeks} semanas · En observación`;
+                const item = element("span", `profile-classification-status profile-classification-status--${assessment.status}`,
+                    `${label}: ${statusLabel}`);
+                item.title = `${assessment.evidence.evidenceTypes.length}/${criteria.minimumEvidenceTypes} tipos de evidencia · promedio ${assessment.evidence.averagePoints.toFixed(1)}/6`;
+                statusFragment.append(item);
+            });
+            elements.classificationStatuses.replaceChildren(statusFragment);
             elements.wins.textContent = String(summary.wins);
             elements.topThree.textContent = String(summary.topThreeAppearances);
             elements.weeks.textContent = String(summary.weeksEvaluated);

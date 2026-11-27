@@ -151,7 +151,7 @@
             };
         }).filter(Boolean);
 
-        items.sort((left, right) => weekly.compareWeeklyMetrics(left.metrics, right.metrics)
+        items.sort((left, right) => weekly.compareWeeklyMetrics(left.metrics, right.metrics, state.settings.weeklyTieBreakPriority)
             || compareNames(left.participant.name, right.participant.name));
         items.forEach((item, index) => {
             item.rank = index > 0 && weekly.sameRankMetrics(item.metrics, items[index - 1].metrics)
@@ -181,6 +181,13 @@
         const week = state.weeks.find((item) => item.id === weekId);
         if (!week) throw new TypeError("Weekly Spotlight requires an existing week.");
         const context = createDerivationContext(state);
+        const previousWeek = state.weeks.filter((item) => item.status === "CLOSED" && item.endDate < week.startDate)
+            .sort((left, right) => right.endDate.localeCompare(left.endDate))[0] || null;
+        const weeksById = new Map(state.weeks.map((item) => [item.id, item]));
+        const previouslyEvaluatedByCategory = new Map(constants.CATEGORIES.map(({ id }) => [id, new Set(
+            state.weeklyVotes.filter((vote) => vote.categoryId === id
+                && weeksById.get(vote.weekId)?.endDate < week.startDate).map((vote) => vote.participantId)
+        )]));
         return {
             week,
             mode: week.status === "CLOSED" ? "OFFICIAL" : "LIVE",
@@ -188,7 +195,23 @@
                 category,
                 results: constants.GENDERS.map((gender) => {
                     const ranking = deriveSpotlightRanking(state, { weekId, categoryId: category.id, gender }, context);
-                    return { gender, winners: ranking.winners, evaluatedCount: ranking.items.length };
+                    const previous = previousWeek
+                        ? deriveSpotlightRanking(state, { weekId: previousWeek.id, categoryId: category.id, gender }, context)
+                        : { items: [] };
+                    const previousById = new Map(previous.items.map((item) => [item.participant.id, item]));
+                    const debuts = ranking.items.filter((item) => !previouslyEvaluatedByCategory.get(category.id).has(item.participant.id));
+                    const improvements = ranking.items.map((item) => ({
+                        ...item,
+                        delta: item.metrics.weeklyPoints - (previousById.get(item.participant.id)?.metrics.weeklyPoints ?? item.metrics.weeklyPoints)
+                    })).filter((item) => item.delta > 0).sort((left, right) => right.delta - left.delta);
+                    const bestDelta = improvements[0]?.delta;
+                    return {
+                        gender, winners: ranking.winners, evaluatedCount: ranking.items.length,
+                        debutOfWeek: debuts[0] || null,
+                        mostImproved: bestDelta ? improvements.filter((item) => item.delta === bestDelta) : [],
+                        disagreements: ranking.items.filter((item) => item.metrics.ratingDifference !== null
+                            && item.metrics.ratingDifference >= 3)
+                    };
                 })
             }))
         };

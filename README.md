@@ -15,27 +15,28 @@ La aplicación reúne en un solo lugar a los participantes, sus nominaciones por
 - Nominación independiente por temporada: cada participante puede quedar sin categoría hasta que se decida en cuáles competirá.
 - Lista semanal breve de nominados compartida por categoría, más acceso opcional al catálogo completo para descubrir nuevos talentos.
 - Evaluación semanal abierta en cualquiera de las seis categorías, aunque el participante todavía no compita oficialmente en ella.
-- Dos votos independientes (P1 y P2), evidencia enlazada por tipo, tags descriptivos, nota breve y hasta cinco Standouts por votante en cada semana.
-- Resultados semanales en vivo y oficiales, con puntuación, posiciones, empates y motivos destacados.
+- Dos votos independientes (P1 y P2): P1 entrega y bloquea su evaluación antes de que P2 comience; al entregar ambas, se pueden comparar. El cierre semanal requiere las dos entregas.
+- Evidencia con tipo y enlace, tags descriptivos, nota breve y hasta cinco Standouts por votante en cada semana.
+- Resultados semanales en vivo y oficiales, con puntuación, posiciones, empates, diferencias altas y un recap de debuts, mejoras y desacuerdos.
 - Estadísticas por periodo, categoría, género, grupo y votante, con tendencias y métricas descriptivas.
-- Clasificación gradual por categoría: estado en observación, requisitos configurables, revisión trimestral con confirmación de P1 y P2, y pausa de participación que conserva el historial.
+- Clasificación gradual por categoría: estado y progreso visibles en el perfil, requisitos configurables, revisión trimestral con confirmación de P1 y P2, y pausa de participación que conserva el historial.
 - Clasificación de temporada con resultados por categoría y género, provisionales, podios y puntuaciones explicables. Solo las categorías confirmadas participan en el ranking anual.
 - Hall of Fame con ganadores, ranking completo, puntuaciones y métricas congeladas al cerrar cada temporada.
 - Copias de seguridad portátiles con validación de integridad, imágenes incluidas y recuperación ante datos dañados.
 
 ## Temporadas y participación
 
-Cada temporada agrupa semanas de votación. La evaluación semanal está abierta para descubrir talento en cualquier categoría; una evaluación o nominación no clasifica automáticamente al participante. Por defecto, una categoría queda lista para revisión al reunir tres semanas completas con votos de ambos evaluadores y promedio mínimo de 4,2 sobre 6. Cada categoría permite ajustar esos criterios. En los cierres trimestrales, P1 y P2 confirman la entrada de forma independiente. La clasificación inicia el puntaje anual desde ese momento; las evaluaciones anteriores quedan en el historial como evidencia y no se suman retroactivamente a la carrera por el título. También puede pausarse y retomarse en una revisión posterior. Al cerrar la temporada, Stats guarda resultados, rankings, criterios y estados; la siguiente empieza sin clasificaciones activas. El historial semanal y las etiquetas se conservan.
+Cada temporada agrupa semanas de votación. La evaluación semanal está abierta para descubrir talento en cualquier categoría; una evaluación o nominación no clasifica automáticamente al participante. Por defecto, una categoría queda lista para revisión al reunir tres semanas completas con votos de ambos evaluadores, promedio mínimo de 4,2 sobre 6 y evidencia de al menos dos tipos distintos. Los tres criterios se ajustan por categoría en Datos. En los cierres trimestrales, P1 y P2 confirman la entrada de forma independiente. La clasificación inicia el puntaje anual desde ese momento; las evaluaciones anteriores quedan en el historial como evidencia y no se suman retroactivamente a la carrera por el título. También puede pausarse y retomarse en una revisión posterior. Al cerrar la temporada, Stats guarda resultados, rankings, criterios y estados; la siguiente empieza sin clasificaciones activas. El historial semanal y las etiquetas se conservan.
 
 La clasificación oficial requiere al menos cinco semanas evaluadas por categoría. La puntuación de temporada combina rendimiento promedio (40%), tasa de victorias (25%), apariciones en el Top 3 (20%) y votos Standout (15%). Los resultados provisionales se muestran por separado hasta cumplir ese mínimo. La puntuación general combina el 95% de la mejor categoría elegible con el 5% de la segunda, cuando existe.
 
-Las semanas siguen el calendario ISO de lunes a domingo en la zona horaria de Panamá. Una semana abierta muestra resultados en vivo; al cerrarla, sus resultados pasan a ser oficiales. Solo puede existir una semana abierta a la vez.
+Las semanas siguen el calendario ISO de lunes a domingo en la zona horaria de Panamá. Una semana abierta muestra resultados en vivo; tras la entrega de P1 y P2 puede cerrarse y sus resultados pasan a ser oficiales. Solo puede existir una semana abierta a la vez. Reabrirla inicia una nueva ronda y retira las entregas anteriores, manteniendo sus votos para edición.
 
 ## Votación
 
-P1 y P2 evalúan por separado a cada participante en cada categoría. Las valoraciones aportan 3 puntos por Standout, 2 por Impressed, 1 por Good y 0 por Normal. “Sin evaluar” significa que no hay voto guardado. Cada votante tiene un máximo global de cinco Standouts por semana, y puede adjuntar tipo de evidencia, enlace, hasta tres tags de motivo y una nota breve por voto. Los tags recurrentes resumen observaciones, pero no agregan puntos automáticamente.
+P1 y P2 evalúan por separado a cada participante en cada categoría. Mientras una evaluación está en curso, la otra nota y sus tags quedan ocultos en la interfaz. La entrega es una barrera de flujo local: no equivale a autenticación de identidad. Las valoraciones aportan 3 puntos por Standout, 2 por Impressed, 1 por Good y 0 por Normal. “Sin evaluar” significa que no hay voto guardado. Cada votante tiene un máximo global de cinco Standouts por semana, y puede adjuntar tipo de evidencia, enlace, hasta tres tags de motivo y una nota breve por voto. Cada categoría muestra una guía breve para compartir los criterios. Los tags recurrentes resumen observaciones, pero no agregan puntos automáticamente.
 
-Los rankings semanales ordenan por puntos, cantidad de votos y Standouts. Los empates usan posiciones de competición, por ejemplo 1, 1, 3. Los resultados distinguen las categorías y los géneros.
+Los rankings semanales ordenan por puntos y usan como segundo criterio configurable la cantidad de evaluadores o los Standouts; el otro criterio queda tercero. Si persiste el empate, conserva la misma posición de competición, por ejemplo 1, 1, 3. Los resultados distinguen Semana, Clasificación y Temporada, además de categorías y géneros.
 
 ## Datos y privacidad
 

@@ -26,6 +26,8 @@ test("exposes a complete participant dossier with reusable edit and tag actions"
     assert.match(html, /id="profile-status"/);
     assert.match(html, /id="profile-tag-groups"/);
     assert.match(html, /id="profile-category-grid"/);
+    assert.match(html, /id="profile-classification-statuses"/);
+    assert.match(view, /classifications\.assessmentFor/);
     assert.match(html, /id="profile-win-list"/);
     assert.match(html, /id="profile-history-list"/);
     assert.match(app, /editParticipant: openParticipantDialog/);

@@ -378,7 +378,7 @@
         if (shouldRender) {
             if (activeView === "results") productController?.activateResults();
             else if (activeView === "hall-of-fame") productController?.activateHall();
-            else if (activeView === "data") backupController?.activate();
+            else if (activeView === "data") { backupController?.activate(); seasonController?.activate("settings"); }
             else if (activeView === "weekly") weeklyController?.activate();
             else if (activeView === "profile") {
                 const participantId = profileIdFromLocation() || currentProfileId;
@@ -1408,6 +1408,7 @@
                 seasonController.activate("season");
                 seasonController.activate("rankings");
             },
+            activateClassification: () => seasonController.activate("classification"),
             viewParticipant: openParticipantProfile
         });
         activeView = activeViewFromLocation();

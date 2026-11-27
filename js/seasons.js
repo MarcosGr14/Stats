@@ -71,6 +71,16 @@
         if (!current.classificationCriteria) {
             current.classificationCriteria = defaultCriteria;
             changed = true;
+        } else {
+            constants.CATEGORIES.forEach(({ id }) => {
+                if (current.classificationCriteria[id]?.minimumEvidenceTypes === undefined) {
+                    current.classificationCriteria[id] = {
+                        ...(current.classificationCriteria[id] || constants.CLASSIFICATION_DEFAULTS),
+                        minimumEvidenceTypes: constants.CLASSIFICATION_DEFAULTS.minimumEvidenceTypes
+                    };
+                    changed = true;
+                }
+            });
         }
         if (!current.categoryClassifications) {
             current.categoryClassifications = {};

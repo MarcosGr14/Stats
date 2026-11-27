@@ -12,8 +12,8 @@ Permitir evaluar a cualquier participante por categoría cada semana y separar e
 
 ## Supuestos de producto
 - La evaluación usa la escala existente de 0–3 puntos por votante (máximo conjunto: 6 por semana).
-- Criterio inicial editable por categoría: 3 semanas con voto y promedio de 4.2/6; el promedio se calcula con semanas evaluadas y los ceros cuentan.
-- P1 y P2 confirman cada clasificación por separado. Sin autenticación, las confirmaciones son controles separados, no una garantía de identidad.
+- Criterio inicial editable por categoría: 3 semanas completas, promedio de 4.2/6 y dos tipos de evidencia; el promedio se calcula con semanas evaluadas y los ceros cuentan.
+- P1 entrega y bloquea su evaluación antes de que P2 vote; P1 y P2 confirman cada clasificación por separado. Sin autenticación, son controles locales de flujo, no una garantía de identidad.
 - Solo categorías clasificadas entran en la competencia anual oficial; semanas, notas y etiquetas conservan evaluaciones de observación.
 
 ## Pasos
@@ -35,8 +35,10 @@ Permitir evaluar a cualquier participante por categoría cada semana y separar e
 - [x] Criterios editables, confirmaciones separadas P1/P2 y pausas dentro de revisiones trimestrales.
 - [x] Resumen de progreso, desacuerdo entre votos, tags recurrentes y evidencia con enlace.
 - [x] Verificación automatizada, sintaxis y documentación de producto.
+- [x] Rúbricas por disciplina, progreso de clasificación en perfiles y vistas separadas de Semana, Clasificación y Temporada.
+- [x] Entrega secuencial P1/P2, resumen de debut/mejora/desacuerdo y configuración de desempate semanal.
 
 ## Resultado y límites
-- Los votos de observación no clasifican por sí solos. Al confirmarse una categoría, las semanas completas que sustentaron la clasificación cuentan en esa participación; las semanas nuevas se agregan mientras la categoría permanezca activa.
-- La confirmación P1/P2 son acciones locales separadas en el mismo navegador, no cuentas autenticadas.
+- Los votos de observación no clasifican por sí solos. Al confirmarse una categoría, el puntaje anual empieza en adelante; la evidencia anterior queda en el historial sin sumar retroactivamente.
+- P1 y P2 entregan sus evaluaciones de forma secuencial con controles locales; la aplicación no autentica la identidad de quien usa cada turno.
 - La sesión no ofreció un navegador para la inspección visual manual. Se comprobaron contratos de UI, renderizadores y comportamiento de dominio mediante las pruebas automatizadas.

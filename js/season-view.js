@@ -46,6 +46,9 @@
         const elements = {
             seasonView: byId("season"),
             rankingsView: byId("rankings"),
+            classificationView: byId("classification-view"),
+            classificationSeasonLabel: byId("classification-season-label"),
+            classificationPeriodLabel: byId("classification-period-label"),
             seasonMode: byId("season-mode"),
             seasonPeriod: byId("season-period"),
             seasonLiveStatus: byId("season-live-status"),
@@ -56,6 +59,8 @@
             rankingsIncludeOpen: byId("rankings-include-open"),
             categoryTabs: [...document.querySelectorAll("[data-season-category]")],
             genderButtons: [...document.querySelectorAll("[data-season-gender]")],
+            classificationCategoryTabs: [...document.querySelectorAll("[data-classification-category]")],
+            classificationGenderButtons: [...document.querySelectorAll("[data-classification-gender]")],
             grandGrid: byId("season-grand-grid"),
             categoryWinners: byId("season-category-winners"),
             standingKicker: byId("season-standing-kicker"),
@@ -71,6 +76,7 @@
             classificationSummary: byId("classification-review-summary"),
             classificationCriteriaForm: byId("classification-criteria-form"),
             classificationCriteriaFields: byId("classification-criteria-fields"),
+            weeklyTiebreakForm: byId("weekly-tiebreak-form"),
             dialog: byId("season-breakdown-dialog"),
             breakdownContent: byId("season-breakdown-content")
         };
@@ -345,7 +351,7 @@
                 heading.append(identity, element("span", `classification-state classification-state--${candidate.status}`, statusText));
                 card.append(heading);
                 const evidence = element("p", "classification-candidate__evidence",
-                    `${candidate.evidence.weeksEvaluated}/${candidate.evidence.minimumWeeks} semanas completas · promedio ${decimal(candidate.evidence.averagePoints, 1)}/6 · mínimo ${decimal(candidate.evidence.minimumAveragePoints, 1)}`);
+                    `${candidate.evidence.weeksEvaluated}/${candidate.evidence.minimumWeeks} semanas · ${candidate.evidence.evidenceTypes.length}/${candidate.evidence.minimumEvidenceTypes} tipos de evidencia · promedio ${decimal(candidate.evidence.averagePoints, 1)}/6 · mínimo ${decimal(candidate.evidence.minimumAveragePoints, 1)}`);
                 card.append(evidence);
                 if (candidate.evidence.reviewPeriod && candidate.status !== "classified") {
                     card.append(element("p", "classification-review-progress", `Periodo de revisión abierto: ${candidate.evidence.reviewPeriod}`));
@@ -378,12 +384,22 @@
                 fragment.append(card);
             });
             elements.classificationList.replaceChildren(fragment);
+            elements.classificationSeasonLabel.textContent = current?.label || "Sin temporada";
+            elements.classificationPeriodLabel.textContent = `Periodo de revisión: ${classifications.currentReviewPeriod(state) || "esperando cierre trimestral"}`;
+        }
 
+        function renderClassificationCriteria() {
+            const state = getState();
+            const current = classifications.currentSeason(state);
+            elements.weeklyTiebreakForm.elements.priority.value = state.settings.weeklyTieBreakPriority || "voters";
+            elements.weeklyTiebreakForm.elements.priority.disabled = !canWrite();
+            elements.weeklyTiebreakForm.querySelector("button[type=submit]").disabled = !canWrite();
             const fields = document.createDocumentFragment();
             constants.CATEGORIES.forEach(({ id, label }) => {
                 const criteria = classifications.criteriaFor(state, id);
                 const row = element("div", "classification-criteria-row");
                 row.append(element("strong", "", categoryLabel(id)));
+                row.append(element("p", "classification-rubric", constants.CATEGORY_RUBRICS[id]));
                 const weeksLabel = element("label", "", "Semanas completas");
                 const weeks = element("input"); weeks.type = "number"; weeks.min = "1"; weeks.max = "52"; weeks.step = "1";
                 weeks.name = `${id}-weeks`; weeks.value = criteria.minimumWeeks; weeks.required = true;
@@ -392,7 +408,12 @@
                 const points = element("input"); points.type = "number"; points.min = "0"; points.max = "6"; points.step = "0.1";
                 points.name = `${id}-points`; points.value = criteria.minimumAveragePoints; points.required = true;
                 points.disabled = !canWrite(); pointsLabel.append(points);
-                row.append(weeksLabel, pointsLabel); fields.append(row);
+                const evidenceLabel = element("label", "", "Tipos de evidencia distintos");
+                const evidence = element("input"); evidence.type = "number"; evidence.min = "1";
+                evidence.max = String(constants.EVIDENCE_TYPES.length); evidence.step = "1";
+                evidence.name = `${id}-evidence`; evidence.value = criteria.minimumEvidenceTypes; evidence.required = true;
+                evidence.disabled = !canWrite(); evidenceLabel.append(evidence);
+                row.append(weeksLabel, pointsLabel, evidenceLabel); fields.append(row);
             });
             elements.classificationCriteriaFields.replaceChildren(fields);
             elements.classificationCriteriaForm.querySelector("button[type=submit]").disabled = !canWrite() || !current;
@@ -504,6 +525,10 @@
                 tab.setAttribute("aria-selected", String(selected));
                 tab.tabIndex = selected ? 0 : -1;
             });
+            elements.classificationCategoryTabs.forEach((tab) => {
+                const selected = tab.dataset.classificationCategory === categoryId;
+                tab.setAttribute("aria-selected", String(selected)); tab.tabIndex = selected ? 0 : -1;
+            });
             currentModel = createViewModel(getState(), { includeOpen, categoryId, gender });
             renderStanding(currentModel);
             renderClassificationReview(currentModel);
@@ -514,6 +539,7 @@
             if (!constants.GENDERS.includes(nextGender)) return;
             gender = nextGender;
             elements.genderButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.seasonGender === gender)));
+            elements.classificationGenderButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.classificationGender === gender)));
             currentModel = createViewModel(getState(), { includeOpen, categoryId, gender });
             renderStanding(currentModel);
             renderClassificationReview(currentModel);
@@ -524,7 +550,9 @@
             revokeImages();
             const startedAt = performance.now();
             currentModel = createViewModel(getState(), { includeOpen, categoryId, gender });
-            if (activeView === "rankings") {
+            if (activeView === "classification") {
+                renderClassificationReview(currentModel);
+            } else if (activeView === "rankings") {
                 renderMode(currentModel, {
                     mode: elements.rankingsMode,
                     period: elements.rankingsPeriod,
@@ -571,6 +599,8 @@
         elements.genderButtons.forEach((button) => {
             button.addEventListener("click", () => selectGender(button.dataset.seasonGender));
         });
+        elements.classificationCategoryTabs.forEach((tab) => tab.addEventListener("click", () => selectCategory(tab.dataset.classificationCategory)));
+        elements.classificationGenderButtons.forEach((button) => button.addEventListener("click", () => selectGender(button.dataset.classificationGender)));
         function handleViewClick(event) {
             const participant = event.target.closest("button[data-season-participant-id]");
             if (participant) {
@@ -605,18 +635,29 @@
                 constants.CATEGORIES.forEach(({ id }) => {
                     next = classifications.updateCriteria(next, id, {
                         minimumWeeks: form.get(`${id}-weeks`),
-                        minimumAveragePoints: form.get(`${id}-points`)
+                        minimumAveragePoints: form.get(`${id}-points`),
+                        minimumEvidenceTypes: form.get(`${id}-evidence`)
                     });
                 });
                 commitState(next);
                 notify("Criterios de clasificación guardados por categoría.");
             } catch (error) { notify(error.message, "error"); }
         });
+        elements.weeklyTiebreakForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            if (!canWrite()) return;
+            try {
+                const next = weekly.updateTieBreakPriority(getState(), elements.weeklyTiebreakForm.elements.priority.value);
+                commitState(next);
+                notify("Regla de desempate semanal guardada.");
+            } catch (error) { notify(error.message, "error"); }
+        });
 
         return Object.freeze({
             activate(viewId = "season") {
-                activeView = viewId === "rankings" ? "rankings" : "season";
-                render();
+                activeView = viewId === "rankings" ? "rankings" : viewId === "classification" ? "classification" : viewId;
+                if (viewId === "settings") renderClassificationCriteria();
+                else render();
             }
         });
     }

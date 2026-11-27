@@ -23,10 +23,11 @@
             closeWeek: byId("close-current-week"), reopenWeek: byId("reopen-current-week"),
             status: byId("weekly-status"), empty: byId("weekly-empty"), workspace: byId("weekly-workspace"),
             periodTitle: byId("weekly-period-title"), weekRange: byId("weekly-week-range"),
-            userSwitch: byId("weekly-user-switch"), voterClarity: byId("weekly-voter-clarity"),
+            userSwitch: byId("weekly-user-switch"), voterClarity: byId("weekly-voter-clarity"), sealBallot: byId("seal-weekly-ballot"),
             evaluatedCount: byId("weekly-evaluated-count"), standoutCount: byId("weekly-standout-count"),
             standoutRemaining: byId("weekly-standout-remaining"), standoutProgress: byId("weekly-standout-progress"),
             search: byId("weekly-search"), categoryFilter: byId("weekly-category-filter"),
+            rubric: byId("weekly-rubric"),
             genderFilter: byId("weekly-gender-filter"), groupFilter: byId("weekly-group-filter"),
             evaluationFilter: byId("weekly-evaluation-filter"), resetFilters: byId("reset-weekly-filters"),
             showCatalog: byId("weekly-show-catalog"),
@@ -67,6 +68,10 @@
         function currentVoter() {
             return state().settings.voters.find((voter) => voter.id === activeUserId) || { id: activeUserId, name: activeUserId.toUpperCase() };
         }
+        function voterCanEdit(week = currentWeek(), voterId = activeUserId) {
+            return Boolean(week && week.status === "OPEN" && !week.sealedVoterIds?.includes(voterId)
+                && (voterId !== constants.VOTER_IDS[1] || week.sealedVoterIds?.includes(constants.VOTER_IDS[0])));
+        }
         function groupName(groupId) {
             return groupId ? state().groups.find((group) => group.id === groupId)?.name || "Grupo desconocido" : "Solista";
         }
@@ -102,16 +107,30 @@
             elements.groupFilter.value = [...elements.groupFilter.options].some((option) => option.value === current) ? current : "all";
         }
         function renderUserSwitch() {
+            const week = currentWeek();
+            const sealed = week?.sealedVoterIds || [];
+            if (week?.status === "OPEN" && sealed.length < constants.VOTER_IDS.length
+                && !voterCanEdit(week, activeUserId)) {
+                activeUserId = sealed.includes(constants.VOTER_IDS[0]) ? constants.VOTER_IDS[1] : constants.VOTER_IDS[0];
+            }
             const fragment = document.createDocumentFragment();
             state().settings.voters.forEach((voter) => {
                 const button = createElement("button", "weekly-user-button");
                 button.type = "button"; button.dataset.weeklyUserId = voter.id;
                 button.setAttribute("aria-pressed", String(voter.id === activeUserId));
+                button.disabled = week?.status === "OPEN" && !voterCanEdit(week, voter.id);
                 button.append(createElement("span", "", voter.id.toUpperCase()), createElement("strong", "", voter.name));
                 fragment.append(button);
             });
             elements.userSwitch.replaceChildren(fragment);
-            elements.voterClarity.textContent = `Editando solo los votos de ${currentVoter().name} (${activeUserId.toUpperCase()}).`;
+            elements.voterClarity.textContent = sealed.length === 2
+                ? "Ambas evaluaciones están entregadas. Ya pueden comparar en Resultados."
+                : week?.status !== "OPEN" ? "Semana cerrada · consulta de votos y resultados."
+                    : sealed.length === 1 ? "P1 entregó su evaluación. P2 vota ahora sin ver esas notas."
+                        : `Primero vota ${currentVoter().name} sin consultar la evaluación de la otra persona.`;
+            elements.sealBallot.hidden = !voterCanEdit(week);
+            elements.sealBallot.disabled = !canWrite();
+            elements.sealBallot.textContent = `Entregar evaluación ${activeUserId.toUpperCase()}`;
         }
         function createCategoryBadge(categoryId) {
             return createElement("span", `category-badge category-badge--${categoryId}`, categoryLabel(categoryId));
@@ -122,14 +141,13 @@
             const row = createElement("div", "weekly-category-summary");
             const identity = createElement("div", "weekly-category-summary__identity");
             identity.append(createCategoryBadge(categoryId), createElement("span", `weekly-state weekly-state--${vote?.rating || "none"}`, ratingLabel(vote?.rating)));
-            const otherVoteExists = state().weeklyVotes.some((item) => item.weekId === week.id
-                && item.participantId === participant.id && item.categoryId === categoryId && item.userId !== activeUserId);
-            const pointsText = week.status === "OPEN"
-                ? vote ? "Tu voto guardado" : otherVoteExists ? "Tu voto pendiente" : "Sin evaluar"
+            const bothSealed = constants.VOTER_IDS.every((id) => week.sealedVoterIds?.includes(id));
+            const pointsText = week.status === "OPEN" && !bothSealed
+                ? vote ? "Tu voto guardado" : "Sin evaluar"
                 : metrics.votesCount ? `${metrics.weeklyPoints} pts · ${metrics.votersCount}/2` : "Sin puntaje";
             const points = createElement("span", "weekly-category-points", pointsText);
             row.append(identity, points);
-            if (week.status === "CLOSED" && metrics.ratingDifference !== null && metrics.ratingDifference >= 3) {
+            if ((week.status === "CLOSED" || bothSealed) && metrics.ratingDifference !== null && metrics.ratingDifference >= 3) {
                 row.append(createElement("span", "weekly-disagreement", "Diferencia alta · revisar"));
             }
             return row;
@@ -150,13 +168,16 @@
                     `Nominado en ${categoryLabel(item.categoryId)}${item.voterIds.length > 1 ? " · P1 + P2" : ` · ${item.voterIds[0]?.toUpperCase() || ""}`}`);
                 summaries.append(label);
             });
+            const revealBoth = week.status !== "OPEN" || constants.VOTER_IDS.every((id) => week.sealedVoterIds?.includes(id));
             const evaluatedCategories = [...new Set(state().weeklyVotes
-                .filter((vote) => vote.weekId === week.id && vote.participantId === participant.id && vote.categoryId)
+                .filter((vote) => vote.weekId === week.id && vote.participantId === participant.id && vote.categoryId
+                    && (revealBoth || vote.userId === activeUserId))
                 .map((vote) => vote.categoryId))];
             evaluatedCategories
                 .forEach((categoryId) => summaries.append(createCategorySummary(participant, categoryId, week)));
             const relevantVotes = state().weeklyVotes.filter((vote) => vote.weekId === week.id
                 && vote.participantId === participant.id && vote.categoryId
+                && (revealBoth || vote.userId === activeUserId)
                 && (elements.categoryFilter.value === "all" || vote.categoryId === elements.categoryFilter.value));
             const reasonCounts = new Map();
             relevantVotes.forEach((vote) => (vote.reasonTagIds || []).forEach((tagId) => {
@@ -200,13 +221,13 @@
                     nominationButton.dataset.weeklyNominateParticipant = participant.id;
                     nominationButton.dataset.weeklyNominateCategory = elements.categoryFilter.value;
                     nominationButton.dataset.weeklyNominateValue = String(!nominatedByCurrent);
-                    nominationButton.disabled = !canWrite();
+                    nominationButton.disabled = !canWrite() || !voterCanEdit(week);
                     actions.append(nominationButton);
                 }
                 const categories = weekly.categoriesForParticipant(state(), week.id, participant.id);
                 if (categories.length) {
                     const action = createElement("button", "button button--primary", "Evaluar categorías");
-                    action.type = "button"; action.dataset.weeklyParticipantId = participant.id; action.disabled = !canWrite();
+                    action.type = "button"; action.dataset.weeklyParticipantId = participant.id; action.disabled = !canWrite() || !voterCanEdit(week);
                     actions.append(action);
                 } else {
                     actions.append(createElement("span", "weekly-readonly-badge", "Sin categoría asignada"));
@@ -257,17 +278,23 @@
             }
             ensureSelection(); renderWeekSelect(); renderGroupOptions();
             const week = currentWeek();
+            elements.rubric.textContent = elements.categoryFilter.value === "all"
+                ? "Elige una categoría para ver su guía de evaluación."
+                : constants.CATEGORY_RUBRICS[elements.categoryFilter.value];
             elements.empty.hidden = Boolean(week); elements.workspace.hidden = !week;
             elements.openWeek.disabled = !canWrite(); elements.newWeek.disabled = !canWrite();
             if (!week) {
+                elements.sealBallot.hidden = true;
                 elements.status.textContent = "Sin semana"; elements.status.dataset.state = "none";
                 elements.closeWeek.hidden = true; elements.reopenWeek.hidden = true; return;
             }
             elements.status.textContent = week.status === "OPEN" ? "ABIERTA" : "CERRADA"; elements.status.dataset.state = week.status.toLocaleLowerCase("en");
             elements.periodTitle.textContent = `${week.label} · ${week.id}`;
             elements.weekRange.textContent = `${weekly.formatWeekRange(week)} · lunes-domingo`;
-            elements.closeWeek.hidden = week.status !== "OPEN"; elements.closeWeek.disabled = !canWrite();
+            elements.closeWeek.hidden = week.status !== "OPEN";
+            elements.closeWeek.disabled = !canWrite() || !constants.VOTER_IDS.every((id) => week.sealedVoterIds?.includes(id));
             elements.reopenWeek.hidden = week.status !== "CLOSED"; elements.reopenWeek.disabled = !canWrite();
+            elements.sealBallot.hidden = !voterCanEdit(week);
             elements.readonlyCopy.textContent = week.status === "OPEN" ? "ABIERTA · Puedes editar los votos" : "CERRADA · Resultados oficiales";
             renderUserSwitch(); renderProgress(week); renderLegacyWarning(week); renderCards(week);
         }
@@ -345,7 +372,7 @@
         }
         function openVoteDialog(participantId, trigger) {
             const week = currentWeek();
-            if (!week || week.status !== "OPEN" || !canWrite()) return;
+            if (!week || week.status !== "OPEN" || !canWrite() || !voterCanEdit(week)) return;
             const participant = state().participants.find((item) => item.id === participantId);
             if (!participant || participant.archivedAt !== null) return;
             editingParticipantId = participantId;
@@ -430,7 +457,7 @@
         function openReopenDialog() {
             const week = currentWeek(); if (!week || week.status !== "CLOSED") return;
             returnFocusElement = elements.reopenWeek; elements.reopenDialogTitle.textContent = `¿Reabrir ${week.label}?`;
-            elements.reopenDialogMessage.textContent = "Podrás volver a editar los votos. El historial se conservará.";
+            elements.reopenDialogMessage.textContent = "Se quitarán las entregas de P1 y P2 para una nueva ronda de edición. El historial de votos se conservará.";
             elements.reopenDialog.showModal(); elements.cancelReopenWeek.focus();
         }
         function closeReopenDialog() { if (elements.reopenDialog.open) elements.reopenDialog.close(); if (returnFocusElement?.isConnected) returnFocusElement.focus(); returnFocusElement = null; }
@@ -451,7 +478,19 @@
             elements.reopenWeek.addEventListener("click", openReopenDialog);
             elements.userSwitch.addEventListener("click", (event) => {
                 const button = event.target.closest("button[data-weekly-user-id]"); if (!button) return;
+                if (!voterCanEdit(currentWeek(), button.dataset.weeklyUserId)) return;
                 activeUserId = button.dataset.weeklyUserId; render();
+            });
+            elements.sealBallot.addEventListener("click", () => {
+                const week = currentWeek(); if (!week || !canWrite()) return;
+                try {
+                    const result = weekly.sealBallot(state(), week.id, activeUserId);
+                    commitState(result.state);
+                    if (result.sealedVoterIds.length === 1) activeUserId = constants.VOTER_IDS[1];
+                    notify(result.sealedVoterIds.length === 2
+                        ? "Ambas evaluaciones están entregadas. Ya pueden revisar los resultados juntos."
+                        : "Evaluación entregada y bloqueada. Ahora corresponde votar a P2.");
+                } catch (error) { notify(error.message, "error"); }
             });
             elements.search.addEventListener("input", render);
             [elements.categoryFilter, elements.genderFilter, elements.groupFilter, elements.evaluationFilter]
