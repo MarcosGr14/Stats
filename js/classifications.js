@@ -156,9 +156,8 @@
         const status = completed ? action : (participant.categoryIds.includes(categoryId) ? "classified" : "ready");
         const periods = previous.periods ? [...previous.periods.map((period) => ({ ...period, weekIds: [...period.weekIds] }))] : [];
         if (completed && action === "classified") {
-            const alreadyScored = new Set(periods.flatMap((period) => period.weekIds));
-            const evidenceWeekIds = assessed.evidence.weeks.filter((weekId) => !alreadyScored.has(weekId));
-            periods.push({ weekIds: evidenceWeekIds });
+            // Qualification evidence remains in the weekly history; annual scoring begins at classification.
+            periods.push({ weekIds: [] });
         }
         season.categoryClassifications[key] = {
             status, confirmedBy, requestedStatus: completed ? null : action,

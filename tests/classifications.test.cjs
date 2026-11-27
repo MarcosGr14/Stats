@@ -40,9 +40,12 @@ test("classification requires three complete weeks, the average threshold and bo
     const second = classifications.reviewClassification(first.state, "dino", "dance", "p2");
     assert.equal(second.completed, true);
     assert.deepEqual(second.state.participants[0].categoryIds, ["dance"]);
-    const historical = season.deriveCategoryStanding(second.state, { categoryId: "dance", gender: "male", weekIds: ["2026-W11", "2026-W12", "2026-W13"] });
-    assert.equal(historical.provisional[0].participant.id, "dino");
-    assert.deepEqual(second.state.seasons[0].categoryClassifications[JSON.stringify(["dino", "dance"])].confirmedBy, ["p1", "p2"]);
+    const observationHistory = season.deriveCategoryStanding(second.state, { categoryId: "dance", gender: "male", weekIds: ["2026-W11", "2026-W12", "2026-W13"] });
+    assert.equal(observationHistory.eligible.length + observationHistory.provisional.length, 0);
+    assert.equal(second.state.weeklyVotes.filter((vote) => vote.participantId === "dino").length, 6);
+    const classification = second.state.seasons[0].categoryClassifications[JSON.stringify(["dino", "dance"])];
+    assert.deepEqual(classification.confirmedBy, ["p1", "p2"]);
+    assert.deepEqual(classification.periods, [{ weekIds: [] }]);
 });
 
 test("criteria are editable but bounded per category", () => {
